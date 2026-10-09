@@ -1,0 +1,2977 @@
+{
+ "clients": [
+  {
+   "id": "kieran",
+   "slug": "physique-x",
+   "name": "Physique X",
+   "growthNote": "Site not live yet",
+   "revenueNote": "No sales yet"
+  },
+  {
+   "id": "sassy",
+   "slug": "sassy-fitness",
+   "name": "Sassy Fitness",
+   "growthNote": "▲ 18% vs last 30d",
+   "revenueNote": "▲ £640"
+  },
+  {
+   "id": "iron",
+   "slug": "iron-forge-strength",
+   "name": "Iron Forge Strength",
+   "growthNote": "▲ 9% vs last 30d",
+   "revenueNote": "▲ £1,200"
+  },
+  {
+   "id": "bloom",
+   "slug": "bloom-pilates",
+   "name": "Bloom Pilates",
+   "growthNote": "▲ 31% vs last 30d",
+   "revenueNote": "▲ £450"
+  },
+  {
+   "id": "run",
+   "slug": "runstrong-club",
+   "name": "RunStrong Club",
+   "growthNote": "▲ 6% vs last 30d",
+   "revenueNote": "▲ £278"
+  }
+ ],
+ "leads": [
+  {
+   "id": "sassy-sj",
+   "clientId": "sassy",
+   "name": "Sarah Jones",
+   "email": "sarah.jones@email.com",
+   "phone": "07700 900101",
+   "source": "quiz",
+   "stage": "new",
+   "page": "/fat-loss-quiz",
+   "utm": "ig_spring_shred",
+   "firstSeen": "2026-10-07T12:04:00",
+   "value": 0,
+   "attended": null,
+   "headline": "2h ago",
+   "detail": "Score: 72 · Goal: fat loss",
+   "mailerlite": "Quiz Nurture ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Score",
+     "72 / 100"
+    ],
+    [
+     "Main goal",
+     "Fat loss"
+    ],
+    [
+     "Training days",
+     "3 per week"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-sj-e0",
+     "label": "Completed Fat Loss Quiz",
+     "source": "Website",
+     "at": "2026-10-07T12:04:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-mt",
+   "clientId": "sassy",
+   "name": "Mark Taylor",
+   "email": "mark.t@email.com",
+   "phone": "07700 900102",
+   "source": "magnet",
+   "stage": "new",
+   "page": "/meal-plan",
+   "utm": "fb_mealplan",
+   "firstSeen": "2026-10-07T09:12:00",
+   "value": 0,
+   "attended": null,
+   "headline": "5h ago",
+   "detail": "7-Day Meal Plan",
+   "mailerlite": "Meal Plan Delivery ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "7-Day Meal Plan"
+    ],
+    [
+     "Opted in from",
+     "Instagram bio"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-mt-e0",
+     "label": "Downloaded 7-Day Meal Plan",
+     "source": "Website",
+     "at": "2026-10-07T09:12:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-ps",
+   "clientId": "sassy",
+   "name": "Priya Shah",
+   "email": "priya.shah@email.com",
+   "phone": "07700 900103",
+   "source": "ads",
+   "stage": "new",
+   "page": "/spring-shred",
+   "utm": "ig_ad_spring_v2",
+   "firstSeen": "2026-10-06T18:40:00",
+   "value": 0,
+   "attended": null,
+   "headline": "Yesterday",
+   "detail": "Spring Shred ad · IG",
+   "mailerlite": "Ads Welcome ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "12-Week Coaching"
+    ],
+    [
+     "Start date",
+     "ASAP"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-ps-e0",
+     "label": "Submitted Spring Shred form",
+     "source": "Website",
+     "at": "2026-10-06T18:40:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-ow",
+   "clientId": "sassy",
+   "name": "Olivia Webb",
+   "email": "liv.webb@email.com",
+   "phone": "07700 900104",
+   "source": "news",
+   "stage": "new",
+   "page": "/newsletter",
+   "utm": "tiktok_bio",
+   "firstSeen": "2026-10-05T21:15:00",
+   "value": 0,
+   "attended": null,
+   "headline": "2 days",
+   "detail": "Weekly tips signup",
+   "mailerlite": "Newsletter ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "SIGNUP",
+   "answers": [
+    [
+     "List",
+     "Weekly Tips"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-ow-e0",
+     "label": "Joined newsletter",
+     "source": "Website",
+     "at": "2026-10-05T21:15:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-er",
+   "clientId": "sassy",
+   "name": "Emma Reid",
+   "email": "emma.reid@email.com",
+   "phone": "07700 900105",
+   "source": "news",
+   "stage": "nurture",
+   "page": "/newsletter",
+   "utm": "ig_story",
+   "firstSeen": "2026-10-03T08:30:00",
+   "value": 0,
+   "attended": null,
+   "headline": "4 days",
+   "detail": "Opened 3 of 4 emails",
+   "mailerlite": "Newsletter ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "SIGNUP",
+   "answers": [
+    [
+     "List",
+     "Weekly Tips"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-er-e1",
+     "label": "Opened email 3",
+     "source": "MailerLite",
+     "at": "2026-10-06T07:55:00"
+    },
+    {
+     "id": "sassy-er-e0",
+     "label": "Joined newsletter",
+     "source": "Website",
+     "at": "2026-10-03T08:30:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-dp",
+   "clientId": "sassy",
+   "name": "Dan Price",
+   "email": "dan.price@email.com",
+   "phone": "07700 900106",
+   "source": "ads",
+   "stage": "nurture",
+   "page": "/spring-shred",
+   "utm": "fb_ad_spring_v1",
+   "firstSeen": "2026-10-01T13:02:00",
+   "value": 0,
+   "attended": null,
+   "headline": "6 days",
+   "detail": "Clicked booking link",
+   "mailerlite": "Ads Welcome ✓",
+   "calendly": "Link clicked, not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "12-Week Coaching"
+    ],
+    [
+     "Start date",
+     "Next month"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-dp-e1",
+     "label": "Clicked \"Book a call\"",
+     "source": "MailerLite",
+     "at": "2026-10-04T19:20:00"
+    },
+    {
+     "id": "sassy-dp-e0",
+     "label": "Submitted Spring Shred form",
+     "source": "Website",
+     "at": "2026-10-01T13:02:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-jw",
+   "clientId": "sassy",
+   "name": "Jo Walsh",
+   "email": "jo.walsh@email.com",
+   "phone": "07700 900107",
+   "source": "quiz",
+   "stage": "nurture",
+   "page": "/fat-loss-quiz",
+   "utm": "ig_spring_shred",
+   "firstSeen": "2026-09-30T20:11:00",
+   "value": 0,
+   "attended": null,
+   "headline": "1 week",
+   "detail": "Score: 58",
+   "mailerlite": "Quiz Nurture ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Score",
+     "58 / 100"
+    ],
+    [
+     "Main goal",
+     "Tone up"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-jw-e1",
+     "label": "Opened email 2",
+     "source": "MailerLite",
+     "at": "2026-10-03T12:00:00"
+    },
+    {
+     "id": "sassy-jw-e0",
+     "label": "Completed Fat Loss Quiz",
+     "source": "Website",
+     "at": "2026-09-30T20:11:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-hb",
+   "clientId": "sassy",
+   "name": "Hannah Brooks",
+   "email": "h.brooks@email.com",
+   "phone": "07700 900108",
+   "source": "magnet",
+   "stage": "nurture",
+   "page": "/home-workouts",
+   "utm": "yt_desc",
+   "firstSeen": "2026-09-29T10:44:00",
+   "value": 0,
+   "attended": null,
+   "headline": "1 week",
+   "detail": "Home Workout Guide",
+   "mailerlite": "Guide Delivery ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "Home Workout Guide"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-hb-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-29T11:02:00"
+    },
+    {
+     "id": "sassy-hb-e0",
+     "label": "Downloaded Home Workout Guide",
+     "source": "Website",
+     "at": "2026-09-29T10:44:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-lk",
+   "clientId": "sassy",
+   "name": "Lucy King",
+   "email": "lucy.king@email.com",
+   "phone": "07700 900123",
+   "source": "survey",
+   "stage": "call",
+   "page": "/body-goals-survey",
+   "utm": "ig_spring_shred",
+   "firstSeen": "2026-10-02T19:42:00",
+   "value": 0,
+   "attended": null,
+   "headline": "Thu 2:00pm",
+   "detail": "Calendly · Discovery Call",
+   "mailerlite": "Survey Nurture ✓",
+   "calendly": "Thu 9 Oct, 2:00pm",
+   "stripe": "No purchase yet",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Main goal",
+     "Lose 2 stone"
+    ],
+    [
+     "Biggest blocker",
+     "Consistency"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-lk-e2",
+     "label": "Call booked: Thu 9 Oct, 2:00pm",
+     "source": "Calendly",
+     "at": "2026-10-05T08:14:00"
+    },
+    {
+     "id": "sassy-lk-e1",
+     "label": "Clicked \"Book a call\" in email 2",
+     "source": "MailerLite",
+     "at": "2026-10-05T08:11:00"
+    },
+    {
+     "id": "sassy-lk-e0",
+     "label": "Completed Body Goals Survey",
+     "source": "Website",
+     "at": "2026-10-02T19:42:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-bc",
+   "clientId": "sassy",
+   "name": "Ben Cole",
+   "email": "ben.cole@email.com",
+   "phone": "07700 900109",
+   "source": "quiz",
+   "stage": "call",
+   "page": "/fat-loss-quiz",
+   "utm": "ig_spring_shred",
+   "firstSeen": "2026-10-04T07:30:00",
+   "value": 0,
+   "attended": null,
+   "headline": "Fri 10:30am",
+   "detail": "Calendly · Discovery Call",
+   "mailerlite": "Quiz Nurture ✓",
+   "calendly": "Fri 10 Oct, 10:30am",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Score",
+     "81 / 100"
+    ],
+    [
+     "Main goal",
+     "Build muscle"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-bc-e1",
+     "label": "Call booked: Fri 10 Oct, 10:30am",
+     "source": "Calendly",
+     "at": "2026-10-04T07:41:00"
+    },
+    {
+     "id": "sassy-bc-e0",
+     "label": "Completed Fat Loss Quiz",
+     "source": "Website",
+     "at": "2026-10-04T07:30:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-ks",
+   "clientId": "sassy",
+   "name": "Kate Simms",
+   "email": "kate.simms@email.com",
+   "phone": "07700 900110",
+   "source": "ads",
+   "stage": "call",
+   "page": "/spring-shred",
+   "utm": "ig_ad_spring_v2",
+   "firstSeen": "2026-10-06T12:20:00",
+   "value": 0,
+   "attended": null,
+   "headline": "Mon 6:00pm",
+   "detail": "Calendly · Discovery Call",
+   "mailerlite": "Ads Welcome ✓",
+   "calendly": "Mon 13 Oct, 6:00pm",
+   "stripe": "No purchase yet",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "12-Week Coaching"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-ks-e1",
+     "label": "Call booked: Mon 13 Oct, 6:00pm",
+     "source": "Calendly",
+     "at": "2026-10-06T12:25:00"
+    },
+    {
+     "id": "sassy-ks-e0",
+     "label": "Submitted Spring Shred form",
+     "source": "Website",
+     "at": "2026-10-06T12:20:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-cb",
+   "clientId": "sassy",
+   "name": "Chris Bell",
+   "email": "chris.bell@email.com",
+   "phone": "07700 900111",
+   "source": "quiz",
+   "stage": "showed",
+   "page": "/fat-loss-quiz",
+   "utm": "ig_spring_shred",
+   "firstSeen": "2026-09-24T16:00:00",
+   "value": 0,
+   "attended": true,
+   "headline": "Showed",
+   "detail": "Follow up sent",
+   "mailerlite": "Post-call Follow Up ✓",
+   "calendly": "Attended 2 Oct",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Score",
+     "77 / 100"
+    ],
+    [
+     "Main goal",
+     "Fat loss"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-cb-e2",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-10-02T15:30:00"
+    },
+    {
+     "id": "sassy-cb-e1",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-25T09:10:00"
+    },
+    {
+     "id": "sassy-cb-e0",
+     "label": "Completed Fat Loss Quiz",
+     "source": "Website",
+     "at": "2026-09-24T16:00:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-nf",
+   "clientId": "sassy",
+   "name": "Nina Ford",
+   "email": "nina.ford@email.com",
+   "phone": "07700 900112",
+   "source": "magnet",
+   "stage": "showed",
+   "page": "/meal-plan",
+   "utm": "fb_mealplan",
+   "firstSeen": "2026-09-22T11:18:00",
+   "value": 0,
+   "attended": false,
+   "headline": "No-show",
+   "detail": "Rebook email sent",
+   "mailerlite": "No-show Rebook ✓",
+   "calendly": "No-show 3 Oct",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "7-Day Meal Plan"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-nf-e2",
+     "label": "Marked no-show",
+     "source": "Calendly",
+     "at": "2026-10-03T11:15:00"
+    },
+    {
+     "id": "sassy-nf-e1",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-28T18:02:00"
+    },
+    {
+     "id": "sassy-nf-e0",
+     "label": "Downloaded 7-Day Meal Plan",
+     "source": "Website",
+     "at": "2026-09-22T11:18:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-ga",
+   "clientId": "sassy",
+   "name": "Grace Adams",
+   "email": "grace.a@email.com",
+   "phone": "07700 900113",
+   "source": "survey",
+   "stage": "showed",
+   "page": "/body-goals-survey",
+   "utm": "tiktok_bio",
+   "firstSeen": "2026-09-20T19:05:00",
+   "value": 0,
+   "attended": true,
+   "headline": "Showed",
+   "detail": "Thinking it over",
+   "mailerlite": "Post-call Follow Up ✓",
+   "calendly": "Attended 1 Oct",
+   "stripe": "No purchase yet",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Main goal",
+     "Get strong"
+    ],
+    [
+     "Biggest blocker",
+     "Time"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-ga-e1",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-10-01T18:30:00"
+    },
+    {
+     "id": "sassy-ga-e0",
+     "label": "Completed Body Goals Survey",
+     "source": "Website",
+     "at": "2026-09-20T19:05:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-aw",
+   "clientId": "sassy",
+   "name": "Amy Watts",
+   "email": "amy.watts@email.com",
+   "phone": "07700 900114",
+   "source": "ads",
+   "stage": "purchased",
+   "page": "/spring-shred",
+   "utm": "ig_ad_spring_v1",
+   "firstSeen": "2026-09-18T14:22:00",
+   "value": 997,
+   "attended": true,
+   "headline": "£997",
+   "detail": "Stripe · 12-Week Coaching",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended 26 Sep",
+   "stripe": "£997 · 12-Week Coaching",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "12-Week Coaching"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-aw-e2",
+     "label": "Paid £997",
+     "source": "Stripe",
+     "at": "2026-09-26T17:48:00"
+    },
+    {
+     "id": "sassy-aw-e1",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-26T17:00:00"
+    },
+    {
+     "id": "sassy-aw-e0",
+     "label": "Submitted Spring Shred form",
+     "source": "Website",
+     "at": "2026-09-18T14:22:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-rp",
+   "clientId": "sassy",
+   "name": "Raj Patel",
+   "email": "raj.patel@email.com",
+   "phone": "07700 900115",
+   "source": "quiz",
+   "stage": "purchased",
+   "page": "/fat-loss-quiz",
+   "utm": "ig_spring_shred",
+   "firstSeen": "2026-09-15T09:40:00",
+   "value": 149,
+   "attended": true,
+   "headline": "£149/mo",
+   "detail": "Stripe · Membership",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended 19 Sep",
+   "stripe": "£149/mo · Membership",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Score",
+     "88 / 100"
+    ],
+    [
+     "Main goal",
+     "Build muscle"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-rp-e2",
+     "label": "Subscribed £149/mo",
+     "source": "Stripe",
+     "at": "2026-09-19T13:05:00"
+    },
+    {
+     "id": "sassy-rp-e1",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-19T12:30:00"
+    },
+    {
+     "id": "sassy-rp-e0",
+     "label": "Completed Fat Loss Quiz",
+     "source": "Website",
+     "at": "2026-09-15T09:40:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-ld",
+   "clientId": "sassy",
+   "name": "Leah Doyle",
+   "email": "leah.doyle@email.com",
+   "phone": "07700 900116",
+   "source": "survey",
+   "stage": "purchased",
+   "page": "/body-goals-survey",
+   "utm": "ig_spring_shred",
+   "firstSeen": "2026-09-12T20:30:00",
+   "value": 997,
+   "attended": true,
+   "headline": "£997",
+   "detail": "Stripe · 12-Week Coaching",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended 17 Sep",
+   "stripe": "£997 · 12-Week Coaching",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Main goal",
+     "Lose a stone"
+    ],
+    [
+     "Biggest blocker",
+     "Motivation"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-ld-e2",
+     "label": "Paid £997",
+     "source": "Stripe",
+     "at": "2026-09-17T19:20:00"
+    },
+    {
+     "id": "sassy-ld-e1",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-17T18:30:00"
+    },
+    {
+     "id": "sassy-ld-e0",
+     "label": "Completed Body Goals Survey",
+     "source": "Website",
+     "at": "2026-09-12T20:30:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-th",
+   "clientId": "sassy",
+   "name": "Tom Hill",
+   "email": "tom.hill@email.com",
+   "phone": "07700 900117",
+   "source": "magnet",
+   "stage": "lost",
+   "page": "/meal-plan",
+   "utm": "fb_mealplan",
+   "firstSeen": "2026-09-10T08:05:00",
+   "value": 0,
+   "attended": true,
+   "headline": "Not a fit",
+   "detail": "Budget",
+   "mailerlite": "Unsubscribed",
+   "calendly": "Attended 16 Sep",
+   "stripe": "No purchase",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "7-Day Meal Plan"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-th-e1",
+     "label": "Marked lost: Budget",
+     "source": "Client",
+     "at": "2026-09-16T18:00:00"
+    },
+    {
+     "id": "sassy-th-e0",
+     "label": "Downloaded 7-Day Meal Plan",
+     "source": "Website",
+     "at": "2026-09-10T08:05:00"
+    }
+   ]
+  },
+  {
+   "id": "sassy-sm",
+   "clientId": "sassy",
+   "name": "Sam Moore",
+   "email": "sam.moore@email.com",
+   "phone": "07700 900118",
+   "source": "news",
+   "stage": "lost",
+   "page": "/newsletter",
+   "utm": "ig_story",
+   "firstSeen": "2026-09-08T12:12:00",
+   "value": 0,
+   "attended": null,
+   "headline": "Unsubscribed",
+   "detail": "No reply after 6 emails",
+   "mailerlite": "Unsubscribed",
+   "calendly": "Not booked",
+   "stripe": "No purchase",
+   "answersTitle": "SIGNUP",
+   "answers": [
+    [
+     "List",
+     "Weekly Tips"
+    ]
+   ],
+   "events": [
+    {
+     "id": "sassy-sm-e1",
+     "label": "Unsubscribed",
+     "source": "MailerLite",
+     "at": "2026-09-30T09:00:00"
+    },
+    {
+     "id": "sassy-sm-e0",
+     "label": "Joined newsletter",
+     "source": "Website",
+     "at": "2026-09-08T12:12:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if0",
+   "clientId": "iron",
+   "name": "Jack Turner",
+   "email": "jack.turner@email.com",
+   "phone": "07700 900220",
+   "source": "quiz",
+   "stage": "new",
+   "page": "/strength-score",
+   "utm": "ig_strength_score",
+   "firstSeen": "2026-10-07T13:02:00",
+   "value": 0,
+   "attended": false,
+   "headline": "1h ago",
+   "detail": "Result: intermediate",
+   "mailerlite": "Strength Score Nurture ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Result",
+     "Intermediate lifter"
+    ],
+    [
+     "Main goal",
+     "Bigger total"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if0-e0",
+     "label": "Completed Strength Score Quiz",
+     "source": "Website",
+     "at": "2026-10-07T13:02:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if1",
+   "clientId": "iron",
+   "name": "Liam Hughes",
+   "email": "liam.hughes@email.com",
+   "phone": "07700 900221",
+   "source": "ads",
+   "stage": "new",
+   "page": "/forge-16",
+   "utm": "fb_ad_forge16",
+   "firstSeen": "2026-10-07T11:10:00",
+   "value": 0,
+   "attended": false,
+   "headline": "3h ago",
+   "detail": "Forge 16 ad · FB",
+   "mailerlite": "Forge 16 Welcome ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "16-Week Strength Coaching"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if1-e0",
+     "label": "Submitted Forge 16 form",
+     "source": "Website",
+     "at": "2026-10-07T11:10:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if2",
+   "clientId": "iron",
+   "name": "Ryan Clarke",
+   "email": "ryan.clarke@email.com",
+   "phone": "07700 900222",
+   "source": "magnet",
+   "stage": "new",
+   "page": "/5x5-program",
+   "utm": "yt_5x5",
+   "firstSeen": "2026-10-06T20:45:00",
+   "value": 0,
+   "attended": false,
+   "headline": "Yesterday",
+   "detail": "5x5 Starter Program",
+   "mailerlite": "5x5 Delivery ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "5x5 Starter Program"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if2-e0",
+     "label": "Downloaded 5x5 Starter Program",
+     "source": "Website",
+     "at": "2026-10-06T20:45:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if3",
+   "clientId": "iron",
+   "name": "Connor Byrne",
+   "email": "connor.byrne@email.com",
+   "phone": "07700 900223",
+   "source": "magnet",
+   "stage": "nurture",
+   "page": "/5x5-program",
+   "utm": "yt_5x5",
+   "firstSeen": "2026-10-04T07:20:00",
+   "value": 0,
+   "attended": false,
+   "headline": "3 days",
+   "detail": "Opened 4 of 5 emails",
+   "mailerlite": "5x5 Delivery ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "5x5 Starter Program"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if3-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-05T19:20:00"
+    },
+    {
+     "id": "iron-if3-e0",
+     "label": "Downloaded 5x5 Starter Program",
+     "source": "Website",
+     "at": "2026-10-04T07:20:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if4",
+   "clientId": "iron",
+   "name": "Adam Fox",
+   "email": "adam.fox@email.com",
+   "phone": "07700 900224",
+   "source": "news",
+   "stage": "nurture",
+   "page": "/iron-letter",
+   "utm": "ig_bio",
+   "firstSeen": "2026-10-02T18:30:00",
+   "value": 0,
+   "attended": false,
+   "headline": "5 days",
+   "detail": "Clicked coaching link",
+   "mailerlite": "Iron Letter ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "SIGNUP",
+   "answers": [
+    [
+     "List",
+     "Iron Letter"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if4-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-04T06:30:00"
+    },
+    {
+     "id": "iron-if4-e0",
+     "label": "Joined the Iron Letter",
+     "source": "Website",
+     "at": "2026-10-02T18:30:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if5",
+   "clientId": "iron",
+   "name": "Marcus Lee",
+   "email": "marcus.lee@email.com",
+   "phone": "07700 900225",
+   "source": "survey",
+   "stage": "call",
+   "page": "/lifter-survey",
+   "utm": "ig_story_lifter",
+   "firstSeen": "2026-10-03T21:12:00",
+   "value": 0,
+   "attended": false,
+   "headline": "Thu 7:00pm",
+   "detail": "Calendly · Strength Consult",
+   "mailerlite": "Lifter Nurture ✓",
+   "calendly": "Thu 7:00pm",
+   "stripe": "No purchase yet",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Main goal",
+     "Add 20kg to squat"
+    ],
+    [
+     "Biggest blocker",
+     "Stalled progress"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if5-e2",
+     "label": "Call booked: Thu 7:00pm",
+     "source": "Calendly",
+     "at": "2026-10-06T21:12:00"
+    },
+    {
+     "id": "iron-if5-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-05T09:12:00"
+    },
+    {
+     "id": "iron-if5-e0",
+     "label": "Completed Lifter Survey",
+     "source": "Website",
+     "at": "2026-10-03T21:12:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if6",
+   "clientId": "iron",
+   "name": "Owen Price",
+   "email": "owen.price@email.com",
+   "phone": "07700 900226",
+   "source": "quiz",
+   "stage": "call",
+   "page": "/strength-score",
+   "utm": "ig_strength_score",
+   "firstSeen": "2026-10-05T08:40:00",
+   "value": 0,
+   "attended": false,
+   "headline": "Sat 9:00am",
+   "detail": "Calendly · Strength Consult",
+   "mailerlite": "Strength Score Nurture ✓",
+   "calendly": "Sat 9:00am",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Result",
+     "Intermediate lifter"
+    ],
+    [
+     "Main goal",
+     "Bigger total"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if6-e2",
+     "label": "Call booked: Sat 9:00am",
+     "source": "Calendly",
+     "at": "2026-10-08T08:40:00"
+    },
+    {
+     "id": "iron-if6-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-06T20:40:00"
+    },
+    {
+     "id": "iron-if6-e0",
+     "label": "Completed Strength Score Quiz",
+     "source": "Website",
+     "at": "2026-10-05T08:40:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if7",
+   "clientId": "iron",
+   "name": "Ethan Ward",
+   "email": "ethan.ward@email.com",
+   "phone": "07700 900227",
+   "source": "ads",
+   "stage": "showed",
+   "page": "/forge-16",
+   "utm": "fb_ad_forge16",
+   "firstSeen": "2026-09-27T12:05:00",
+   "value": 0,
+   "attended": true,
+   "headline": "Showed",
+   "detail": "Sent payment link",
+   "mailerlite": "Post-call Follow Up ✓",
+   "calendly": "Attended",
+   "stripe": "No purchase yet",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "16-Week Strength Coaching"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if7-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-10-02T00:05:00"
+    },
+    {
+     "id": "iron-if7-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-30T12:05:00"
+    },
+    {
+     "id": "iron-if7-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-29T00:05:00"
+    },
+    {
+     "id": "iron-if7-e0",
+     "label": "Submitted Forge 16 form",
+     "source": "Website",
+     "at": "2026-09-27T12:05:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if8",
+   "clientId": "iron",
+   "name": "Luke Grant",
+   "email": "luke.grant@email.com",
+   "phone": "07700 900228",
+   "source": "quiz",
+   "stage": "showed",
+   "page": "/strength-score",
+   "utm": "ig_strength_score",
+   "firstSeen": "2026-09-26T19:55:00",
+   "value": 0,
+   "attended": false,
+   "headline": "No-show",
+   "detail": "Rebook email sent",
+   "mailerlite": "No-show Rebook ✓",
+   "calendly": "No-show",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Result",
+     "Intermediate lifter"
+    ],
+    [
+     "Main goal",
+     "Bigger total"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if8-e3",
+     "label": "Marked no-show",
+     "source": "Calendly",
+     "at": "2026-10-01T07:55:00"
+    },
+    {
+     "id": "iron-if8-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-29T19:55:00"
+    },
+    {
+     "id": "iron-if8-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-28T07:55:00"
+    },
+    {
+     "id": "iron-if8-e0",
+     "label": "Completed Strength Score Quiz",
+     "source": "Website",
+     "at": "2026-09-26T19:55:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if9",
+   "clientId": "iron",
+   "name": "Callum Reed",
+   "email": "callum.reed@email.com",
+   "phone": "07700 900229",
+   "source": "ads",
+   "stage": "purchased",
+   "page": "/forge-16",
+   "utm": "fb_ad_forge16",
+   "firstSeen": "2026-09-20T16:22:00",
+   "value": 1200,
+   "attended": true,
+   "headline": "£1,200",
+   "detail": "Stripe · 16-Week Strength Coaching",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended",
+   "stripe": "£1,200 · 16-Week Strength Coaching",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "16-Week Strength Coaching"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if9-e4",
+     "label": "Paid £1,200",
+     "source": "Stripe",
+     "at": "2026-09-26T16:22:00"
+    },
+    {
+     "id": "iron-if9-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-25T04:22:00"
+    },
+    {
+     "id": "iron-if9-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-23T16:22:00"
+    },
+    {
+     "id": "iron-if9-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-22T04:22:00"
+    },
+    {
+     "id": "iron-if9-e0",
+     "label": "Submitted Forge 16 form",
+     "source": "Website",
+     "at": "2026-09-20T16:22:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if10",
+   "clientId": "iron",
+   "name": "Nathan Hall",
+   "email": "nathan.hall@email.com",
+   "phone": "07700 900230",
+   "source": "survey",
+   "stage": "purchased",
+   "page": "/lifter-survey",
+   "utm": "ig_story_lifter",
+   "firstSeen": "2026-09-18T10:03:00",
+   "value": 79,
+   "attended": true,
+   "headline": "£79/mo",
+   "detail": "Stripe · Forge Membership",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended",
+   "stripe": "£79/mo · Forge Membership",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Main goal",
+     "Add 20kg to squat"
+    ],
+    [
+     "Biggest blocker",
+     "Stalled progress"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if10-e4",
+     "label": "Paid £79/mo",
+     "source": "Stripe",
+     "at": "2026-09-24T10:03:00"
+    },
+    {
+     "id": "iron-if10-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-22T22:03:00"
+    },
+    {
+     "id": "iron-if10-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-21T10:03:00"
+    },
+    {
+     "id": "iron-if10-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-19T22:03:00"
+    },
+    {
+     "id": "iron-if10-e0",
+     "label": "Completed Lifter Survey",
+     "source": "Website",
+     "at": "2026-09-18T10:03:00"
+    }
+   ]
+  },
+  {
+   "id": "iron-if11",
+   "clientId": "iron",
+   "name": "Scott Dunn",
+   "email": "scott.dunn@email.com",
+   "phone": "07700 900231",
+   "source": "news",
+   "stage": "lost",
+   "page": "/iron-letter",
+   "utm": "ig_bio",
+   "firstSeen": "2026-09-12T14:44:00",
+   "value": 0,
+   "attended": true,
+   "headline": "Not a fit",
+   "detail": "Wants in-person only",
+   "mailerlite": "Unsubscribed",
+   "calendly": "Attended",
+   "stripe": "No purchase",
+   "answersTitle": "SIGNUP",
+   "answers": [
+    [
+     "List",
+     "Iron Letter"
+    ]
+   ],
+   "events": [
+    {
+     "id": "iron-if11-e4",
+     "label": "Marked lost: Wants in-person only",
+     "source": "Client",
+     "at": "2026-09-18T14:44:00"
+    },
+    {
+     "id": "iron-if11-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-17T02:44:00"
+    },
+    {
+     "id": "iron-if11-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-15T14:44:00"
+    },
+    {
+     "id": "iron-if11-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-14T02:44:00"
+    },
+    {
+     "id": "iron-if11-e0",
+     "label": "Joined the Iron Letter",
+     "source": "Website",
+     "at": "2026-09-12T14:44:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp0",
+   "clientId": "bloom",
+   "name": "Chloe Evans",
+   "email": "chloe.evans@email.com",
+   "phone": "07700 900320",
+   "source": "quiz",
+   "stage": "new",
+   "page": "/pilates-quiz",
+   "utm": "ig_pilates_quiz",
+   "firstSeen": "2026-10-07T13:25:00",
+   "value": 0,
+   "attended": false,
+   "headline": "40m ago",
+   "detail": "Result: mat beginner",
+   "mailerlite": "Pilates Quiz Nurture ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Result",
+     "Mat beginner"
+    ],
+    [
+     "Main goal",
+     "Core strength"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp0-e0",
+     "label": "Completed Which Pilates Are You quiz",
+     "source": "Website",
+     "at": "2026-10-07T13:25:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp1",
+   "clientId": "bloom",
+   "name": "Isla Murray",
+   "email": "isla.murray@email.com",
+   "phone": "07700 900321",
+   "source": "survey",
+   "stage": "new",
+   "page": "/posture-survey",
+   "utm": "ig_reel_posture",
+   "firstSeen": "2026-10-07T10:01:00",
+   "value": 0,
+   "attended": false,
+   "headline": "4h ago",
+   "detail": "Main issue: lower back",
+   "mailerlite": "Posture Nurture ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Main issue",
+     "Lower back ache"
+    ],
+    [
+     "Desk hours",
+     "8+ a day"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp1-e0",
+     "label": "Completed Posture Survey",
+     "source": "Website",
+     "at": "2026-10-07T10:01:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp2",
+   "clientId": "bloom",
+   "name": "Ruby Hart",
+   "email": "ruby.hart@email.com",
+   "phone": "07700 900322",
+   "source": "magnet",
+   "stage": "new",
+   "page": "/core-reset-guide",
+   "utm": "pin_core_reset",
+   "firstSeen": "2026-10-07T08:14:00",
+   "value": 0,
+   "attended": false,
+   "headline": "6h ago",
+   "detail": "7-Day Core Reset",
+   "mailerlite": "Core Reset Delivery ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "7-Day Core Reset"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp2-e0",
+     "label": "Downloaded Core Reset Guide",
+     "source": "Website",
+     "at": "2026-10-07T08:14:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp3",
+   "clientId": "bloom",
+   "name": "Ella Wood",
+   "email": "ella.wood@email.com",
+   "phone": "07700 900323",
+   "source": "magnet",
+   "stage": "new",
+   "page": "/core-reset-guide",
+   "utm": "pin_core_reset",
+   "firstSeen": "2026-10-06T21:30:00",
+   "value": 0,
+   "attended": false,
+   "headline": "Yesterday",
+   "detail": "7-Day Core Reset",
+   "mailerlite": "Core Reset Delivery ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "7-Day Core Reset"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp3-e0",
+     "label": "Downloaded Core Reset Guide",
+     "source": "Website",
+     "at": "2026-10-06T21:30:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp4",
+   "clientId": "bloom",
+   "name": "Mia Collins",
+   "email": "mia.collins@email.com",
+   "phone": "07700 900324",
+   "source": "ads",
+   "stage": "nurture",
+   "page": "/bloom-launch",
+   "utm": "ig_ad_bloom_launch",
+   "firstSeen": "2026-10-05T12:12:00",
+   "value": 0,
+   "attended": false,
+   "headline": "2 days",
+   "detail": "Opened 2 of 3 emails",
+   "mailerlite": "Launch Welcome ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "Reformer Foundations"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp4-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-07T00:12:00"
+    },
+    {
+     "id": "bloom-bp4-e0",
+     "label": "Submitted Bloom launch form",
+     "source": "Website",
+     "at": "2026-10-05T12:12:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp5",
+   "clientId": "bloom",
+   "name": "Freya Bell",
+   "email": "freya.bell@email.com",
+   "phone": "07700 900325",
+   "source": "quiz",
+   "stage": "nurture",
+   "page": "/pilates-quiz",
+   "utm": "ig_pilates_quiz",
+   "firstSeen": "2026-10-03T19:40:00",
+   "value": 0,
+   "attended": false,
+   "headline": "4 days",
+   "detail": "Clicked class timetable",
+   "mailerlite": "Pilates Quiz Nurture ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Result",
+     "Mat beginner"
+    ],
+    [
+     "Main goal",
+     "Core strength"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp5-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-05T07:40:00"
+    },
+    {
+     "id": "bloom-bp5-e0",
+     "label": "Completed Which Pilates Are You quiz",
+     "source": "Website",
+     "at": "2026-10-03T19:40:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp6",
+   "clientId": "bloom",
+   "name": "Poppy Grey",
+   "email": "poppy.grey@email.com",
+   "phone": "07700 900326",
+   "source": "news",
+   "stage": "nurture",
+   "page": "/bloom-notes",
+   "utm": "tiktok_bio",
+   "firstSeen": "2026-09-30T07:05:00",
+   "value": 0,
+   "attended": false,
+   "headline": "1 week",
+   "detail": "Opened 5 of 6 emails",
+   "mailerlite": "Bloom Notes ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "SIGNUP",
+   "answers": [
+    [
+     "List",
+     "Bloom Notes"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp6-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-01T19:05:00"
+    },
+    {
+     "id": "bloom-bp6-e0",
+     "label": "Joined Bloom Notes",
+     "source": "Website",
+     "at": "2026-09-30T07:05:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp7",
+   "clientId": "bloom",
+   "name": "Amelia Stone",
+   "email": "amelia.stone@email.com",
+   "phone": "07700 900327",
+   "source": "survey",
+   "stage": "call",
+   "page": "/posture-survey",
+   "utm": "ig_reel_posture",
+   "firstSeen": "2026-10-04T13:50:00",
+   "value": 0,
+   "attended": false,
+   "headline": "Wed 12:30pm",
+   "detail": "Calendly · Intro Session",
+   "mailerlite": "Posture Nurture ✓",
+   "calendly": "Wed 12:30pm",
+   "stripe": "No purchase yet",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Main issue",
+     "Lower back ache"
+    ],
+    [
+     "Desk hours",
+     "8+ a day"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp7-e2",
+     "label": "Call booked: Wed 12:30pm",
+     "source": "Calendly",
+     "at": "2026-10-07T13:50:00"
+    },
+    {
+     "id": "bloom-bp7-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-06T01:50:00"
+    },
+    {
+     "id": "bloom-bp7-e0",
+     "label": "Completed Posture Survey",
+     "source": "Website",
+     "at": "2026-10-04T13:50:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp8",
+   "clientId": "bloom",
+   "name": "Zara Khan",
+   "email": "zara.khan@email.com",
+   "phone": "07700 900328",
+   "source": "ads",
+   "stage": "showed",
+   "page": "/bloom-launch",
+   "utm": "ig_ad_bloom_launch",
+   "firstSeen": "2026-09-25T18:18:00",
+   "value": 0,
+   "attended": true,
+   "headline": "Showed",
+   "detail": "Deciding on start date",
+   "mailerlite": "Post-call Follow Up ✓",
+   "calendly": "Attended",
+   "stripe": "No purchase yet",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "Reformer Foundations"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp8-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-30T06:18:00"
+    },
+    {
+     "id": "bloom-bp8-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-28T18:18:00"
+    },
+    {
+     "id": "bloom-bp8-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-27T06:18:00"
+    },
+    {
+     "id": "bloom-bp8-e0",
+     "label": "Submitted Bloom launch form",
+     "source": "Website",
+     "at": "2026-09-25T18:18:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp9",
+   "clientId": "bloom",
+   "name": "Lily Shaw",
+   "email": "lily.shaw@email.com",
+   "phone": "07700 900329",
+   "source": "quiz",
+   "stage": "purchased",
+   "page": "/pilates-quiz",
+   "utm": "ig_pilates_quiz",
+   "firstSeen": "2026-09-19T09:35:00",
+   "value": 450,
+   "attended": true,
+   "headline": "£450",
+   "detail": "Stripe · Reformer Foundations",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended",
+   "stripe": "£450 · Reformer Foundations",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Result",
+     "Mat beginner"
+    ],
+    [
+     "Main goal",
+     "Core strength"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp9-e4",
+     "label": "Paid £450",
+     "source": "Stripe",
+     "at": "2026-09-25T09:35:00"
+    },
+    {
+     "id": "bloom-bp9-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-23T21:35:00"
+    },
+    {
+     "id": "bloom-bp9-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-22T09:35:00"
+    },
+    {
+     "id": "bloom-bp9-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-20T21:35:00"
+    },
+    {
+     "id": "bloom-bp9-e0",
+     "label": "Completed Which Pilates Are You quiz",
+     "source": "Website",
+     "at": "2026-09-19T09:35:00"
+    }
+   ]
+  },
+  {
+   "id": "bloom-bp10",
+   "clientId": "bloom",
+   "name": "Evie Moss",
+   "email": "evie.moss@email.com",
+   "phone": "07700 900330",
+   "source": "magnet",
+   "stage": "purchased",
+   "page": "/core-reset-guide",
+   "utm": "pin_core_reset",
+   "firstSeen": "2026-09-17T20:02:00",
+   "value": 39,
+   "attended": true,
+   "headline": "£39/mo",
+   "detail": "Stripe · Bloom On Demand",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended",
+   "stripe": "£39/mo · Bloom On Demand",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "7-Day Core Reset"
+    ]
+   ],
+   "events": [
+    {
+     "id": "bloom-bp10-e4",
+     "label": "Paid £39/mo",
+     "source": "Stripe",
+     "at": "2026-09-23T20:02:00"
+    },
+    {
+     "id": "bloom-bp10-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-22T08:02:00"
+    },
+    {
+     "id": "bloom-bp10-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-20T20:02:00"
+    },
+    {
+     "id": "bloom-bp10-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-19T08:02:00"
+    },
+    {
+     "id": "bloom-bp10-e0",
+     "label": "Downloaded Core Reset Guide",
+     "source": "Website",
+     "at": "2026-09-17T20:02:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs0",
+   "clientId": "run",
+   "name": "Paul Graham",
+   "email": "paul.graham@email.com",
+   "phone": "07700 900420",
+   "source": "magnet",
+   "stage": "new",
+   "page": "/couch-to-5k",
+   "utm": "fb_c25k",
+   "firstSeen": "2026-10-07T12:10:00",
+   "value": 0,
+   "attended": false,
+   "headline": "2h ago",
+   "detail": "Couch to 5K Plan",
+   "mailerlite": "C25K Delivery ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "Couch to 5K Plan"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs0-e0",
+     "label": "Downloaded Couch to 5K Plan",
+     "source": "Website",
+     "at": "2026-10-07T12:10:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs1",
+   "clientId": "run",
+   "name": "Sophie Lane",
+   "email": "sophie.lane@email.com",
+   "phone": "07700 900421",
+   "source": "survey",
+   "stage": "new",
+   "page": "/race-goals-survey",
+   "utm": "strava_club",
+   "firstSeen": "2026-10-06T17:45:00",
+   "value": 0,
+   "attended": false,
+   "headline": "Yesterday",
+   "detail": "Target: Brighton 10K",
+   "mailerlite": "Race Goals Nurture ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Target race",
+     "Brighton 10K"
+    ],
+    [
+     "Current best",
+     "64 mins"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs1-e0",
+     "label": "Completed Race Goals Survey",
+     "source": "Website",
+     "at": "2026-10-06T17:45:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs2",
+   "clientId": "run",
+   "name": "Gary Wells",
+   "email": "gary.wells@email.com",
+   "phone": "07700 900422",
+   "source": "news",
+   "stage": "nurture",
+   "page": "/runstrong-weekly",
+   "utm": "ig_bio",
+   "firstSeen": "2026-10-04T06:50:00",
+   "value": 0,
+   "attended": false,
+   "headline": "3 days",
+   "detail": "Opened 3 of 3 emails",
+   "mailerlite": "RunStrong Weekly ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "SIGNUP",
+   "answers": [
+    [
+     "List",
+     "RunStrong Weekly"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs2-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-05T18:50:00"
+    },
+    {
+     "id": "run-rs2-e0",
+     "label": "Joined RunStrong Weekly",
+     "source": "Website",
+     "at": "2026-10-04T06:50:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs3",
+   "clientId": "run",
+   "name": "Helen Burke",
+   "email": "helen.burke@email.com",
+   "phone": "07700 900423",
+   "source": "quiz",
+   "stage": "nurture",
+   "page": "/runner-type-quiz",
+   "utm": "ig_runner_quiz",
+   "firstSeen": "2026-10-02T19:15:00",
+   "value": 0,
+   "attended": false,
+   "headline": "5 days",
+   "detail": "Result: comeback runner",
+   "mailerlite": "Runner Type Nurture ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Result",
+     "Comeback runner"
+    ],
+    [
+     "Main goal",
+     "Run a sub-60 10K"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs3-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-04T07:15:00"
+    },
+    {
+     "id": "run-rs3-e0",
+     "label": "Completed Runner Type Quiz",
+     "source": "Website",
+     "at": "2026-10-02T19:15:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs4",
+   "clientId": "run",
+   "name": "Mike Rowe",
+   "email": "mike.rowe@email.com",
+   "phone": "07700 900424",
+   "source": "magnet",
+   "stage": "nurture",
+   "page": "/couch-to-5k",
+   "utm": "fb_c25k",
+   "firstSeen": "2026-09-30T21:00:00",
+   "value": 0,
+   "attended": false,
+   "headline": "1 week",
+   "detail": "Clicked booking link",
+   "mailerlite": "C25K Delivery ✓",
+   "calendly": "Not booked",
+   "stripe": "No purchase yet",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "Couch to 5K Plan"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs4-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-02T09:00:00"
+    },
+    {
+     "id": "run-rs4-e0",
+     "label": "Downloaded Couch to 5K Plan",
+     "source": "Website",
+     "at": "2026-09-30T21:00:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs5",
+   "clientId": "run",
+   "name": "Anna Fisher",
+   "email": "anna.fisher@email.com",
+   "phone": "07700 900425",
+   "source": "ads",
+   "stage": "call",
+   "page": "/spring-10k",
+   "utm": "fb_ad_10k",
+   "firstSeen": "2026-10-05T09:22:00",
+   "value": 0,
+   "attended": false,
+   "headline": "Tue 6:30pm",
+   "detail": "Calendly · Run Assessment",
+   "mailerlite": "10K Welcome ✓",
+   "calendly": "Tue 6:30pm",
+   "stripe": "No purchase yet",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "10K Coaching Plan"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs5-e2",
+     "label": "Call booked: Tue 6:30pm",
+     "source": "Calendly",
+     "at": "2026-10-08T09:22:00"
+    },
+    {
+     "id": "run-rs5-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-10-06T21:22:00"
+    },
+    {
+     "id": "run-rs5-e0",
+     "label": "Submitted Spring 10K form",
+     "source": "Website",
+     "at": "2026-10-05T09:22:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs6",
+   "clientId": "run",
+   "name": "Kevin Long",
+   "email": "kevin.long@email.com",
+   "phone": "07700 900426",
+   "source": "survey",
+   "stage": "showed",
+   "page": "/race-goals-survey",
+   "utm": "strava_club",
+   "firstSeen": "2026-09-24T18:00:00",
+   "value": 0,
+   "attended": true,
+   "headline": "Showed",
+   "detail": "Follow up sent",
+   "mailerlite": "Post-call Follow Up ✓",
+   "calendly": "Attended",
+   "stripe": "No purchase yet",
+   "answersTitle": "SURVEY ANSWERS",
+   "answers": [
+    [
+     "Target race",
+     "Brighton 10K"
+    ],
+    [
+     "Current best",
+     "64 mins"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs6-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-29T06:00:00"
+    },
+    {
+     "id": "run-rs6-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-27T18:00:00"
+    },
+    {
+     "id": "run-rs6-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-26T06:00:00"
+    },
+    {
+     "id": "run-rs6-e0",
+     "label": "Completed Race Goals Survey",
+     "source": "Website",
+     "at": "2026-09-24T18:00:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs7",
+   "clientId": "run",
+   "name": "Diane Cross",
+   "email": "diane.cross@email.com",
+   "phone": "07700 900427",
+   "source": "quiz",
+   "stage": "showed",
+   "page": "/runner-type-quiz",
+   "utm": "ig_runner_quiz",
+   "firstSeen": "2026-09-23T12:44:00",
+   "value": 0,
+   "attended": false,
+   "headline": "No-show",
+   "detail": "Rebook email sent",
+   "mailerlite": "No-show Rebook ✓",
+   "calendly": "No-show",
+   "stripe": "No purchase yet",
+   "answersTitle": "QUIZ ANSWERS",
+   "answers": [
+    [
+     "Result",
+     "Comeback runner"
+    ],
+    [
+     "Main goal",
+     "Run a sub-60 10K"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs7-e3",
+     "label": "Marked no-show",
+     "source": "Calendly",
+     "at": "2026-09-28T00:44:00"
+    },
+    {
+     "id": "run-rs7-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-26T12:44:00"
+    },
+    {
+     "id": "run-rs7-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-25T00:44:00"
+    },
+    {
+     "id": "run-rs7-e0",
+     "label": "Completed Runner Type Quiz",
+     "source": "Website",
+     "at": "2026-09-23T12:44:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs8",
+   "clientId": "run",
+   "name": "Steve Holt",
+   "email": "steve.holt@email.com",
+   "phone": "07700 900428",
+   "source": "ads",
+   "stage": "purchased",
+   "page": "/spring-10k",
+   "utm": "fb_ad_10k",
+   "firstSeen": "2026-09-16T08:30:00",
+   "value": 249,
+   "attended": true,
+   "headline": "£249",
+   "detail": "Stripe · 10K Coaching Plan",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended",
+   "stripe": "£249 · 10K Coaching Plan",
+   "answersTitle": "FORM ANSWERS",
+   "answers": [
+    [
+     "Interested in",
+     "10K Coaching Plan"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs8-e4",
+     "label": "Paid £249",
+     "source": "Stripe",
+     "at": "2026-09-22T08:30:00"
+    },
+    {
+     "id": "run-rs8-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-20T20:30:00"
+    },
+    {
+     "id": "run-rs8-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-19T08:30:00"
+    },
+    {
+     "id": "run-rs8-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-17T20:30:00"
+    },
+    {
+     "id": "run-rs8-e0",
+     "label": "Submitted Spring 10K form",
+     "source": "Website",
+     "at": "2026-09-16T08:30:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs9",
+   "clientId": "run",
+   "name": "Laura Price",
+   "email": "laura.price@email.com",
+   "phone": "07700 900429",
+   "source": "news",
+   "stage": "purchased",
+   "page": "/runstrong-weekly",
+   "utm": "ig_bio",
+   "firstSeen": "2026-09-14T19:10:00",
+   "value": 29,
+   "attended": true,
+   "headline": "£29/mo",
+   "detail": "Stripe · RunStrong Squad",
+   "mailerlite": "Client Onboarding ✓",
+   "calendly": "Attended",
+   "stripe": "£29/mo · RunStrong Squad",
+   "answersTitle": "SIGNUP",
+   "answers": [
+    [
+     "List",
+     "RunStrong Weekly"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs9-e4",
+     "label": "Paid £29/mo",
+     "source": "Stripe",
+     "at": "2026-09-20T19:10:00"
+    },
+    {
+     "id": "run-rs9-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-19T07:10:00"
+    },
+    {
+     "id": "run-rs9-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-17T19:10:00"
+    },
+    {
+     "id": "run-rs9-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-16T07:10:00"
+    },
+    {
+     "id": "run-rs9-e0",
+     "label": "Joined RunStrong Weekly",
+     "source": "Website",
+     "at": "2026-09-14T19:10:00"
+    }
+   ]
+  },
+  {
+   "id": "run-rs10",
+   "clientId": "run",
+   "name": "Rob Dale",
+   "email": "rob.dale@email.com",
+   "phone": "07700 900430",
+   "source": "magnet",
+   "stage": "lost",
+   "page": "/couch-to-5k",
+   "utm": "fb_c25k",
+   "firstSeen": "2026-09-10T07:55:00",
+   "value": 0,
+   "attended": true,
+   "headline": "Ghosted",
+   "detail": "No reply after call",
+   "mailerlite": "Unsubscribed",
+   "calendly": "Attended",
+   "stripe": "No purchase",
+   "answersTitle": "LEAD MAGNET",
+   "answers": [
+    [
+     "Download",
+     "Couch to 5K Plan"
+    ]
+   ],
+   "events": [
+    {
+     "id": "run-rs10-e4",
+     "label": "Marked lost: No reply after call",
+     "source": "Client",
+     "at": "2026-09-16T07:55:00"
+    },
+    {
+     "id": "run-rs10-e3",
+     "label": "Attended discovery call",
+     "source": "Calendly",
+     "at": "2026-09-14T19:55:00"
+    },
+    {
+     "id": "run-rs10-e2",
+     "label": "Call booked",
+     "source": "Calendly",
+     "at": "2026-09-13T07:55:00"
+    },
+    {
+     "id": "run-rs10-e1",
+     "label": "Opened email 1",
+     "source": "MailerLite",
+     "at": "2026-09-11T19:55:00"
+    },
+    {
+     "id": "run-rs10-e0",
+     "label": "Downloaded Couch to 5K Plan",
+     "source": "Website",
+     "at": "2026-09-10T07:55:00"
+    }
+   ]
+  }
+ ],
+ "sites": [
+  {
+   "clientId": "kieran",
+   "status": "review",
+   "statusNote": "Sent for review 8 Oct by REPS team",
+   "contact": "Kieran",
+   "domain": "Physique X",
+   "versions": [
+    {
+     "id": "kieran-v2",
+     "version": "v2",
+     "label": "v2 · Shape Up direction",
+     "sentNote": "Sent for review 8 Oct by REPS team",
+     "pages": [
+      {
+       "id": "kieran-v2-home",
+       "key": "home",
+       "name": "Homepage",
+       "path": " · Homepage",
+       "kind": "shot",
+       "desktopUrl": "/demo/physiquex-v2-desktop.jpg",
+       "mobileUrl": "/demo/physiquex-v2-mobile.jpg"
+      }
+     ],
+     "comments": [
+      {
+       "id": "kieran-v2-home-c0",
+       "pageId": "kieran-v2-home",
+       "author": "REPS team",
+       "role": "agency",
+       "device": "desktop",
+       "anchor": {
+        "sel": ".shot",
+        "fx": 0.14,
+        "fy": 0.548
+       },
+       "text": "The one off programme cards still show [PRICE]. What do you charge for Chest Builder and the Summer Challenge?",
+       "resolved": false,
+       "createdAt": "2026-10-08T09:10:00"
+      },
+      {
+       "id": "kieran-v2-home-c1",
+       "pageId": "kieran-v2-home",
+       "author": "REPS team",
+       "role": "agency",
+       "device": "desktop",
+       "anchor": {
+        "sel": ".shot",
+        "fx": 0.5,
+        "fy": 0.083
+       },
+       "text": "We've kept member numbers out of this band until we have real figures. Send them over and they'll go here and in the hero.",
+       "resolved": false,
+       "createdAt": "2026-10-08T09:12:00"
+      }
+     ]
+    },
+    {
+     "id": "kieran-v1",
+     "version": "v1",
+     "label": "v1 · Original redesign",
+     "sentNote": "Sent for review 7 Oct by REPS team",
+     "pages": [
+      {
+       "id": "kieran-v1-home",
+       "key": "home",
+       "name": "Homepage",
+       "path": " · Homepage",
+       "kind": "shot",
+       "desktopUrl": "/demo/physiquex-v1-desktop.jpg",
+       "mobileUrl": "/demo/physiquex-v1-mobile.jpg"
+      }
+     ],
+     "comments": [
+      {
+       "id": "kieran-v1-home-c0",
+       "pageId": "kieran-v1-home",
+       "author": "REPS team",
+       "role": "agency",
+       "device": "mobile",
+       "anchor": {
+        "sel": ".shot",
+        "fx": 0.5,
+        "fy": 0.351
+       },
+       "text": "Three of the nine app screens are from the older app build. Fresh captures of those would make them match the rest.",
+       "resolved": false,
+       "createdAt": "2026-10-07T10:05:00"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "clientId": "sassy",
+   "status": "review",
+   "statusNote": "Sent for review 6 Oct by REPS team",
+   "contact": "Sasha",
+   "domain": "sassyfitness.co.uk",
+   "brand": {
+    "name": "SASSY FITNESS",
+    "accent": "#D6336C",
+    "ink": "#1A1A1A",
+    "bg": "#FFF7FA",
+    "font": "Montserrat, sans-serif",
+    "cta": "Take the quiz",
+    "eyebrow": "Online coaching for women",
+    "h1": "Lose the weight. Keep the sass.",
+    "p": "12 weeks of training, food and accountability built around real life, not a meal plan you quit by Friday.",
+    "cards": [
+     [
+      "12-Week Coaching",
+      "1:1 training plans, weekly check-ins and form reviews."
+     ],
+     [
+      "Sassy Membership",
+      "New workouts and recipes every month."
+     ],
+     [
+      "Free Meal Plan",
+      "7 days of easy, high-protein meals."
+     ]
+    ],
+    "quote": "I dropped two dress sizes and actually enjoyed the process.",
+    "who": "Amy W, 12-Week Coaching"
+   },
+   "versions": [
+    {
+     "id": "sassy-v2",
+     "version": "v2",
+     "label": "v2",
+     "sentNote": "Sent for review 6 Oct by REPS team",
+     "pages": [
+      {
+       "id": "sassy-v2-home",
+       "key": "home",
+       "name": "Home",
+       "path": "/",
+       "kind": "mock",
+       "mock": {
+        "type": "home"
+       }
+      },
+      {
+       "id": "sassy-v2-quiz",
+       "key": "quiz",
+       "name": "Fat Loss Quiz",
+       "path": "/fat-loss-quiz",
+       "kind": "mock",
+       "mock": {
+        "type": "quiz",
+        "title": "What is really stalling your fat loss?",
+        "step": "Question 2 of 6",
+        "q": "What usually derails you first?",
+        "opts": [
+         "Weekend takeaways",
+         "No time to train",
+         "Snacking at night",
+         "Losing motivation"
+        ]
+       }
+      },
+      {
+       "id": "sassy-v2-survey",
+       "key": "survey",
+       "name": "Body Goals Survey",
+       "path": "/body-goals-survey",
+       "kind": "mock",
+       "mock": {
+        "type": "survey",
+        "title": "Tell us about your body goals",
+        "fields": [
+         "What is your main goal?",
+         "What has stopped you before?",
+         "When do you want to start?"
+        ]
+       }
+      },
+      {
+       "id": "sassy-v2-magnet",
+       "key": "magnet",
+       "name": "7-Day Meal Plan",
+       "path": "/meal-plan",
+       "kind": "mock",
+       "mock": {
+        "type": "magnet",
+        "title": "Your free 7-Day Meal Plan",
+        "p": "Seven days of quick, high-protein meals that fit around work, kids and a social life.",
+        "cover": "7-DAY MEAL PLAN"
+       }
+      }
+     ],
+     "comments": [
+      {
+       "id": "sassy-v2-home-c0",
+       "pageId": "sassy-v2-home",
+       "author": "Sasha",
+       "role": "client",
+       "anchor": {
+        "sel": ".s-h1",
+        "fx": 0.62,
+        "fy": 0.25
+       },
+       "text": "Can the headline be a bit bigger on mobile?",
+       "resolved": false,
+       "createdAt": "2026-10-07T16:20:00"
+      },
+      {
+       "id": "sassy-v2-home-c1",
+       "pageId": "sassy-v2-home",
+       "author": "REPS team",
+       "role": "agency",
+       "anchor": {
+        "sel": ".s-photo",
+        "fx": 0.7,
+        "fy": 0.2
+       },
+       "text": "Swapped in the new photo from your September shoot.",
+       "resolved": true,
+       "createdAt": "2026-10-07T17:02:00"
+      },
+      {
+       "id": "sassy-v2-home-c2",
+       "pageId": "sassy-v2-home",
+       "author": "Sasha",
+       "role": "client",
+       "anchor": {
+        "sel": ".s-card",
+        "n": 1,
+        "fx": 0.88,
+        "fy": 0.18
+       },
+       "text": "Love these cards. Can the membership one show the price?",
+       "resolved": false,
+       "createdAt": "2026-10-08T09:41:00"
+      },
+      {
+       "id": "sassy-v2-quiz-c0",
+       "pageId": "sassy-v2-quiz",
+       "author": "Sasha",
+       "role": "client",
+       "anchor": {
+        "sel": ".s-opt",
+        "n": 2,
+        "fx": 0.92,
+        "fy": 0.5
+       },
+       "text": "Option 3 should say \"Late night snacking\".",
+       "resolved": false,
+       "createdAt": "2026-10-08T09:50:00"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "clientId": "iron",
+   "status": "changes",
+   "statusNote": "Sent for review 3 Oct by REPS team",
+   "contact": "Dean",
+   "domain": "ironforgestrength.com",
+   "brand": {
+    "name": "IRON FORGE",
+    "accent": "#C2410C",
+    "ink": "#111111",
+    "bg": "#F4F2EF",
+    "font": "Oswald, sans-serif",
+    "cta": "Get your strength score",
+    "eyebrow": "Strength coaching for men",
+    "h1": "Get strong. Stay strong.",
+    "p": "16 weeks of programming, coaching and technique feedback to put real weight on the bar.",
+    "cards": [
+     [
+      "16-Week Coaching",
+      "A program built around your lifts, with video form checks."
+     ],
+     [
+      "Forge Membership",
+      "Monthly training blocks and a private lifting group."
+     ],
+     [
+      "5x5 Starter Program",
+      "A free 8-week plan to build your base."
+     ]
+    ],
+    "quote": "Added 30kg to my deadlift in four months.",
+    "who": "Callum R, 16-Week Coaching"
+   },
+   "versions": [
+    {
+     "id": "iron-v1",
+     "version": "v1",
+     "label": "v1",
+     "sentNote": "Sent for review 3 Oct by REPS team",
+     "pages": [
+      {
+       "id": "iron-v1-home",
+       "key": "home",
+       "name": "Home",
+       "path": "/",
+       "kind": "mock",
+       "mock": {
+        "type": "home"
+       }
+      },
+      {
+       "id": "iron-v1-quiz",
+       "key": "quiz",
+       "name": "Strength Score",
+       "path": "/strength-score",
+       "kind": "mock",
+       "mock": {
+        "type": "quiz",
+        "title": "What is your strength score?",
+        "step": "Question 1 of 8",
+        "q": "How long have you been lifting consistently?",
+        "opts": [
+         "Under 6 months",
+         "6 to 18 months",
+         "18 months to 3 years",
+         "3 years plus"
+        ]
+       }
+      },
+      {
+       "id": "iron-v1-magnet",
+       "key": "magnet",
+       "name": "5x5 Program",
+       "path": "/5x5-program",
+       "kind": "mock",
+       "mock": {
+        "type": "magnet",
+        "title": "The free 5x5 Starter Program",
+        "p": "Eight weeks, three sessions a week, five lifts. The base every strong lifter is built on.",
+        "cover": "5x5 STARTER"
+       }
+      }
+     ],
+     "comments": [
+      {
+       "id": "iron-v1-home-c0",
+       "pageId": "iron-v1-home",
+       "author": "Dean",
+       "role": "client",
+       "anchor": {
+        "sel": ".s-logo",
+        "fx": 1.05,
+        "fy": 0.5
+       },
+       "text": "Logo needs to be the white version on this dark bar.",
+       "resolved": false,
+       "createdAt": "2026-10-04T11:15:00"
+      },
+      {
+       "id": "iron-v1-home-c1",
+       "pageId": "iron-v1-home",
+       "author": "Dean",
+       "role": "client",
+       "anchor": {
+        "sel": ".s-h1",
+        "fx": 0.8,
+        "fy": 0.3
+       },
+       "text": "Headline feels too soft. Something like \"Built in the gym, not on Instagram\".",
+       "resolved": false,
+       "createdAt": "2026-10-04T11:18:00"
+      },
+      {
+       "id": "iron-v1-home-c2",
+       "pageId": "iron-v1-home",
+       "author": "Dean",
+       "role": "client",
+       "anchor": {
+        "sel": ".s-q",
+        "fx": 0.5,
+        "fy": 0.1
+       },
+       "text": "Swap this testimonial for Ethan's, his results are better.",
+       "resolved": false,
+       "createdAt": "2026-10-04T11:22:00"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "clientId": "bloom",
+   "status": "approved",
+   "statusNote": "Approved 5 Oct by Rachel",
+   "contact": "Rachel",
+   "domain": "bloompilates.co.uk",
+   "brand": {
+    "name": "Bloom Pilates",
+    "accent": "#4F7A63",
+    "ink": "#23302A",
+    "bg": "#FBF8F3",
+    "font": "\"DM Serif Display\", serif",
+    "cta": "Find your class",
+    "eyebrow": "Pilates for desk-bound bodies",
+    "h1": "Move better. Feel lighter.",
+    "p": "Reformer and mat classes that ease back ache and build a strong core, in the studio or at home.",
+    "cards": [
+     [
+      "Reformer Foundations",
+      "A 6-week course for complete beginners."
+     ],
+     [
+      "Bloom On Demand",
+      "Short classes you can do in your living room."
+     ],
+     [
+      "Core Reset Guide",
+      "A free 7-day plan to wake up your core."
+     ]
+    ],
+    "quote": "My back has not ached since week three.",
+    "who": "Lily S, Reformer Foundations"
+   },
+   "versions": [
+    {
+     "id": "bloom-v3",
+     "version": "v3",
+     "label": "v3",
+     "sentNote": "Approved 5 Oct by Rachel",
+     "pages": [
+      {
+       "id": "bloom-v3-home",
+       "key": "home",
+       "name": "Home",
+       "path": "/",
+       "kind": "mock",
+       "mock": {
+        "type": "home"
+       }
+      },
+      {
+       "id": "bloom-v3-quiz",
+       "key": "quiz",
+       "name": "Pilates Quiz",
+       "path": "/pilates-quiz",
+       "kind": "mock",
+       "mock": {
+        "type": "quiz",
+        "title": "Which Pilates is right for you?",
+        "step": "Question 3 of 5",
+        "q": "Where do you feel tension most?",
+        "opts": [
+         "Lower back",
+         "Neck and shoulders",
+         "Hips",
+         "I just feel stiff"
+        ]
+       }
+      },
+      {
+       "id": "bloom-v3-survey",
+       "key": "survey",
+       "name": "Posture Survey",
+       "path": "/posture-survey",
+       "kind": "mock",
+       "mock": {
+        "type": "survey",
+        "title": "How is your posture?",
+        "fields": [
+         "How many hours a day do you sit?",
+         "Where do you feel discomfort?"
+        ]
+       }
+      },
+      {
+       "id": "bloom-v3-magnet",
+       "key": "magnet",
+       "name": "Core Reset Guide",
+       "path": "/core-reset-guide",
+       "kind": "mock",
+       "mock": {
+        "type": "magnet",
+        "title": "The free 7-Day Core Reset",
+        "p": "Ten minutes a day to switch your core back on and take the pressure off your back.",
+        "cover": "CORE RESET"
+       }
+      }
+     ],
+     "comments": [
+      {
+       "id": "bloom-v3-home-c0",
+       "pageId": "bloom-v3-home",
+       "author": "Rachel",
+       "role": "client",
+       "anchor": {
+        "sel": ".s-ctas .s-btn",
+        "fx": 0.95,
+        "fy": 0.1
+       },
+       "text": "Could we use our sage green for the buttons?",
+       "resolved": true,
+       "createdAt": "2026-10-02T14:10:00"
+      },
+      {
+       "id": "bloom-v3-home-c1",
+       "pageId": "bloom-v3-home",
+       "author": "Rachel",
+       "role": "client",
+       "anchor": {
+        "sel": ".s-card",
+        "n": 1,
+        "fx": 0.9,
+        "fy": 0.15
+       },
+       "text": "Add the On Demand option here please.",
+       "resolved": true,
+       "createdAt": "2026-10-02T14:12:00"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "clientId": "run",
+   "status": "building",
+   "statusNote": "Your first draft is being built. Expected Fri 10 Oct.",
+   "contact": "Mo",
+   "domain": "runstrongclub.co.uk",
+   "versions": []
+  }
+ ]
+}

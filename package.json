@@ -1,0 +1,31 @@
+{
+  "name": "reps-scaling-os",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "preview": "node scripts/build-preview.mjs",
+    "preview:template": "node scripts/build-template-preview.mjs",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:local": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "db:migrate": "wrangler d1 migrations apply reps-scaling-os --remote",
+    "db:migrate:local": "wrangler d1 migrations apply reps-scaling-os --local"
+  },
+  "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.10",
+    "next": "16.3.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "esbuild": "^0.25.12",
+    "typescript": "^5",
+    "wrangler": "^4.149.0"
+  }
+}

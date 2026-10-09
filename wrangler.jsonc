@@ -1,0 +1,34 @@
+/**
+ * Cloudflare settings for REPS Scaling OS.
+ * The first deploy creates the D1 database and R2 bucket below automatically,
+ * and the app sets up its own table the first time it runs.
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "reps-scaling-os",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true },
+
+  // The database (clients, leads, sites, emails, meetings, logins).
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "reps-scaling-os",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Photos and logos from the onboarding form.
+  "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "reps-scaling-os-uploads"
+    }
+  ]
+}

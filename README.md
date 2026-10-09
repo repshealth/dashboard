@@ -118,6 +118,18 @@ Every client call lands in the CRM from Google Meet's Gemini notes and transcrip
 - **Agency · Meetings** (`/agency/meetings`): every call. Calls are matched to a client by attendee email, then by the client's name in the call title. Calls that don't match wait under **Not matched**. Assigning one also remembers that person's email, so their next calls match on their own. You can hide a call from the client (e.g. internal sales notes), delete one, or **Add a call** by pasting notes or a transcript.
 - **Client voice**: each client gets a voice profile built from their calls, covering how they talk, phrases they use and things to avoid. It rebuilds after every new call, and you can edit it. It feeds into their launch emails and email amends, and **Rewrite emails in this voice** in Agency · Emails rewrites all 12 as a new version for you to approve. If someone had a call with you before onboarding (e.g. the sales call), it moves into their new account when they submit the form, and their emails are written in their voice from the start.
 
+### Tasks from calls
+
+When a call comes in for a client, Claude pulls out the actions agreed on it (falling back to Gemini's "Suggested next steps" without Claude). They land in **Agency · Tasks** under **To review**, grouped by call, with the likely owner outlined.
+
+- Click **Sam, Alyza, James, Client or AI** to assign a task, or **Dismiss** it. You can edit the wording first.
+- Assigned tasks move to **Open**, where you can filter by person or client, set due dates, reassign and tick them off.
+- Tasks assigned to **Client** appear in the client's own **Tasks** section, where they can tick them off. You see that straight away.
+- **Find tasks** on a call in Agency · Meetings pulls tasks from it again (e.g. a call added before tasks existed). **+ Add task** adds one by hand.
+- Tasks for **AI** are listed for now. Having Claude carry them out is a next step.
+
+The team names live in `lib/tasks/types.ts`.
+
 ### Setting up the sync
 
 1. In Cloudflare, add `MEETINGS_SECRET` (any long random string) and `REPS_EMAIL_DOMAINS` (e.g. `fitpreneuragency.com`, so your own team never matches as a client).

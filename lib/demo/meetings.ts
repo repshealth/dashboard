@@ -8,7 +8,7 @@ const D = 'Dani Cole';
 export const demoMeetings: Meeting[] = [
   {
     id: 'm-dani-3', clientId: 'strong-with-dani', title: 'Strong With Dani website review', startedAt: '2026-10-08T17:30:00', durationMins: 24,
-    attendees: ['dani@example.com', 'james@fitpreneuragency.com'], source: 'gemini', visibleToClient: true,
+    attendees: ['dani@example.com', 'james@fitpreneuragency.com'], source: 'gemini', visibleToClient: true, tasksFound: true,
     summary: 'James walked Dani through the first draft of her website and pre-registration page. Dani liked the layout and colours but wants the hero copy to sound more like her and to swap in a photo from her beach shoot. They agreed the launch emails will lean into real-life mum routines rather than transformation talk.',
     details: [
       'Website: Dani is happy with the structure and the pink. She wants the hero line to mention busy mums directly.',
@@ -38,7 +38,7 @@ export const demoMeetings: Meeting[] = [
   },
   {
     id: 'm-dani-2', clientId: 'strong-with-dani', title: 'Strong With Dani onboarding call', startedAt: '2026-10-02T10:00:00', durationMins: 38,
-    attendees: ['dani@example.com', 'james@fitpreneuragency.com'], source: 'gemini', visibleToClient: true,
+    attendees: ['dani@example.com', 'james@fitpreneuragency.com'], source: 'gemini', visibleToClient: true, tasksFound: true,
     summary: 'James and Dani went through the onboarding form together. They set the app launch for the end of October, agreed a 30% pre-registration offer, and talked through her audience: busy mums aged 28 to 45 who used to train.',
     details: [
       'Launch: end of October, with a pre-registration page live as soon as possible.',
@@ -65,7 +65,7 @@ export const demoMeetings: Meeting[] = [
   },
   {
     id: 'm-dani-1', clientId: 'strong-with-dani', title: 'REPS discovery call: Dani', startedAt: '2026-09-24T13:00:00', durationMins: 22,
-    attendees: ['dani@example.com', 'james@fitpreneuragency.com'], source: 'gemini', visibleToClient: false,
+    attendees: ['dani@example.com', 'james@fitpreneuragency.com'], source: 'gemini', visibleToClient: false, tasksFound: true,
     summary: 'Discovery call. Dani has an engaged Instagram following of mums and wants her own app. James explained the Reps app and the launch process. Dani signed up at the end of the call.',
     details: ['Internal sales notes: hidden from the client account by the REPS team.'],
     nextSteps: ['James will send the payment link and the onboarding form.'],

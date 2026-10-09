@@ -6,6 +6,7 @@ import { backend } from '@/lib/backend';
 import { latestPublished, pendingVersion } from '@/lib/site/versions';
 import { emailsNeedingReps, type EmailCampaign } from '@/lib/emails/types';
 import type { Meeting } from '@/lib/meetings/types';
+import type { Task } from '@/lib/tasks/types';
 import type { Client, Lead, Site, SiteComment, StageId, Viewer, Device, PinAnchor, CommentTarget } from '@/lib/types';
 
 export interface DraftComment {
@@ -45,6 +46,10 @@ interface DataCtx {
   allMeetings: Meeting[] | null;
   meetingsCount: number;
   refreshMeetings: () => Promise<void>;
+  /** Every task (REPS only), and how many from calls are waiting for review. */
+  allTasks: Task[] | null;
+  tasksCount: number;
+  refreshTasks: () => Promise<void>;
   refreshAgency: () => Promise<void>;
   approveVersion: (clientId: string, versionId: string) => Promise<void>;
   rejectVersion: (clientId: string, versionId: string, note: string) => Promise<void>;
@@ -93,6 +98,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [allCampaigns, setAllCampaigns] = useState<EmailCampaign[] | null>(null);
   const [allMeetings, setAllMeetings] = useState<Meeting[] | null>(null);
   const refreshMeetings = useCallback(async () => { setAllMeetings(await backend.listMeetings()); }, []);
+  const [allTasks, setAllTasks] = useState<Task[] | null>(null);
+  const refreshTasks = useCallback(async () => { setAllTasks(await backend.listTasks()); }, []);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -103,8 +110,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshAgency = useCallback(async () => {
-    const [l, s, e, m] = await Promise.all([backend.listAllLeads(), backend.listSites(), backend.listEmailCampaigns(), backend.listMeetings()]);
+    const [l, s, e, m, t] = await Promise.all([backend.listAllLeads(), backend.listSites(), backend.listEmailCampaigns(), backend.listMeetings(), backend.listTasks()]);
     setAllMeetings(m);
+    setAllTasks(t);
     setAllLeads(l);
     setAllSites(s);
     setAllCampaigns(e);
@@ -271,12 +279,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const approvalsCount = countApprovals(allSites);
   const emailsCount = emailsNeedingReps(allCampaigns);
   const meetingsCount = (allMeetings ?? []).filter((m) => !m.clientId).length;
+  const tasksCount = (allTasks ?? []).filter((t) => t.status === 'suggested').length;
 
   const value = useMemo<DataCtx>(() => ({
     mode: backend.mode, ready, error, viewer, clients, client, setClientId, leads, site,
     moveLead, saveNotes, addComment, toggleResolved, requestChanges, approve, sendToClient,
-    allLeads, allSites, approvalsCount, allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, refreshAgency, approveVersion, rejectVersion, toast, signOut,
-  }), [allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, ready, error, viewer, clients, client, setClientId, leads, site, moveLead, saveNotes, addComment, toggleResolved,
+    allLeads, allSites, approvalsCount, allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, refreshAgency, approveVersion, rejectVersion, toast, signOut,
+  }), [allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, ready, error, viewer, clients, client, setClientId, leads, site, moveLead, saveNotes, addComment, toggleResolved,
     requestChanges, approve, sendToClient, allLeads, allSites, approvalsCount, refreshAgency, approveVersion, rejectVersion, toast, signOut]);
 
   return (

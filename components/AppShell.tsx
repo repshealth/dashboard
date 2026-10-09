@@ -34,6 +34,15 @@ const NAV = [
     ),
   },
   {
+    href: '/tasks',
+    label: 'Tasks',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+        <path d="M6.5 4h7M6.5 8h7M6.5 12h7" /><path d="M2 4l1 1 1.8-2M2 8l1 1 1.8-2M2 12l1 1 1.8-2" />
+      </svg>
+    ),
+  },
+  {
     href: '/meetings',
     label: 'Meetings',
     icon: (
@@ -69,6 +78,15 @@ const AGENCY_NAV = [
     icon: (
       <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
         <rect x="1.5" y="3" width="13" height="10" rx="1.5" /><path d="M2 4l6 4.8L14 4" />
+      </svg>
+    ),
+  },
+  {
+    href: '/agency/tasks',
+    label: 'Tasks',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+        <path d="M6.5 4h7M6.5 8h7M6.5 12h7" /><path d="M2 4l1 1 1.8-2M2 8l1 1 1.8-2M2 12l1 1 1.8-2" />
       </svg>
     ),
   },
@@ -188,7 +206,7 @@ function NavLink({ href, label, icon, exact, count }: { href: string; label: str
 }
 
 function Shell({ children }: { children: ReactNode }) {
-  const { ready, error, mode, viewer, client, approvalsCount, emailsCount, meetingsCount } = useData();
+  const { ready, error, mode, viewer, client, approvalsCount, emailsCount, meetingsCount, tasksCount } = useData();
   const pathname = usePathname();
   const onAgency = pathname.startsWith('/agency');
   const admin = Boolean(viewer?.isAdmin);
@@ -206,8 +224,9 @@ function Shell({ children }: { children: ReactNode }) {
             <NavLink {...AGENCY_NAV[0]} exact />
             <NavLink {...AGENCY_NAV[1]} count={approvalsCount} />
             <NavLink {...AGENCY_NAV[2]} count={emailsCount} />
-            <NavLink {...AGENCY_NAV[3]} count={meetingsCount} />
-            <NavLink {...AGENCY_NAV[4]} />
+            <NavLink {...AGENCY_NAV[3]} count={tasksCount} />
+            <NavLink {...AGENCY_NAV[4]} count={meetingsCount} />
+            <NavLink {...AGENCY_NAV[5]} />
             <Link href="/onboarding">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
               New client form

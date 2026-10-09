@@ -12,6 +12,7 @@ import { meetingKey, parseMeetingText } from '../meetings/parse';
 import { matchClient } from '../meetings/match';
 import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/types';
 import type { DocMeta, DocStore } from './store';
+import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, Submission } from './types';
 
 /* Records ------------------------------------------------------------------------ */
@@ -47,6 +48,7 @@ export const meta = {
   meeting: (m: Meeting): DocMeta => ({ clientId: m.clientId, key: meetingKey(m.title, m.startedAt), sort: m.startedAt }),
   voice: (v: VoiceProfile): DocMeta => ({ clientId: v.clientId }),
   user: (u: UserRec): DocMeta => ({ key: u.email.toLowerCase(), sort: u.createdAt }),
+  task: (t: Task): DocMeta => ({ clientId: t.clientId, sort: t.createdAt }),
 };
 
 /** The things that differ between example mode and production: Claude, MailerLite, emails. */
@@ -66,6 +68,8 @@ export interface Services {
   scheduleLaunch(c: EmailCampaign, emails: LaunchEmail[]): Promise<MailerLiteState>;
   /** Adds a pre-registered person to the client's pre-reg group in MailerLite. */
   addSubscriber(clientId: string, p: { email: string; name?: string; phone?: string }): Promise<boolean>;
+  /** The actions agreed on a call, with who each looks like it's for. */
+  findTasks(m: Meeting, clientName: string, coach: string, clientNames: string[]): Promise<FoundTask[]>;
   /** Emails a client a sign-in link, e.g. when their website or emails are ready. */
   sendInvite(u: UserRec, clientName: string, what: 'website' | 'emails'): Promise<void>;
 }
@@ -161,6 +165,32 @@ export async function refreshVoiceFor(store: DocStore, services: Services, clien
   return v;
 }
 
+/** Pulls suggested tasks from a client's call into the agency review queue (once per call). */
+export async function tasksFromMeeting(store: DocStore, services: Services, meetingId: string, force = false) {
+  const m = await store.get<Meeting>('meeting', meetingId);
+  if (!m?.clientId || (m.tasksFound && !force)) return 0;
+  const [client, subs] = await Promise.all([store.get<ClientRec>('client', m.clientId), store.list<Submission>('submission', { clientId: m.clientId, limit: 1 })]);
+  const a = subs[0]?.answers;
+  const coach = a?.business.coachName || client?.contactName || client?.name || 'the client';
+  const names = [coach, a?.contact.name, client?.contactName].filter(Boolean) as string[];
+  const found = await services.findTasks(m, client?.name ?? '', coach, names);
+  const existing = force ? (await store.list<Task>('task', { clientId: m.clientId })).filter((t) => t.meetingId === m.id) : [];
+  const seen = new Set(existing.map((t) => t.title.toLowerCase()));
+  let n = 0;
+  for (const f of found) {
+    if (!f.title.trim() || seen.has(f.title.toLowerCase())) continue;
+    const t: Task = {
+      id: services.newId(), clientId: m.clientId, title: f.title.trim(), detail: f.detail || undefined, quote: f.quote || undefined,
+      meetingId: m.id, meetingTitle: m.title, meetingAt: m.startedAt, status: 'suggested', assignee: null, suggested: f.suggested,
+      createdAt: new Date().toISOString(), source: 'meeting',
+    };
+    await store.put('task', t.id, t, meta.task(t));
+    n++;
+  }
+  await store.mutate<Meeting>('meeting', m.id, (x) => { x.tasksFound = true; }, meta.meeting);
+  return n;
+}
+
 /** One Google Meet notes doc or transcript. Notes and transcript of the same call merge into one meeting. */
 export async function ingestMeetingDoc(store: DocStore, services: Services, d: {
   docId?: string; title: string; text: string; url?: string; attendees?: string[]; startedAt?: string | null; endedAt?: string | null;
@@ -205,7 +235,10 @@ export async function ingestMeetingDoc(store: DocStore, services: Services, d: {
     await store.put('meeting', m.id, m, meta.meeting(m));
   }
   if (d.docId) await store.put('meetingdoc', d.docId, { meetingId: m.id });
-  if (m.clientId) await refreshVoiceFor(store, services, m.clientId).catch((e) => console.error('Voice profile failed:', e));
+  if (m.clientId) {
+    await refreshVoiceFor(store, services, m.clientId).catch((e) => console.error('Voice profile failed:', e));
+    await tasksFromMeeting(store, services, m.id).catch((e) => console.error('Finding tasks failed:', e));
+  }
   return { id: m.id, clientId: m.clientId, duplicate: false, meeting: m };
 }
 
@@ -614,6 +647,7 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
           c.meetingEmails = [...new Set([...c.meetingEmails, ...m.attendees.filter((e) => e !== c.contactEmail)])];
         }, meta.client);
         await refreshVoiceFor(store, services, patch.clientId).catch(() => null);
+        await tasksFromMeeting(store, services, id).catch(() => 0);
       }
     },
     async deleteMeeting(id) {
@@ -636,6 +670,56 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       await admin();
       const v: VoiceProfile = { ...x, by: 'reps', updatedAt: new Date().toISOString() };
       await store.put('voice', v.clientId, v, meta.voice(v));
+    },
+
+    /* Tasks */
+    async listTasks(clientId) {
+      if (clientId === undefined) {
+        await admin();
+        return wait(await store.list<Task>('task'));
+      }
+      const v = await access(clientId);
+      const list = await store.list<Task>('task', { clientId });
+      return wait(v.isAdmin ? list : list.filter((t) => t.assignee === 'client' && (t.status === 'open' || t.status === 'done')));
+    },
+    async addTask(clientId, x) {
+      await admin();
+      if (!x.title?.trim()) throw new AccessError('Add a task first.', 400);
+      const now = new Date().toISOString();
+      const t: Task = {
+        id: services.newId(), clientId, title: x.title.trim().slice(0, 300), detail: x.detail?.trim() || undefined,
+        status: x.assignee ? 'open' : 'suggested', assignee: x.assignee, assignedAt: x.assignee ? now : undefined,
+        due: x.due || undefined, createdAt: now, source: 'manual',
+      };
+      await store.put('task', t.id, t, meta.task(t));
+      return t;
+    },
+    async updateTask(id, patch) {
+      const t = await store.get<Task>('task', id);
+      if (!t) throw new AccessError('Task not found.', 404);
+      const v = await access(t.clientId);
+      if (!v.isAdmin) {
+        const onlyStatus = Object.keys(patch).every((k) => k === 'status') && (patch.status === 'done' || patch.status === 'open');
+        if (t.assignee !== 'client' || !onlyStatus) throw new AccessError('Only the REPS team can change that.');
+      }
+      await store.mutate<Task>('task', id, (x) => {
+        if (patch.title !== undefined) x.title = patch.title.trim().slice(0, 300) || x.title;
+        if (patch.detail !== undefined) x.detail = patch.detail.trim() || undefined;
+        if (patch.due !== undefined) x.due = patch.due || undefined;
+        if (patch.assignee !== undefined) {
+          x.assignee = patch.assignee as Assignee | null;
+          if (patch.assignee) { x.assignedAt = new Date().toISOString(); if (x.status === 'suggested') x.status = 'open'; }
+        }
+        if (patch.status !== undefined) {
+          x.status = patch.status;
+          if (patch.status === 'done') { x.doneAt = new Date().toISOString(); x.doneBy = actor(v); }
+          else { x.doneAt = undefined; x.doneBy = undefined; }
+        }
+      }, meta.task);
+    },
+    async findTasks(meetingId) {
+      await admin();
+      return wait(await tasksFromMeeting(store, services, meetingId, true), 600);
     },
   };
 }

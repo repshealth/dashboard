@@ -11,6 +11,7 @@ import { linkEmail, sendEmail, signInLink } from './auth';
 import { setting } from './env';
 import { VOICE_SCHEMA, VOICE_SYSTEM, voiceFromRules, voicePrompt } from '../meetings/voice';
 import type { VoiceProfile } from '../meetings/types';
+import { TASKS_SCHEMA, TASKS_SYSTEM, tasksFromNotes, tasksPrompt, toAssignee } from '../tasks/extract';
 
 /** Production services: Claude for writing, MailerLite for scheduling, Resend for sign-in emails. */
 export function liveServices(store: DocStore, origin: string): Services {
@@ -35,6 +36,15 @@ export function liveServices(store: DocStore, origin: string): Services {
       }
       // A rules-only profile never replaces one from Claude or one the team edited.
       return existing && existing.by !== 'rules' ? null : voiceFromRules(clientId, meetings, names);
+    },
+    async findTasks(m, clientName, coach, names) {
+      try {
+        const out = await claudeJson<{ tasks: { title: string; detail: string; quote: string; who: string }[] }>(TASKS_SYSTEM, tasksPrompt(m, clientName, coach), TASKS_SCHEMA, 3000);
+        if (out) return out.tasks.map((t) => ({ title: t.title, detail: t.detail, quote: t.quote, suggested: toAssignee(t.who) }));
+      } catch (e) {
+        console.error('Finding tasks with Claude failed, using the notes:', e);
+      }
+      return tasksFromNotes(m, names);
     },
     scheduleLaunch: async (c, emails) => scheduleLaunch(await ml(c.clientId), c, emails),
     addSubscriber: async (clientId, p) => addSubscriber(await ml(clientId), p),

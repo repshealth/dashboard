@@ -2,6 +2,7 @@ import type { OnboardingAnswers } from '../site/onboarding';
 import type { Client, Lead, LeadEvent, Site, SiteComment, SiteVersion, StageId, Viewer } from '../types';
 import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState } from '../emails/types';
 import type { Meeting, VoiceProfile } from '../meetings/types';
+import type { Assignee, Task, TaskPatch } from '../tasks/types';
 
 /** One onboarding form as submitted. */
 export interface Submission {
@@ -94,4 +95,13 @@ export interface Backend {
   /** Rebuilds the client's voice profile from all their calls. */
   refreshVoice(clientId: string): Promise<VoiceProfile>;
   saveVoice(v: VoiceProfile): Promise<void>;
+
+  /* Tasks from calls */
+  /** Every task (REPS), or one client's. Clients only get the tasks assigned to them. */
+  listTasks(clientId?: string): Promise<Task[]>;
+  addTask(clientId: string, t: { title: string; detail?: string; assignee: Assignee | null; due?: string }): Promise<Task>;
+  /** REPS can change anything; a client can only tick their own tasks done or not done. */
+  updateTask(id: string, patch: TaskPatch): Promise<void>;
+  /** Pulls tasks from a call again (e.g. one added before tasks existed). Returns how many were found. */
+  findTasks(meetingId: string): Promise<number>;
 }

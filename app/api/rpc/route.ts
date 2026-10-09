@@ -13,6 +13,7 @@ const METHODS = new Set<keyof Backend>([
   'requestEmailChanges', 'approveEmails', 'scheduleEmails', 'approveEmailVersion', 'rejectEmailVersion',
   'saveEmailEdits', 'saveLaunchSettings', 'getMailerLite', 'saveMailerLite', 'rewriteEmails',
   'listMeetings', 'addMeeting', 'updateMeeting', 'deleteMeeting', 'getVoice', 'refreshVoice', 'saveVoice',
+  'listTasks', 'addTask', 'updateTask', 'findTasks',
 ]);
 
 /**

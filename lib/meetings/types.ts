@@ -20,6 +20,8 @@ export interface Meeting {
   /** Clients see their calls unless the REPS team hides one. */
   visibleToClient: boolean;
   source: 'gemini' | 'pasted';
+  /** Tasks have been pulled from this call (so it's only done once). */
+  tasksFound?: boolean;
 }
 
 /** How a client actually talks, built from their calls. Used when writing their emails. */

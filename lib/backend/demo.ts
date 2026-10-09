@@ -14,6 +14,8 @@ import { makeAmendedEmails, rulesEmailAmend } from '../emails/amend';
 import type { EmailCampaign, EmailComment } from '../emails/types';
 import { demoMeetings, demoVoice } from '../demo/meetings';
 import { voiceFromRules } from '../meetings/voice';
+import { tasksFromNotes } from '../tasks/extract';
+import type { Task } from '../tasks/types';
 import { MemoryStore } from './store';
 import { createBackend, meta, type ClientRec, type Services } from './core';
 import type { Backend, Submission } from './types';
@@ -43,6 +45,7 @@ const services: Services = {
     existing && existing.by !== 'rules' ? null : voiceFromRules(clientId, meetings, names),
   scheduleLaunch: async () => ({ state: 'scheduled', note: 'Example mode: 12 emails would now be scheduled in MailerLite', at: new Date().toISOString() }),
   addSubscriber: async () => false,
+  findTasks: async (m, _client, _coach, names) => tasksFromNotes(m, names),
   sendInvite: async () => {},
 };
 
@@ -113,8 +116,31 @@ async function seedExample() {
     store.put('campaign', slug, c, meta.campaign(c)),
     ...demoMeetings.map((m) => store.put('meeting', m.id, m, meta.meeting(m))),
     ...demoVoice.map((v) => store.put('voice', v.clientId, v, meta.voice(v))),
+    ...demoTasks(slug).map((t) => store.put('task', t.id, t, meta.task(t))),
   ]);
 }
+/** Example tasks: some from the latest call waiting for review, some already assigned. */
+function demoTasks(clientId: string): Task[] {
+  const call = (id: string) => demoMeetings.find((m) => m.id === id)!;
+  const review = call('m-dani-3');
+  const onboard = call('m-dani-2');
+  const t = (n: number, m: typeof review, title: string, rest: Partial<Task>): Task => ({
+    id: `task-${n}`, clientId, title, meetingId: m.id, meetingTitle: m.title, meetingAt: m.startedAt,
+    status: 'suggested', assignee: null, createdAt: m.startedAt, source: 'meeting', ...rest,
+  });
+  return [
+    t(1, review, 'Leave comments on the website in the dashboard', { suggested: 'client', quote: 'Dani will leave comments on the website in the dashboard.' }),
+    t(2, review, 'Send the beach shoot photos', { suggested: 'client', detail: 'For the hero and the coach section.', quote: 'Dani will send the beach shoot photos by Monday.', due: '2026-10-12' }),
+    t(3, review, 'Swap the hero photo for one from the beach shoot', { suggested: 'sam', quote: 'And the photo, can we use one from my beach shoot? That one is a bit old now.' }),
+    t(4, review, 'Rewrite the hero line to speak to busy mums', { suggested: 'ai', detail: 'Dani suggested: "Training, food and accountability in one app, built for busy mums."', quote: 'It is nice, but it is a bit, I don\'t know, gym-bro? My girls are mums.' }),
+    t(5, review, 'Update the launch emails once comments are in', { suggested: 'james', quote: 'James will update the launch emails once comments are in.' }),
+    t(6, onboard, 'Submit the onboarding form with photos', { status: 'done', assignee: 'client', suggested: 'client', assignedAt: onboard.startedAt, doneAt: '2026-10-07T19:42:00', doneBy: 'Dani' }),
+    t(7, onboard, 'Build the website, pre-registration page and launch emails', { status: 'done', assignee: 'james', suggested: 'james', assignedAt: onboard.startedAt, doneAt: '2026-10-08T12:00:00', doneBy: 'REPS team' }),
+    t(8, onboard, 'Set up the MailerLite groups for the launch', { status: 'open', assignee: 'alyza', assignedAt: onboard.startedAt, due: '2026-10-20' }),
+    t(9, onboard, 'Post three Instagram stories about the pre-registration page', { status: 'open', assignee: 'client', assignedAt: onboard.startedAt, detail: 'Link to the pre-registration page in each one.' }),
+  ];
+}
+
 const seeded = seedExample();
 
 const base = createBackend(store, services, async () => {

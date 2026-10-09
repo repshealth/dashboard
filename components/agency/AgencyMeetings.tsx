@@ -93,6 +93,12 @@ export default function AgencyMeetings() {
                       {current.visibleToClient ? 'Hide from client' : 'Show to client'}
                     </button>
                   )}
+                  {current.clientId && (
+                    <button type="button" className="btn" disabled={busy} onClick={() => act(async () => {
+                      const n = await backend.findTasks(current.id);
+                      if (!n) throw new Error('No new tasks found in this call.');
+                    }, 'New tasks are waiting in Agency · Tasks.')}>Find tasks</button>
+                  )}
                   <button type="button" className="btn" disabled={busy} onClick={() => { if (confirm(`Delete "${current.title}" from the CRM? The Google Doc is not touched.`)) act(() => backend.deleteMeeting(current.id), 'Call deleted.'); }}>Delete</button>
                 </>
               } />

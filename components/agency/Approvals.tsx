@@ -87,7 +87,7 @@ export default function Approvals() {
                     <>
                       <div className="ap-item-v">{i.base?.version ?? 'v?'} → {i.pending.version} · ready to approve</div>
                       <div className="ap-item-tags">
-                        <span className="stbadge sm st-review">{i.pending.changes?.length ?? 0} change{(i.pending.changes?.length ?? 0) === 1 ? '' : 's'}</span>
+                        {i.pending.commit ? <span className="stbadge sm st-review">Updated in Claude</span> : <span className="stbadge sm st-review">{i.pending.changes?.length ?? 0} change{(i.pending.changes?.length ?? 0) === 1 ? '' : 's'}</span>}
                         {needs > 0 && <span className="stbadge sm st-changes">{needs} need{needs === 1 ? 's' : ''} you</span>}
                       </div>
                     </>
@@ -112,8 +112,17 @@ export default function Approvals() {
                 <div className="ap-head">
                   <div>
                     <div className="ap-eyebrow">{item.client.name}</div>
-                    <h2>{item.pending.version} made from {item.site.contact || 'the client'}&apos;s comments</h2>
-                    <p className="sub">{item.pending.summary} {item.pending.amendedBy === 'rules' ? 'Made with simple rules (Claude isn’t connected in this preview).' : 'Made by Claude.'}</p>
+                    {item.pending.commit ? (
+                      <>
+                        <h2>{item.pending.version} updated in Claude</h2>
+                        <p className="sub">&ldquo;{item.pending.commit.message || 'Website updated'}&rdquo; · <a className="sv-inline-link" href={item.pending.commit.url} target="_blank" rel="noreferrer">View on GitHub</a></p>
+                      </>
+                    ) : (
+                      <>
+                        <h2>{item.pending.version} made from {item.site.contact || 'the client'}&apos;s comments</h2>
+                        <p className="sub">{item.pending.summary} {item.pending.amendedBy === 'rules' ? 'Made with simple rules (Claude isn’t connected in this preview).' : 'Made by Claude.'}</p>
+                      </>
+                    )}
                   </div>
                   <div className="actions">
                     <button type="button" className="btn" disabled={busy} onClick={() => setRejecting(!rejecting)}>Reject</button>
@@ -166,20 +175,23 @@ export default function Approvals() {
                         </div>
                       </div>
                     </div>
-                    {page?.spec ? (
+                    {page?.spec || page?.htmlUrl ? (
                       <PreviewFrame
                         spec={page.spec}
+                        htmlUrl={page.kind === 'html' ? page.htmlUrl : undefined}
                         device={device}
                         label={`${item.site.domain}${page.path} · ${showing === 'new' ? item.pending.version : item.base?.version}`}
                         highlight={showing === 'new' ? changes.map((c) => c.after) : changes.map((c) => c.before)}
                       />
                     ) : <div className="sv-empty"><p>This page can&apos;t be previewed.</p></div>}
-                    <p className="ap-hint">Changed words are outlined in the preview.</p>
+                    {!item.pending.commit && <p className="ap-hint">Changed words are outlined in the preview.</p>}
                   </div>
 
                   <aside className="detail ap-changes" aria-label="What changed">
-                    <div className="lbl" style={{ marginTop: 0 }}>WHAT CHANGED ({changes.length})</div>
-                    {!changes.length && <p className="cm-none">No text was changed automatically.</p>}
+                    <div className="lbl" style={{ marginTop: 0 }}>{item.pending.commit ? 'WHAT CHANGED' : `WHAT CHANGED (${changes.length})`}</div>
+                    {item.pending.commit ? (
+                      <p className="cm-none">Updated in Claude and pushed to GitHub: &ldquo;{item.pending.commit.message || 'Website updated'}&rdquo;. Compare it with the current version using the toggle, then approve to send it to {item.site.contact || 'the client'}.</p>
+                    ) : !changes.length && <p className="cm-none">No text was changed automatically.</p>}
                     {changes.map((c, i) => {
                       const cm = commentFor(c.commentId);
                       return (

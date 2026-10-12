@@ -15,6 +15,7 @@ import type { EmailCampaign, EmailComment } from '../emails/types';
 import { demoMeetings, demoVoice } from '../demo/meetings';
 import { voiceFromRules } from '../meetings/voice';
 import { tasksFromNotes } from '../tasks/extract';
+import { fetchSiteFromGitHub } from '../site/github';
 import type { Task } from '../tasks/types';
 import { MemoryStore } from './store';
 import { createBackend, meta, type ClientRec, type Services } from './core';
@@ -46,6 +47,9 @@ const services: Services = {
   scheduleLaunch: async () => ({ state: 'scheduled', note: 'Example mode: 12 emails would now be scheduled in MailerLite', at: new Date().toISOString() }),
   addSubscriber: async () => false,
   findTasks: async (m, _client, _coach, names) => tasksFromNotes(m, names),
+  // In the preview, public repos are read straight from GitHub by the browser.
+  fetchSite: (repo, branch) => fetchSiteFromGitHub(repo, branch),
+  storeHtml: async (_c, _sha, _path, html) => URL.createObjectURL(new Blob([html], { type: 'text/html' })),
   sendInvite: async () => {},
 };
 

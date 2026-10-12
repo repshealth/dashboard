@@ -1,5 +1,5 @@
 import type { OnboardingAnswers } from '../site/onboarding';
-import type { Client, Lead, LeadEvent, Site, SiteComment, SiteVersion, StageId, Viewer } from '../types';
+import type { Client, Lead, LeadEvent, Site, SiteComment, SiteSource, SiteVersion, StageId, Viewer } from '../types';
 import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState } from '../emails/types';
 import type { Meeting, VoiceProfile } from '../meetings/types';
 import type { Assignee, Task, TaskPatch } from '../tasks/types';
@@ -49,6 +49,10 @@ export interface Backend {
    * from the open comments, waiting for REPS approval.
    */
   requestChanges(clientId: string, versionId: string, by: string): Promise<{ open: number; pending: SiteVersion | null }>;
+  /** REPS connects the website to the GitHub repo it's saved to from Claude. Empty repo disconnects. */
+  saveSiteSource(clientId: string, src: Pick<SiteSource, 'repo' | 'branch' | 'autoPublish'>): Promise<void>;
+  /** REPS checks GitHub for a newer version now (pushes also arrive on their own). */
+  syncSite(clientId: string): Promise<{ added: boolean; note: string }>;
   /** REPS approves a revised version: the client can now see it and approve it. */
   approveVersion(clientId: string, versionId: string): Promise<void>;
   /** REPS discards a revised version; the request stays open for the team to handle. */

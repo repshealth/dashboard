@@ -1,4 +1,5 @@
-import type { Client, Lead, LeadEvent, Site, SiteComment, SourceId, Viewer } from '../types';
+import type { Client, Lead, LeadEvent, Site, SiteComment, SitePage, SiteSource, SiteVersion, SourceId, Viewer } from '../types';
+import { pageName, type FetchedSite } from '../site/github';
 import { STAGE_NAME } from '../constants';
 import type { SiteCopy } from '../site/copy';
 import { buildSpec, slugify } from '../site/compose';
@@ -70,6 +71,10 @@ export interface Services {
   addSubscriber(clientId: string, p: { email: string; name?: string; phone?: string }): Promise<boolean>;
   /** The actions agreed on a call, with who each looks like it's for. */
   findTasks(m: Meeting, clientName: string, coach: string, clientNames: string[]): Promise<FoundTask[]>;
+  /** Reads the site's HTML pages from GitHub at the latest commit on a branch. */
+  fetchSite(repo: string, branch: string): Promise<FetchedSite>;
+  /** Stores one page's HTML and returns the address it can be loaded from. */
+  storeHtml(clientId: string, sha: string, path: string, html: string): Promise<string>;
   /** Emails a client a sign-in link, e.g. when their website or emails are ready. */
   sendInvite(u: UserRec, clientName: string, what: 'website' | 'emails'): Promise<void>;
 }
@@ -189,6 +194,53 @@ export async function tasksFromMeeting(store: DocStore, services: Services, meet
   }
   await store.mutate<Meeting>('meeting', m.id, (x) => { x.tasksFound = true; }, meta.meeting);
   return n;
+}
+
+/**
+ * Pulls the latest version of a client's site from their GitHub repo. A new commit becomes
+ * a new version: waiting in Approvals, or straight to the client if the team chose that.
+ */
+export async function syncSiteFromGitHub(store: DocStore, services: Services, clientId: string) {
+  const s = await store.get<Site>('site', clientId);
+  const src = s?.github;
+  if (!s || !src?.repo) throw new AccessError('Connect a GitHub repo for this website first.', 400);
+  let fetched: FetchedSite;
+  try {
+    fetched = await services.fetchSite(src.repo, src.branch || 'main');
+  } catch (e) {
+    const note = e instanceof Error ? e.message : String(e);
+    await store.mutate<Site>('site', clientId, (x) => { if (x.github) Object.assign(x.github, { lastSync: new Date().toISOString(), lastNote: note }); }, meta.site);
+    throw new AccessError(note, 502);
+  }
+  if (fetched.sha === src.lastSha) {
+    await store.mutate<Site>('site', clientId, (x) => { if (x.github) Object.assign(x.github, { lastSync: new Date().toISOString(), lastNote: 'Up to date' }); }, meta.site);
+    return { added: false, note: 'Already up to date.' };
+  }
+  const pages: SitePage[] = [];
+  for (const f of fetched.files) {
+    const htmlUrl = await services.storeHtml(clientId, fetched.sha, f.path, f.html);
+    const name = pageName(f.path, f.html);
+    pages.push({ id: services.newId(), key: f.path, name, path: ` · ${name}`, kind: 'html', htmlUrl });
+  }
+  let added: SiteVersion | null = null;
+  await store.mutate<Site>('site', clientId, (x) => {
+    const n = `v${x.versions.filter((v) => v.state !== 'rejected').length + 1}`;
+    const auto = Boolean(x.github?.autoPublish);
+    const base = x.versions.find((v) => (v.state ?? 'published') === 'published');
+    added = {
+      id: services.newId(), version: n, label: `${n} · ${fetched.message || 'Updated in Claude'}`.slice(0, 120),
+      sentNote: auto ? 'Updated in Claude just now' : 'Updated in Claude, waiting for REPS approval',
+      pages, comments: [], state: auto ? 'published' : 'pending', basedOn: base?.id, createdAt: new Date().toISOString(),
+      summary: fetched.message || 'Website updated in Claude.', changes: [], unresolved: [],
+      commit: { sha: fetched.sha, message: fetched.message, url: fetched.url },
+    };
+    // Only the newest update waits for approval.
+    x.versions.forEach((v) => { if (v.state === 'pending' && v.commit) v.state = 'rejected'; });
+    x.versions.unshift(added);
+    if (auto && x.status !== 'draft') { x.status = 'review'; x.statusNote = `${n} sent for review just now`; }
+    if (x.github) Object.assign(x.github, { lastSha: fetched.sha, lastSync: new Date().toISOString(), lastNote: `Added ${n}` });
+  }, meta.site);
+  return { added: true, note: `${(added as SiteVersion | null)?.version ?? 'A new version'} added from GitHub.` };
 }
 
 /** One Google Meet notes doc or transcript. Notes and transcript of the same call merge into one meeting. */
@@ -439,6 +491,18 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
     async listSites() {
       await admin();
       return wait(await store.list<Site>('site'));
+    },
+    async saveSiteSource(clientId, src) {
+      await admin();
+      const repo = src.repo.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/$/, '');
+      const ok = await site(clientId, (x) => {
+        x.github = repo ? { ...(x.github ?? {}), repo, branch: src.branch?.trim() || 'main', autoPublish: Boolean(src.autoPublish) } as SiteSource : undefined;
+      });
+      if (!ok) throw new AccessError('This client has no website yet.', 404);
+    },
+    async syncSite(clientId) {
+      await admin();
+      return wait(await syncSiteFromGitHub(store, services, clientId), 300);
     },
     async approveVersion(clientId, versionId) {
       await admin();

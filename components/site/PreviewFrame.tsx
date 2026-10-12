@@ -2,14 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import SpecSite from './SpecSite';
+import HtmlFrame from './HtmlFrame';
 import type { AnySpec } from '@/lib/site/prereg';
 import type { Device } from '@/lib/types';
 
 const DESKTOP_W = 1280;
 
 /** A browser-style frame showing a generated site at real desktop width, scaled to fit, or at phone width. */
-export default function PreviewFrame({ spec, device, label, highlight = [] }: {
-  spec: AnySpec; device: Device; label: string; highlight?: string[];
+export default function PreviewFrame({ spec, htmlUrl, device, label, highlight = [] }: {
+  spec?: AnySpec; htmlUrl?: string; device: Device; label: string; highlight?: string[];
 }) {
   const vp = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(0);
@@ -42,8 +43,10 @@ export default function PreviewFrame({ spec, device, label, highlight = [] }: {
           <span className="dots"><i /><i /><i /></span>
           <span className="url">{label}</span>
         </div>
-        <div className="viewport" ref={vp}>
-          {device === 'desktop' ? (
+        <div className={`viewport${htmlUrl ? ' vp-html' : ''}`} ref={vp}>
+          {htmlUrl ? (
+            <HtmlFrame key={`${htmlUrl}-${device}`} url={htmlUrl} device={device} width={w} height={vp.current?.clientHeight ?? 620} />
+          ) : !spec ? null : device === 'desktop' ? (
             <div className="tpl-zoom" style={{ width: DESKTOP_W, zoom: w ? Math.min(1, w / DESKTOP_W) : 0.6 }}>
               <SpecSite spec={spec} />
             </div>

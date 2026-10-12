@@ -8,7 +8,8 @@ import { amendWithClaude } from './amend';
 import { amendEmailsWithClaude } from './amend-emails';
 import { addSubscriber, scheduleLaunch } from './mailerlite';
 import { linkEmail, sendEmail, signInLink } from './auth';
-import { setting } from './env';
+import { cf, setting } from './env';
+import { fetchSiteFromGitHub } from '../site/github';
 import { VOICE_SCHEMA, VOICE_SYSTEM, voiceFromRules, voicePrompt } from '../meetings/voice';
 import type { VoiceProfile } from '../meetings/types';
 import { TASKS_SCHEMA, TASKS_SYSTEM, tasksFromNotes, tasksPrompt, toAssignee } from '../tasks/extract';
@@ -45,6 +46,14 @@ export function liveServices(store: DocStore, origin: string): Services {
         console.error('Finding tasks with Claude failed, using the notes:', e);
       }
       return tasksFromNotes(m, names);
+    },
+    fetchSite: (repo, branch) => fetchSiteFromGitHub(repo, branch, setting('GITHUB_TOKEN') || undefined),
+    async storeHtml(clientId, sha, path, html) {
+      const bucket = cf().UPLOADS;
+      if (!bucket) throw new Error('File storage (R2) isn’t connected.');
+      const key = `sites/${clientId}/${sha.slice(0, 12)}/${path}`;
+      await bucket.put(key, new TextEncoder().encode(html).buffer as ArrayBuffer, { httpMetadata: { contentType: 'text/html; charset=utf-8' } });
+      return `/api/files/${key}`;
     },
     scheduleLaunch: async (c, emails) => scheduleLaunch(await ml(c.clientId), c, emails),
     addSubscriber: async (clientId, p) => addSubscriber(await ml(clientId), p),

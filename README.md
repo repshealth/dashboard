@@ -144,6 +144,24 @@ Gemini note-taking needs a Google Workspace plan that includes Gemini in Meet.
 
 `components/site/TemplateSite.tsx` and `components/site/template.css` draw the whole site from a `SiteSpec` (`lib/site/spec.ts`). `lib/site/compose.ts` turns onboarding answers and copy into a spec. To work on the design, run `npm run preview:template` and open `preview-dist/template.html`, which shows the template filled with example answers.
 
+## Websites updated from Claude (GitHub)
+
+A client's website can live in its own GitHub repo, e.g. `repshealth/physique-x-site`, holding the site as plain, self-contained HTML files (`index.html` is the homepage, one `.html` file per other page). Whenever the site is changed in Claude and pushed, the new version appears in the client's Website section, as real pages they can click through and pin comments on.
+
+**Connect it:** open the client's **Website** as REPS, and under **Updates from Claude** press **Connect GitHub repo**. Enter the repo and branch, and choose whether updates wait for you in **Approvals** (the default) or go straight to the client. **Check for updates** pulls the latest version on demand.
+
+**Make it automatic (live mode):** in Cloudflare add `GITHUB_WEBHOOK_SECRET` (any long random string), plus `GITHUB_TOKEN` if the site repos are private (a fine-grained token with read access to their contents). Then in the site repo on GitHub go to **Settings > Webhooks > Add webhook**:
+- Payload URL: `https://<your-dashboard>/api/github`
+- Content type: `application/json`
+- Secret: the same `GITHUB_WEBHOOK_SECRET`
+- Events: just the push event
+
+**In the client's Claude project**, add this to the project instructions:
+
+> This client's website lives in the GitHub repo repshealth/physique-x-site. Whenever you change the website, save it as plain, self-contained HTML (index.html for the homepage, one .html file per other page, CSS in the file, images as full https links) and push it to the main branch with a one-line commit message saying what changed. Don't push anything else to that repo.
+
+The pages are shown in a locked-down frame, so their scripts can't touch the dashboard. Links and forms inside them don't navigate away from the preview.
+
 ## Agency side and approvals
 
 REPS admins see an **Agency** section above the client account in the sidebar, with a dark top bar so it's always clear which side you're on. Client logins never see it.

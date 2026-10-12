@@ -123,7 +123,10 @@ export interface SitePage {
   name: string;
   path: string;
   /** shot = screenshots, mock = example page, template = generated from onboarding. */
-  kind: 'shot' | 'mock' | 'template';
+  /** html = a real web page, pulled from the client's GitHub repo. */
+  kind: 'shot' | 'mock' | 'template' | 'html';
+  /** kind html: where the page's HTML is stored. */
+  htmlUrl?: string;
   desktopUrl?: string;
   mobileUrl?: string;
   mock?: MockPage;
@@ -144,6 +147,8 @@ export interface SiteVersion {
   basedOn?: string;
   createdAt?: string;
   amendedBy?: 'claude' | 'rules';
+  /** Set when the version came from a push to the client's GitHub repo. */
+  commit?: { sha: string; message: string; url: string };
   summary?: string;
   changes?: SiteChange[];
   unresolved?: UnresolvedComment[];
@@ -156,7 +161,19 @@ export interface Site {
   contact: string;
   domain: string;
   brand?: MockBrand;
+  /** Where updates come from: a GitHub repo the site is saved to from Claude. */
+  github?: SiteSource;
   versions: SiteVersion[]; // newest first
+}
+
+export interface SiteSource {
+  repo: string; // "repshealth/physique-x-site"
+  branch: string; // "main"
+  /** true = each update goes straight to the client; false = it waits in Approvals first. */
+  autoPublish: boolean;
+  lastSha?: string;
+  lastSync?: string;
+  lastNote?: string;
 }
 
 export interface Viewer {

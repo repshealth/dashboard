@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useData, type DraftComment } from '../DataProvider';
 import MockSite from './MockSite';
 import SpecSite from '../site/SpecSite';
+import HtmlFrame from '../site/HtmlFrame';
+import SiteSource from './SiteSource';
 import { SITE_STATUS } from '@/lib/constants';
 import { fmtWhen } from '@/lib/format';
 import { pendingVersion, publishedVersions } from '@/lib/site/versions';
@@ -53,6 +55,7 @@ export default function WebsiteView() {
   const [modal, setModal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [pos, setPos] = useState<Pos>({});
+  const [frameScroll, setFrameScroll] = useState<string | null>(null);
   const pvRef = useRef<HTMLDivElement>(null);
   const vpRef = useRef<HTMLDivElement>(null);
   // Generated sites are drawn at a real desktop width and scaled down to fit the preview.
@@ -237,6 +240,7 @@ export default function WebsiteView() {
     if (c.device && c.device !== device) setDevice(c.device);
     scrollToPick.current = true;
     setPick(c.id);
+    if (page.kind === 'html') setFrameScroll(`${c.id}`);
   };
 
   return (
@@ -287,7 +291,24 @@ export default function WebsiteView() {
               <span className="url">{site.domain}{page.path}</span>
               <span className="ver">{version.version}</span>
             </div>
-            <div className="viewport" ref={vpRef}>
+            <div className={`viewport${page.kind === 'html' ? ' vp-html' : ''}`} ref={vpRef}>
+              {page.kind === 'html' && page.htmlUrl ? (
+                <HtmlFrame
+                  key={`${page.id}-${device}`}
+                  url={page.htmlUrl}
+                  device={device}
+                  width={vpW}
+                  height={vpRef.current?.clientHeight ?? 620}
+                  cmode={cmode}
+                  scrollTo={frameScroll}
+                  pins={[
+                    ...comments.map((c) => ({ id: c.id, n: number.get(c.id) ?? 0, anchor: c.anchor, done: c.resolved, on: pick === c.id })),
+                    ...(draft && draft.pageId === page.id ? [{ id: 'draft', n: comments.length + 1, anchor: draft.anchor, draft: true }] : []),
+                  ]}
+                  onPick={(anchor, target) => { setDraft({ pageId: page.id, anchor, target, text: '' }); setCmode(false); setPick(null); }}
+                  onPin={(id) => setPick(pick === id ? null : id)}
+                />
+              ) : (
               <div className={`pv${cmode ? ' cmode' : ''}`} ref={pvRef} onClick={placePin} onLoadCapture={measure}>
                 {page.kind === 'shot' ? (
                   <div className="site shotwrap">
@@ -324,6 +345,7 @@ export default function WebsiteView() {
                   <span className="pin draft" style={{ left: pos.draft.x, top: pos.draft.y }}>{comments.length + 1}</span>
                 )}
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -349,6 +371,7 @@ export default function WebsiteView() {
           ) : locked ? (
             <div className="sv-lock">Design approved. Comments are closed and the REPS team will now put the site live.</div>
           ) : null}
+          {viewer?.isAdmin && !old && <SiteSource site={site} />}
           <div className="lbl">COMMENTS ON {page.name.toUpperCase()}</div>
           <div className="sv-open">{openAll} open across the site</div>
 

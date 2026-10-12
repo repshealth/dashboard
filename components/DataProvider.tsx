@@ -35,6 +35,8 @@ interface DataCtx {
   requestChanges: () => Promise<{ open: number; auto: boolean }>;
   approve: () => Promise<void>;
   sendToClient: () => Promise<void>;
+  /** Reloads the selected client's website (e.g. after a GitHub update). */
+  refreshSite: () => Promise<void>;
   /* Agency */
   allLeads: Lead[] | null;
   allSites: Site[] | null;
@@ -271,6 +273,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await Promise.all([refreshAgency(), sitesBy[cid] !== undefined ? reloadSite(cid) : Promise.resolve()]);
   }, [refreshAgency, reloadSite, sitesBy]);
 
+  const refreshSite = useCallback(async () => {
+    if (clientId) await reloadSite(clientId);
+  }, [clientId, reloadSite]);
+
   const signOut = useCallback(async () => {
     await backend.signOut();
     router.replace('/login');
@@ -283,10 +289,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<DataCtx>(() => ({
     mode: backend.mode, ready, error, viewer, clients, client, setClientId, leads, site,
-    moveLead, saveNotes, addComment, toggleResolved, requestChanges, approve, sendToClient,
+    moveLead, saveNotes, addComment, toggleResolved, requestChanges, approve, sendToClient, refreshSite,
     allLeads, allSites, approvalsCount, allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, refreshAgency, approveVersion, rejectVersion, toast, signOut,
   }), [allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, ready, error, viewer, clients, client, setClientId, leads, site, moveLead, saveNotes, addComment, toggleResolved,
-    requestChanges, approve, sendToClient, allLeads, allSites, approvalsCount, refreshAgency, approveVersion, rejectVersion, toast, signOut]);
+    requestChanges, approve, sendToClient, refreshSite, allLeads, allSites, approvalsCount, refreshAgency, approveVersion, rejectVersion, toast, signOut]);
 
   return (
     <Ctx.Provider value={value}>

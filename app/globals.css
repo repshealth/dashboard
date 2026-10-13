@@ -322,6 +322,29 @@ a{color:inherit}
 .ob-choice:hover{background:var(--soft)}
 .ob-choice.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--tint)}
 .ob-fontprev{display:block;font-size:19px;line-height:1;color:var(--text) !important;margin-bottom:8px}
+/* Website look sketches on the intake form */
+.ob-look,.ob-choice .ob-look{position:relative;display:block;width:100%;align-self:stretch;height:78px;padding:0;border-radius:10px;overflow:hidden;margin-bottom:10px;border:1px solid rgba(0,0,0,.08)}
+.ob-look i,.ob-look b,.ob-look em,.ob-look u{position:absolute;display:block}
+.ob-look-arena{background:#0b0b0d}
+.ob-look-arena i{left:10px;top:14px;width:58%;height:9px;background:#fff;border-radius:2px}
+.ob-look-arena b{left:10px;top:28px;width:46%;height:11px;background:var(--p);border-radius:2px}
+.ob-look-arena em{right:10px;top:10px;width:22%;height:58px;border-radius:4px;background:repeating-linear-gradient(135deg,#222 0 5px,#2c2c2c 5px 10px)}
+.ob-look-arena u{left:0;right:0;bottom:0;height:16px;background:linear-gradient(color-mix(in srgb,var(--p) 50%,transparent) 1px,transparent 1px) 0 0/8px 5px,linear-gradient(90deg,color-mix(in srgb,var(--p) 50%,transparent) 1px,transparent 1px) 0 0/8px 5px;opacity:.6}
+.ob-look-studio{background:color-mix(in srgb,var(--s) 14%,#fffaf3)}
+.ob-look-studio i{left:50%;top:10px;width:40%;height:7px;transform:translateX(-50%);background:var(--p);border-radius:4px;opacity:.8}
+.ob-look-studio b{left:50%;top:22px;width:56%;height:9px;transform:translateX(-50%);background:#1d1d1d;border-radius:4px}
+.ob-look-studio em{left:16%;bottom:0;width:20%;height:34px;border-radius:40px 40px 4px 4px;background:var(--s)}
+.ob-look-studio u{right:16%;bottom:0;width:20%;height:28px;border-radius:40px 40px 4px 4px;background:color-mix(in srgb,var(--p) 40%,#fff)}
+.ob-look-pulse{background:linear-gradient(#fff 0 0) 0 100%/100% 30% no-repeat,color-mix(in srgb,var(--p) 18%,#07070d)}
+.ob-look-pulse i{left:-10%;top:-30%;width:60%;height:120%;border-radius:50%;background:var(--p);filter:blur(16px);opacity:.6}
+.ob-look-pulse b{left:10px;top:16px;width:46%;height:10px;background:var(--s);border-radius:3px}
+.ob-look-pulse em{left:10px;top:31px;width:34%;height:10px;background:#fff;border-radius:3px}
+.ob-look-pulse u{right:14px;top:8px;width:16%;height:48px;border-radius:7px;background:#111;border:2px solid #333;transform:rotate(6deg)}
+.ob-look-auto,.ob-choice .ob-look-auto{display:flex;background:#f3f3f5}
+.ob-look.ob-look-auto i{position:static;flex:1}
+.ob-look-auto i:nth-child(1){background:#0b0b0d}
+.ob-look-auto i:nth-child(2){background:color-mix(in srgb,var(--s) 14%,#fffaf3)}
+.ob-look-auto i:nth-child(3){background:color-mix(in srgb,var(--p) 30%,#07070d)}
 .ob-chips{display:flex;flex-wrap:wrap;gap:6px}
 .ob-chip{border:1px solid var(--line2);background:#fff;border-radius:999px;padding:6px 12px;font-size:12px;color:var(--muted)}
 .ob-chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
@@ -642,6 +665,13 @@ textarea.em-subj{font-size:15px}
 /* Websites from GitHub */
 .viewport.vp-html{overflow:hidden}
 .html-frame{max-width:none}
+.sv-look{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#FAFAFC;display:flex;flex-direction:column;gap:8px}
+.sv-look-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.sv-look-b{display:flex;flex-direction:column;align-items:center;gap:0;padding:5px 5px 7px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font:600 12px inherit;color:var(--text);cursor:pointer;transition:border-color .2s}
+.sv-look-b .ob-look{height:42px;width:100%;margin-bottom:6px}
+.sv-look-b:hover{border-color:#B8A9D9}
+.sv-look-b.on{border-color:#6C55A3;box-shadow:0 0 0 2px rgba(108,85,163,.18)}
+.sv-look-b:disabled{opacity:.7;cursor:default}
 .sv-source{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#FAFAFC;display:flex;flex-direction:column;gap:8px}
 .sv-src-line{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
 .sv-src-note{margin:0;font-size:11.5px;color:var(--dim)}

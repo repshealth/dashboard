@@ -5,6 +5,16 @@
 
 export type FontStyle = 'bold' | 'modern' | 'elegant';
 
+/** The website designs a generated site can use. Shape Up is the original, kept for older sites. */
+export type SiteDesign = 'shapeup' | 'pulse' | 'arena' | 'studio';
+
+/** The designs offered for new sites, for the intake form and the agency's look switcher. */
+export const LOOKS: { id: Exclude<SiteDesign, 'shapeup'>; name: string; desc: string; after: string }[] = [
+  { id: 'arena', name: 'Arena', desc: 'Black, loud and athletic. Huge capitals, a moving light grid, poster-style programmes.', after: 'Centr, Ladder, Physique X' },
+  { id: 'studio', name: 'Studio', desc: 'Light, warm and editorial. Italic serif accents, soft moving shapes, arch photos.', after: 'Lean with Lilly, Harriet Harper, Sweat, Shreddy' },
+  { id: 'pulse', name: 'Pulse', desc: 'Dark hero with a glow in your colours, bright sections below.', after: 'EvolveYou, Sweat' },
+];
+
 export interface Headline {
   /** Lighter first line, e.g. "Everything you need," */
   light: string;
@@ -47,7 +57,7 @@ export interface Faq { q: string; a: string }
 export interface SiteSpec {
   slug: string;
   /** Which website design draws it. Older sites without it use Shape Up. */
-  design?: 'shapeup' | 'pulse';
+  design?: SiteDesign;
   brand: {
     name: string;
     logoUrl?: string;

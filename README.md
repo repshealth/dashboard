@@ -70,7 +70,7 @@ Onboarding happens in two parts.
 
 - their sub account is created straight away,
 - their answers are saved (Agency · Onboarding shows them),
-- Claude writes a first draft of their website in the **Pulse** design with their branding. It appears in Website as **Draft · REPS only**, with the pricing section marked "to be added".
+- Claude writes a first draft of their website with their branding, in the look they picked on the form (Arena, Studio or Pulse; "Not sure" picks by headline style: serif goes Studio, condensed goes Arena, bold goes Pulse). It appears in Website as **Draft · REPS only**, with the pricing section marked "to be added".
 
 **2. The REPS team fills in the launch setup** in **Agency · Launch setup**, which lists every sub account still waiting (with a count in the sidebar). It holds the offer and pricing, features and app screenshots, programmes, the free guide, and the app launch (date, website link, pre-reg offer and code). **Save** as you go; **Save and build launch** then:
 
@@ -82,7 +82,11 @@ To have Claude write the copy, add `ANTHROPIC_API_KEY` in Cloudflare. Without it
 
 ### Website designs
 
-- **Pulse** (`components/site/PulseSite.tsx`, `pulse.css`), used for new sites. Inspired by EvolveYou, Ladder, Sweat, Centr, Shreddy and similar app-launch sites: a dark campaign hero with a slowly moving glow in the brand colours, phones whose screens scroll through the app, a feature showcase where the phone follows the feature you're on, marquees for highlights and reviews, numbers that count up, and hover effects on buttons, cards, photos and plans. Without app screenshots the phones show a stand-in app screen built from the feature names. Motion switches off for people who ask their device for less motion.
+- **Arena** (`components/site/ArenaSite.tsx`, `arena.css`). Black, loud and athletic, after Centr, Ladder and Physique X: huge capitals with a highlighter bar, a light grid that moves behind the hero, a stage of five phones whose screens scroll, a numbered feature list beside a phone that follows along, poster programmes that reveal details on hover, a drag-to-compare before and after, and a striped closing band.
+- **Studio** (`components/site/StudioSite.tsx`, `studio.css`). Light, warm and editorial, after Lean with Lilly, Harriet Harper, Sweat and Shreddy: italic serif accents, soft shapes that drift and change shape behind the hero, arch photos, floating feature chips, a turning text badge, numbers in circles, features around a central phone, and a moving row of phones whose screens scroll.
+- Arena and Studio share `components/site/kit.tsx` and `kit.css` (phones, marquees, counters, scroll reveals, the email sign-up).
+- The REPS team can switch a generated site between looks from the **Website look** panel in Website. A draft changes straight away; a site the client has seen gets a new version in Approvals. Rebuilding the launch keeps the chosen look.
+- **Pulse** (`components/site/PulseSite.tsx`, `pulse.css`). Inspired by EvolveYou, Ladder, Sweat, Centr, Shreddy and similar app-launch sites: a dark campaign hero with a slowly moving glow in the brand colours, phones whose screens scroll through the app, a feature showcase where the phone follows the feature you're on, marquees for highlights and reviews, numbers that count up, and hover effects on buttons, cards, photos and plans. Without app screenshots the phones show a stand-in app screen built from the feature names. Motion switches off for people who ask their device for less motion.
 - **Shape Up** (`TemplateSite.tsx`, `template.css`), the original design. Sites saved before Pulse keep it.
 
 Both draw from the same `SiteSpec` (`lib/site/spec.ts`), so comments, amends and approvals work the same on either.
@@ -151,7 +155,7 @@ Gemini note-taking needs a Google Workspace plan that includes Gemini in Meet.
 
 ### Working on the website designs
 
-`lib/site/compose.ts` turns the answers and copy into a `SiteSpec`. Run `npm run preview` and open Strong With Dani's Website to see Pulse with example answers.
+`lib/site/compose.ts` turns the answers and copy into a `SiteSpec`. Run `npm run preview` and open Strong With Dani's Website to see the Studio look with example answers, and use the Website look panel to compare the others.
 
 ## Websites updated from Claude (GitHub)
 

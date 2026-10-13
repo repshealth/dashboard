@@ -12,7 +12,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = join(root, 'preview-dist');
 mkdirSync(outDir, { recursive: true });
 
-const css0 = readFileSync(join(root, 'app/globals.css'), 'utf8') + '\n' + readFileSync(join(root, 'components/site/template.css'), 'utf8') + '\n' + readFileSync(join(root, 'components/site/pulse.css'), 'utf8');
+const css0 = readFileSync(join(root, 'app/globals.css'), 'utf8') + '\n' + readFileSync(join(root, 'components/site/template.css'), 'utf8') + '\n' + ['pulse','kit','arena','studio'].map((n) => readFileSync(join(root, `components/site/${n}.css`), 'utf8')).join('\n');
 const fontsUrl = readFileSync(join(root, 'lib/fonts.ts'), 'utf8').match(/https:\/\/fonts\.googleapis\.com[^'"`]+/)[0];
 
 // Inline images from /public so each file works on its own.

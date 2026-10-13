@@ -1,0 +1,57 @@
+/* Shared parts for the Arena and Studio website designs (components/site/kit.tsx).
+   Each design's root has class .sk and sets --p, --s, --ink, --mist, --line, --muted. */
+
+.sk{container-type:inline-size;position:relative;overflow:clip;font-family:'Figtree','Helvetica Neue',sans-serif;font-size:16px;line-height:1.55}
+.sk *{box-sizing:border-box}
+.sk :where(h1,h2,h3,p,blockquote,figure,ol,ul){margin:0}
+.sk :where(ol,ul){list-style:none;padding:0}
+.sk button{font-family:inherit}
+
+/* Images and stand-ins */
+.sk-img{display:block;width:100%;height:100%;object-fit:cover}
+.sk-ph{display:grid;place-items:center;background:repeating-linear-gradient(135deg,var(--ph-a,var(--mist)) 0 16px,var(--ph-b,color-mix(in srgb,var(--s) 22%,#fff)) 16px 32px)}
+.sk-ph span{font-size:13px;font-weight:600;background:#fff;color:#141414;padding:6px 12px;border-radius:999px;text-align:center;margin:0 10px}
+.sk-stars{color:#FFC64A;letter-spacing:2px}
+.sk-logo-img{height:30px;width:auto;max-width:170px;object-fit:contain;display:block}
+.sk-logo-text{font-family:var(--fd);font-stretch:var(--fs);font-weight:var(--fw);font-size:22px;letter-spacing:-.02em;white-space:nowrap}
+
+/* Marquees */
+.sk-marquee{overflow:hidden;display:flex}
+.sk-track{display:flex;flex:none;animation:sk-marq var(--dur,38s) linear infinite}
+.sk-track.rev{animation-direction:reverse}
+.sk-marquee:hover .sk-track{animation-play-state:paused}
+.sk-run{display:flex;flex:none;align-items:center}
+@keyframes sk-marq{to{transform:translateX(-50%)}}
+
+/* Phones whose screens scroll */
+.sk-phone{position:relative;aspect-ratio:9/19;border-radius:40px;background:#141418;padding:9px;box-shadow:0 30px 60px rgba(0,0,0,.28),inset 0 0 0 1.5px rgba(255,255,255,.16)}
+.sk-notch{position:absolute;top:17px;left:50%;transform:translateX(-50%);width:30%;height:16px;border-radius:999px;background:#000;z-index:2}
+.sk-screen{position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:#fff}
+.sk-scroll{position:absolute;left:0;top:0;width:100%;height:auto;animation:sk-screen var(--dur,16s) ease-in-out infinite alternate}
+.sk-phone:hover .sk-scroll{animation-play-state:paused}
+@keyframes sk-screen{0%,8%{top:0;transform:translateY(0)}92%,100%{top:100%;transform:translateY(-100%)}}
+.sk-mock{min-height:130%;background:linear-gradient(180deg,color-mix(in srgb,var(--s) 14%,#fff),#fff 40%);padding:46px 12px 12px;display:flex;flex-direction:column;gap:9px;color:#141414}
+.sk-mock-top{display:flex;justify-content:space-between;align-items:center;font-size:11px}
+.sk-mock-top span{width:22px;height:22px;border-radius:50%;background:#ececef}
+.sk-mock-ring{--n:70%;align-self:center;width:58%;aspect-ratio:1;border-radius:50%;background:conic-gradient(var(--p) var(--n),#ececef 0);display:grid;place-items:center;position:relative;margin:4px 0 6px}
+.sk-mock-ring::before{content:"";position:absolute;inset:11%;border-radius:50%;background:#fff}
+.sk-mock-ring b,.sk-mock-ring small{position:relative;grid-area:1/1}
+.sk-mock-ring b{font-size:17px;margin-top:-10px}
+.sk-mock-ring small{font-size:8.5px;margin-top:20px;opacity:.6}
+.sk-mock-card{display:flex;gap:8px;align-items:center;background:#fff;border-radius:12px;padding:9px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.sk-mock-card i{width:30px;height:30px;border-radius:9px;background:color-mix(in srgb,var(--s) 40%,#fff);flex:none}
+.sk-mock-card.hi{background:var(--p);color:#fff}
+.sk-mock-card.hi i{background:rgba(255,255,255,.3)}
+.sk-mock-card b{display:block;font-size:10.5px;line-height:1.2}
+.sk-mock-card small{font-size:9px;opacity:.65}
+
+/* Scroll reveal: only hides things once the script is running */
+.sk-armed .sk-rv{opacity:0;transform:translateY(34px);transition:opacity .8s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
+.sk-armed .sk-rv.in{opacity:1;transform:none}
+.sk-armed .sk-rv.d1{transition-delay:.1s}
+.sk-armed .sk-rv.d2{transition-delay:.2s}
+.sk-armed .sk-rv.d3{transition-delay:.3s}
+
+@media (prefers-reduced-motion: reduce){
+  .sk *,.sk *::before,.sk *::after{animation:none!important;transition:none!important}
+}

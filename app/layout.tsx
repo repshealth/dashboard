@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import '@/components/site/template.css';
 import '@/components/site/pulse.css';
+import '@/components/site/kit.css';
+import '@/components/site/arena.css';
+import '@/components/site/studio.css';
 import { FONTS_URL } from '@/lib/fonts';
 
 export const metadata: Metadata = {

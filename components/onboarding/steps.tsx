@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { FEATURE_OPTIONS, TIMEZONES, type OnboardingAnswers } from '@/lib/site/onboarding';
-import type { FontStyle } from '@/lib/site/spec';
+import { LOOKS, type FontStyle } from '@/lib/site/spec';
 import { Area, Chips, Choice, Colour, Photo, Photos, Text } from './fields';
 
 export type Draft = OnboardingAnswers;
@@ -18,6 +18,15 @@ const FontPreview = ({ font }: { font: FontStyle }) => {
   }[font];
   return <span className="ob-fontprev" style={f}><span style={{ fontWeight: font === 'elegant' ? 400 : 300, fontStyle: font === 'elegant' ? 'italic' : 'normal' }}>Your strongest</span><br /><span style={{ fontWeight: 700 }}>self starts here.</span></span>;
 };
+
+type Look = NonNullable<Draft['brand']['look']>;
+
+/** A tiny sketch of each website design in the client's own colours. */
+const LookPreview = ({ look, p, s }: { look: Look; p: string; s: string }) => (
+  <span className={`ob-look ob-look-${look}`} style={{ ['--p' as string]: p, ['--s' as string]: s }} aria-hidden="true">
+    {look === 'auto' ? <><i /><i /><i /></> : <><i /><b /><em /><u /></>}
+  </span>
+);
 
 const ALL_STEPS: Step[] = [
   {
@@ -59,6 +68,10 @@ const ALL_STEPS: Step[] = [
           { value: 'bold', title: 'Bold', desc: 'Tall, condensed capitals', preview: <FontPreview font="bold" /> },
           { value: 'modern', title: 'Modern', desc: 'Clean and sporty', preview: <FontPreview font="modern" /> },
           { value: 'elegant', title: 'Elegant', desc: 'Serif, softer feel', preview: <FontPreview font="elegant" /> },
+        ]} />
+        <Choice<Look> wide label="Website look" value={a.brand.look ?? 'auto'} onChange={(v) => set((d) => { d.brand.look = v; })} options={[
+          ...LOOKS.map((l) => ({ value: l.id as Look, title: l.name, desc: l.desc, preview: <LookPreview look={l.id} p={a.brand.primary} s={a.brand.secondary} /> })),
+          { value: 'auto' as Look, title: 'Not sure', desc: 'We will pick the one that suits your brand', preview: <LookPreview look="auto" p={a.brand.primary} s={a.brand.secondary} /> },
         ]} />
         <Text wide label="Three words for how you talk to clients" placeholder="e.g. Warm, direct, no-nonsense" value={a.brand.tone} onChange={(v) => set((d) => { d.brand.tone = v; })} />
         <Photo square label="Logo" hint="PNG with a transparent background works best" value={a.brand.logo} onChange={(v) => set((d) => { d.brand.logo = v; })} />

@@ -4,7 +4,8 @@ import { STAGE_NAME } from '../constants';
 import type { SiteCopy } from '../site/copy';
 import { buildSpec, slugify } from '../site/compose';
 import { emptyAnswers, emptyLaunch, launchOf, withLaunch, type LaunchDoc, type OnboardingAnswers } from '../site/onboarding';
-import { buildPreReg, type PreRegCopy } from '../site/prereg';
+import { buildPreReg, isPreReg, type PreRegCopy } from '../site/prereg';
+import { LOOKS, type SiteDesign, type SiteSpec } from '../site/spec';
 import { makeAmendedVersion, type AmendFn } from '../site/make-amend';
 import { buildCampaign } from '../emails/copy';
 import { applyRepsEdits, makeAmendedEmails, type EmailAmendFn } from '../emails/amend';
@@ -318,6 +319,9 @@ export async function buildLaunch(store: DocStore, services: Services, clientId:
   await store.mutate<Site>('site', clientId, (x) => {
     const latest = x.versions.find((v) => (v.state ?? 'published') === 'published');
     const keep = (key: string) => latest?.pages.find((p) => p.key === key)?.id ?? services.newId();
+    // Keep the look the team picked for this client.
+    const before = latest?.pages.find((p) => p.key === 'home')?.spec;
+    if (before && !isPreReg(before) && before.design && before.design !== 'shapeup') spec.design = before.design;
     const pages = [
       { id: keep('home'), key: 'home', name: 'Homepage', path: ' · Homepage', kind: 'template' as const, spec },
       { id: keep('prereg'), key: 'prereg', name: 'Pre-registration', path: ' · Pre-registration', kind: 'template' as const, spec: prereg },
@@ -573,6 +577,35 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
         x.github = repo ? { ...(x.github ?? {}), repo, branch: src.branch?.trim() || 'main', autoPublish: Boolean(src.autoPublish) } as SiteSource : undefined;
       });
       if (!ok) throw new AccessError('This client has no website yet.', 404);
+    },
+    async setSiteDesign(clientId, design) {
+      await admin();
+      const look = LOOKS.find((l) => l.id === design);
+      if (!look) throw new AccessError('Unknown website look.', 400);
+      let result: { pending: boolean } | null = null;
+      const ok = await site(clientId, (x) => {
+        const latest = x.versions.find((v) => (v.state ?? 'published') === 'published');
+        const home = latest?.pages.find((p) => p.key === 'home' && p.kind === 'template' && p.spec && !isPreReg(p.spec));
+        if (!latest || !home) throw new AccessError('Only generated websites can change their look.', 400);
+        if ((home.spec as SiteSpec).design === design) { result = { pending: false }; return; }
+        if (x.status === 'draft') {
+          home.spec = { ...(home.spec as SiteSpec), design };
+          result = { pending: false };
+          return;
+        }
+        // The client has seen it: the new look waits in Approvals.
+        const n = `v${x.versions.filter((v) => v.state !== 'rejected').length + 1}`;
+        x.versions.forEach((v) => { if (v.state === 'pending') v.state = 'rejected'; });
+        const pages = latest.pages.map((p) => (p.id === home.id ? { ...p, id: services.newId(), spec: { ...(p.spec as SiteSpec), design } } : { ...p, id: services.newId() }));
+        x.versions.unshift({
+          id: services.newId(), version: n, label: `${n} · ${look.name} look`, state: 'pending', basedOn: latest.id,
+          sentNote: `Switched to the ${look.name} look`, createdAt: new Date().toISOString(), pages, comments: [],
+          summary: `Same words and photos in the ${look.name} design.`, changes: [], unresolved: [],
+        });
+        result = { pending: true };
+      });
+      if (!ok || !result) throw new AccessError('This client has no website yet.', 404);
+      return wait(result as { pending: boolean }, 300);
     },
     async syncSite(clientId) {
       await admin();

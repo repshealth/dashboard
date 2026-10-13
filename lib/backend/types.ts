@@ -1,3 +1,4 @@
+import type { SiteDesign } from '../site/spec';
 import type { LaunchDoc, LaunchSetup, OnboardingAnswers } from '../site/onboarding';
 import type { Client, Lead, LeadEvent, Site, SiteComment, SiteSource, SiteVersion, StageId, Viewer } from '../types';
 import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState } from '../emails/types';
@@ -53,6 +54,8 @@ export interface Backend {
   saveSiteSource(clientId: string, src: Pick<SiteSource, 'repo' | 'branch' | 'autoPublish'>): Promise<void>;
   /** REPS checks GitHub for a newer version now (pushes also arrive on their own). */
   syncSite(clientId: string): Promise<{ added: boolean; note: string }>;
+  /** Admin: redraw a generated site in another design. Drafts change in place; otherwise a pending version. */
+  setSiteDesign(clientId: string, design: Exclude<SiteDesign, 'shapeup'>): Promise<{ pending: boolean }>;
   /** REPS approves a revised version: the client can now see it and approve it. */
   approveVersion(clientId: string, versionId: string): Promise<void>;
   /** REPS discards a revised version; the request stays open for the team to handle. */

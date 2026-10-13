@@ -1,4 +1,4 @@
-import type { FontStyle } from './spec';
+import type { FontStyle, SiteDesign } from './spec';
 
 /** What a client fills in on the onboarding form. Image fields hold a URL (live) or a data URL (preview). */
 export interface OnboardingAnswers {
@@ -6,7 +6,7 @@ export interface OnboardingAnswers {
   /** Their web address, so the site can go live on it. */
   domain: DomainAnswers;
   business: { brandName: string; coachName: string; instagram: string; publicEmail: string };
-  brand: { primary: string; secondary: string; font: FontStyle; tone: string; logo?: string };
+  brand: { primary: string; secondary: string; font: FontStyle; tone: string; logo?: string; /** Website design they picked, or 'auto' to let REPS choose. */ look?: Exclude<SiteDesign, 'shapeup'> | 'auto' };
   audience: { who: string; struggles: string; goals: string; objections: string };
   offer: {
     type: 'app' | 'coaching' | 'hybrid';
@@ -103,7 +103,7 @@ export function emptyAnswers(): OnboardingAnswers {
     contact: { name: '', email: '', phone: '', address: '', timezone: 'Europe/London' },
     domain: emptyDomain(),
     business: { brandName: '', coachName: '', instagram: '', publicEmail: '' },
-    brand: { primary: '#5BB6F0', secondary: '#FBDD8A', font: 'bold', tone: '' },
+    brand: { primary: '#5BB6F0', secondary: '#FBDD8A', font: 'bold', tone: '', look: 'auto' },
     audience: { who: '', struggles: '', goals: '', objections: '' },
     offer: {
       type: 'app', productName: '', location: 'both', daysPerWeek: '3–5', sessionLength: '30 min', features: [], freeTrialDays: 7,
@@ -130,7 +130,7 @@ export function exampleAnswers(): OnboardingAnswers {
     contact: { name: 'Danielle Cole', email: 'dani@example.com', phone: '07700 900555', address: '14 Marlow Road, Leeds LS6 2AB', timezone: 'Europe/London' },
     domain: { has: 'yes', name: 'strongwithdani.co.uk', registrar: 'GoDaddy', access: 'yes', currentSite: '' },
     business: { brandName: 'Strong With Dani', coachName: 'Dani', instagram: '@strongwithdani', publicEmail: 'hello@strongwithdani.co.uk' },
-    brand: { primary: '#E2557A', secondary: '#F7D9C4', font: 'bold', tone: 'Warm, direct, no-nonsense' },
+    brand: { primary: '#E2557A', secondary: '#F7D9C4', font: 'bold', tone: 'Warm, direct, no-nonsense', look: 'studio' },
     audience: {
       who: 'Busy mums aged 28 to 45 who used to train and want to feel strong again',
       struggles: 'No time, starting again every Monday, confused by conflicting advice online',

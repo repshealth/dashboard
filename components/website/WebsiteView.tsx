@@ -7,6 +7,7 @@ import MockSite from './MockSite';
 import SpecSite from '../site/SpecSite';
 import HtmlFrame from '../site/HtmlFrame';
 import SiteSource from './SiteSource';
+import SiteLook from './SiteLook';
 import { SITE_STATUS } from '@/lib/constants';
 import { fmtWhen } from '@/lib/format';
 import { pendingVersion, publishedVersions } from '@/lib/site/versions';
@@ -19,15 +20,15 @@ const SECTION_NAMES: Record<string, string> = {
 
 /** Describes what a pin was dropped on, so the REPS team (and Claude) know what the comment is about. */
 function describeTarget(el: Element, pageName: string): CommentTarget {
-  const sec = el.closest('.t-navwrap, .t-hero, .t-bandzone, .t-foot, .pz-nav, .pz-hero, .pz-band, .pz-promo, .pz-stats, .pz-foot, section[id]');
-  const has = (c: string) => sec?.classList.contains(c);
+  const sec = el.closest('.t-navwrap, .t-hero, .t-bandzone, .t-foot, .pz-nav, .pz-hero, .pz-band, .pz-promo, .pz-stats, .pz-foot, .ar-ticker, .ar-nav, .ar-hero, .ar-stats, .ar-foot, .st-bar, .st-nav, .st-hero, .st-band, .st-stats, .st-foot, section[id]');
+  const has = (...c: string[]) => c.some((x) => sec?.classList.contains(x));
   const section = !sec ? pageName
-    : has('t-navwrap') || has('pz-nav') ? 'Menu'
-    : has('t-hero') || has('pz-hero') ? 'Hero'
-    : has('t-bandzone') || has('pz-band') ? 'Highlights band'
-    : has('pz-promo') ? 'Offer bar'
-    : has('pz-stats') ? 'Numbers'
-    : has('t-foot') || has('pz-foot') ? 'Footer'
+    : has('t-navwrap', 'pz-nav', 'ar-nav', 'st-nav') ? 'Menu'
+    : has('t-hero', 'pz-hero', 'ar-hero', 'st-hero') ? 'Hero'
+    : has('t-bandzone', 'pz-band', 'st-band') ? 'Highlights band'
+    : has('pz-promo', 'ar-ticker', 'st-bar') ? 'Offer bar'
+    : has('pz-stats', 'ar-stats', 'st-stats') ? 'Numbers'
+    : has('t-foot', 'pz-foot', 'ar-foot', 'st-foot') ? 'Footer'
     : SECTION_NAMES[sec.id] ?? pageName;
   const pic = el.closest('img, [role="img"]');
   if (pic) {
@@ -374,6 +375,7 @@ export default function WebsiteView() {
           ) : locked ? (
             <div className="sv-lock">Design approved. Comments are closed and the REPS team will now put the site live.</div>
           ) : null}
+          {viewer?.isAdmin && !old && <SiteLook site={site} version={version} />}
           {viewer?.isAdmin && !old && <SiteSource site={site} />}
           <div className="lbl">COMMENTS ON {page.name.toUpperCase()}</div>
           <div className="sv-open">{openAll} open across the site</div>

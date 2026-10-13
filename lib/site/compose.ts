@@ -1,6 +1,15 @@
 import type { OnboardingAnswers } from './onboarding';
 import type { SiteCopy } from './copy';
-import type { Plan, SiteSpec } from './spec';
+import type { Plan, SiteDesign, SiteSpec } from './spec';
+
+/**
+ * The design a new site gets: the client's pick, else one that suits their headline style
+ * (serif goes editorial, condensed goes athletic), so new sites don't all look alike.
+ */
+export function pickDesign(brand: OnboardingAnswers['brand']): SiteDesign {
+  if (brand.look && brand.look !== 'auto') return brand.look;
+  return brand.font === 'elegant' ? 'studio' : brand.font === 'modern' ? 'arena' : 'pulse';
+}
 
 const DAYS: Record<string, number> = { week: 7, month: 30.4, quarter: 91.3, year: 365, once: 0 };
 const PERIOD_LABEL: Record<string, string> = {
@@ -61,7 +70,7 @@ export function buildSpec(a: OnboardingAnswers, c: SiteCopy, slug: string): Site
 
   return {
     slug,
-    design: 'pulse',
+    design: pickDesign(a.brand),
     brand: {
       name: a.business.brandName,
       logoUrl: a.brand.logo,

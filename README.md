@@ -22,7 +22,7 @@ It's view-only example data: nothing is saved and it resets when the page reload
 1. Push this folder to a GitHub repo (private is fine).
 2. In the Cloudflare dashboard go to **Workers & Pages > Create > Import a repository** and pick the repo.
 3. Set the **Build command** to `npx opennextjs-cloudflare build` and the **Deploy command** to `npx opennextjs-cloudflare deploy`. Leave the rest as it is.
-4. Deploy. You get an address like `reps-scaling-os.<your-account>.workers.dev`, and every push to GitHub redeploys it.
+4. Deploy. You get an address like `dashboard.<your-account>.workers.dev`, and every push to GitHub redeploys it.
 
 The first deploy also creates the D1 database (`reps-scaling-os`) and the R2 bucket (`reps-scaling-os-uploads`) listed in `wrangler.jsonc`. In example mode they sit unused.
 

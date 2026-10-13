@@ -9,7 +9,7 @@
  */
 export type Kind =
   | 'client' | 'lead' | 'site' | 'campaign' | 'submission'
-  | 'meeting' | 'meetingdoc' | 'voice' | 'mailerlite' | 'task'
+  | 'meeting' | 'meetingdoc' | 'voice' | 'mailerlite' | 'task' | 'launch'
   | 'user' | 'session' | 'token';
 
 export interface DocMeta {

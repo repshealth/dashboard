@@ -36,7 +36,7 @@ interface DataCtx {
   approve: () => Promise<void>;
   sendToClient: () => Promise<void>;
   /** Reloads the selected client's website (e.g. after a GitHub update). */
-  refreshSite: () => Promise<void>;
+  refreshSite: (clientId?: string) => Promise<void>;
   /* Agency */
   allLeads: Lead[] | null;
   allSites: Site[] | null;
@@ -52,6 +52,9 @@ interface DataCtx {
   allTasks: Task[] | null;
   tasksCount: number;
   refreshTasks: () => Promise<void>;
+  /** Clients whose intake form is in but whose launch setup isn't built yet (REPS only). */
+  launchCount: number;
+  refreshLaunch: () => Promise<void>;
   refreshAgency: () => Promise<void>;
   approveVersion: (clientId: string, versionId: string) => Promise<void>;
   rejectVersion: (clientId: string, versionId: string, note: string) => Promise<void>;
@@ -102,6 +105,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const refreshMeetings = useCallback(async () => { setAllMeetings(await backend.listMeetings()); }, []);
   const [allTasks, setAllTasks] = useState<Task[] | null>(null);
   const refreshTasks = useCallback(async () => { setAllTasks(await backend.listTasks()); }, []);
+  const [launchCount, setLaunchCount] = useState(0);
+  const refreshLaunch = useCallback(async () => {
+    const [subs, docs] = await Promise.all([backend.listSubmissions(), backend.listLaunchSetups()]);
+    const built = new Set(docs.filter((d) => d.builtAt).map((d) => d.clientId));
+    setLaunchCount(new Set(subs.filter((x) => x.clientId && !built.has(x.clientId)).map((x) => x.clientId)).size);
+  }, []);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -115,6 +124,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [l, s, e, m, t] = await Promise.all([backend.listAllLeads(), backend.listSites(), backend.listEmailCampaigns(), backend.listMeetings(), backend.listTasks()]);
     setAllMeetings(m);
     setAllTasks(t);
+    refreshLaunch().catch(() => {});
     setAllLeads(l);
     setAllSites(s);
     setAllCampaigns(e);
@@ -273,8 +283,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await Promise.all([refreshAgency(), sitesBy[cid] !== undefined ? reloadSite(cid) : Promise.resolve()]);
   }, [refreshAgency, reloadSite, sitesBy]);
 
-  const refreshSite = useCallback(async () => {
-    if (clientId) await reloadSite(clientId);
+  const refreshSite = useCallback(async (cid?: string) => {
+    const id = cid ?? clientId;
+    if (id) await reloadSite(id);
   }, [clientId, reloadSite]);
 
   const signOut = useCallback(async () => {
@@ -290,8 +301,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DataCtx>(() => ({
     mode: backend.mode, ready, error, viewer, clients, client, setClientId, leads, site,
     moveLead, saveNotes, addComment, toggleResolved, requestChanges, approve, sendToClient, refreshSite,
-    allLeads, allSites, approvalsCount, allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, refreshAgency, approveVersion, rejectVersion, toast, signOut,
-  }), [allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, ready, error, viewer, clients, client, setClientId, leads, site, moveLead, saveNotes, addComment, toggleResolved,
+    allLeads, allSites, approvalsCount, allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, launchCount, refreshLaunch, refreshAgency, approveVersion, rejectVersion, toast, signOut,
+  }), [allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, launchCount, refreshLaunch, ready, error, viewer, clients, client, setClientId, leads, site, moveLead, saveNotes, addComment, toggleResolved,
     requestChanges, approve, sendToClient, refreshSite, allLeads, allSites, approvalsCount, refreshAgency, approveVersion, rejectVersion, toast, signOut]);
 
   return (

@@ -3,7 +3,7 @@ import { pageName, type FetchedSite } from '../site/github';
 import { STAGE_NAME } from '../constants';
 import type { SiteCopy } from '../site/copy';
 import { buildSpec, slugify } from '../site/compose';
-import { emptyAnswers, emptyLaunch, launchOf, type OnboardingAnswers } from '../site/onboarding';
+import { emptyAnswers, emptyLaunch, launchOf, withLaunch, type LaunchDoc, type OnboardingAnswers } from '../site/onboarding';
 import { buildPreReg, type PreRegCopy } from '../site/prereg';
 import { makeAmendedVersion, type AmendFn } from '../site/make-amend';
 import { buildCampaign } from '../emails/copy';
@@ -294,6 +294,67 @@ export async function ingestMeetingDoc(store: DocStore, services: Services, d: {
   return { id: m.id, clientId: m.clientId, duplicate: false, meeting: m };
 }
 
+/**
+ * Builds a client's launch from their intake answers and the team's launch setup: the website
+ * gets its pricing and offer, the pre-registration page is made, and both email sequences are
+ * written. Drafts are updated in place; anything the client has already seen gets a new version
+ * that waits for REPS approval. Returns a line per thing done, for the team.
+ */
+export async function buildLaunch(store: DocStore, services: Services, clientId: string): Promise<string[]> {
+  const [launch, subs, client, voice] = await Promise.all([
+    store.get<LaunchDoc>('launch', clientId), store.list<Submission>('submission', { clientId, limit: 1 }),
+    store.get<ClientRec>('client', clientId), store.get<VoiceProfile>('voice', clientId),
+  ]);
+  if (!launch) throw new AccessError('Fill in the launch setup first.', 400);
+  if (!subs[0] || !client) throw new AccessError('This client has no intake form yet.', 400);
+  const a = withLaunch(subs[0].answers, launch.setup);
+  if (!launchOf(a).date) throw new AccessError('Add the launch date first.', 400);
+  const notes: string[] = [];
+
+  const [site1, pre, mail] = await Promise.all([services.writeSiteCopy(a), services.writePreRegCopy(a), services.writeLaunchEmails(a, voiceForPrompt(voice))]);
+  const spec = buildSpec(a, site1.copy, client.slug);
+  const prereg = buildPreReg(a, pre.copy, spec);
+
+  await store.mutate<Site>('site', clientId, (x) => {
+    const latest = x.versions.find((v) => (v.state ?? 'published') === 'published');
+    const keep = (key: string) => latest?.pages.find((p) => p.key === key)?.id ?? services.newId();
+    const pages = [
+      { id: keep('home'), key: 'home', name: 'Homepage', path: ' · Homepage', kind: 'template' as const, spec },
+      { id: keep('prereg'), key: 'prereg', name: 'Pre-registration', path: ' · Pre-registration', kind: 'template' as const, spec: prereg },
+    ];
+    if (x.status === 'draft' && latest) {
+      latest.pages = pages;
+      latest.sentNote = 'Built from the intake form and launch setup';
+      x.statusNote = 'Launch setup added. Check it over, then send it to the client.';
+      notes.push('Website draft updated with the offer and pricing, and the pre-registration page added.');
+    } else {
+      const n = `v${x.versions.filter((v) => v.state !== 'rejected').length + 1}`;
+      x.versions.forEach((v) => { if (v.state === 'pending') v.state = 'rejected'; });
+      x.versions.unshift({
+        id: services.newId(), version: n, label: `${n} · Launch details added`, state: 'pending', basedOn: latest?.id,
+        sentNote: 'Updated from the launch setup', createdAt: new Date().toISOString(), pages, comments: [],
+        summary: 'Offer, pricing and pre-registration page added from the launch setup.', changes: [], unresolved: [],
+      });
+      notes.push(`Website ${n} with the offer and pre-registration page is waiting in Approvals.`);
+    }
+  }, meta.site);
+
+  const existing = await store.get<EmailCampaign>('campaign', clientId);
+  if (!existing || existing.status === 'draft') {
+    const c = buildCampaign(a, clientId, mail.emails, mail.by);
+    c.versions[0].id = services.newId();
+    if (mail.by === 'claude') c.versions[0].sentNote = 'Written by Claude from the intake form and launch setup';
+    await store.put('campaign', clientId, c, meta.campaign(c));
+    notes.push(existing ? 'Launch emails rewritten (still a draft).' : 'Both launch email sequences written as a draft.');
+  } else {
+    await store.mutate<EmailCampaign>('campaign', clientId, (c) => Object.assign(c, {
+      launchDate: launchOf(a).date, websiteUrl: launchOf(a).websiteUrl, discountCode: launchOf(a).code, offer: launchOf(a).offer,
+    }), meta.campaign);
+    notes.push('The client has already seen their emails, so only the launch date, link and code were updated. Use Rewrite in Agency · Emails if the copy needs to change.');
+  }
+  return notes;
+}
+
 /* The backend ------------------------------------------------------------------------- */
 
 /**
@@ -431,9 +492,13 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
 
     async submitOnboarding(raw) {
       const base = emptyAnswers();
+      // The client only answers about themselves and their brand. The offer, pricing and launch
+      // come later from the REPS team's launch setup.
       const a: OnboardingAnswers = {
         ...base, ...raw,
-        contact: { ...base.contact, ...raw.contact }, business: { ...base.business, ...raw.business }, launch: { ...emptyLaunch(), ...raw.launch },
+        contact: { ...base.contact, ...raw.contact }, business: { ...base.business, ...raw.business },
+        domain: { ...base.domain, ...(raw.domain ?? {}) },
+        offer: base.offer, leadMagnet: base.leadMagnet, launch: emptyLaunch(),
       };
       if (!a.business.brandName?.trim()) throw new AccessError('Please add your business name.', 400);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.contact.email || '')) throw new AccessError('Please add a valid email address.', 400);
@@ -450,37 +515,46 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       const sub: Submission = { id: services.newId(), clientId, submittedAt: now, answers: a };
       await store.put('submission', sub.id, sub, meta.submission(sub));
 
-      // Calls already held with this person (e.g. the sales call) move into their new account,
-      // and how they talked on them shapes their launch emails.
-      let voice = '';
+      // Calls already held with this person (e.g. the sales call) move into their new account.
       const prior = (await store.list<Meeting>('meeting', { clientId: null })).filter((m) => m.attendees.includes(client.contactEmail!));
-      if (prior.length) {
-        for (const m of prior) await store.mutate<Meeting>('meeting', m.id, (x) => { x.clientId = clientId; }, meta.meeting);
-        voice = voiceForPrompt(await refreshVoiceFor(store, services, clientId).catch(() => null));
-      }
+      for (const m of prior) await store.mutate<Meeting>('meeting', m.id, (x) => { x.clientId = clientId; }, meta.meeting);
+      if (prior.length) await refreshVoiceFor(store, services, clientId).catch(() => null);
 
-      const [site1, pre, mail] = await Promise.all([services.writeSiteCopy(a), services.writePreRegCopy(a), services.writeLaunchEmails(a, voice)]);
+      // The first draft of the website, from their branding. Pricing is added in the launch setup.
+      const site1 = await services.writeSiteCopy(a);
       const spec = buildSpec(a, site1.copy, slug);
-      const prereg = buildPreReg(a, pre.copy, spec);
-      const vid = services.newId();
       const s: Site = {
-        clientId, status: 'draft', statusNote: 'Built from the onboarding form just now', contact: client.contactName ?? client.name, domain: client.name,
+        clientId, status: 'draft', statusNote: 'Built from the intake form. Add the launch setup to fill in the pricing.',
+        contact: client.contactName ?? client.name, domain: a.domain.name || client.name,
         versions: [{
-          id: vid, version: 'v1', label: 'v1 · First draft', state: 'published', createdAt: now,
-          sentNote: site1.by === 'claude' ? 'Built from the onboarding form, copy written by Claude' : 'Built from the onboarding form',
-          pages: [
-            { id: services.newId(), key: 'home', name: 'Homepage', path: ' · Homepage', kind: 'template', spec },
-            { id: services.newId(), key: 'prereg', name: 'Pre-registration', path: ' · Pre-registration', kind: 'template', spec: prereg },
-          ],
+          id: services.newId(), version: 'v1', label: 'v1 · First draft', state: 'published', createdAt: now,
+          sentNote: site1.by === 'claude' ? 'Built from the intake form, copy written by Claude' : 'Built from the intake form',
+          pages: [{ id: services.newId(), key: 'home', name: 'Homepage', path: ' · Homepage', kind: 'template', spec }],
           comments: [],
         }],
       };
       await store.put('site', clientId, s, meta.site(s));
-      const c = buildCampaign(a, clientId, mail.emails, mail.by);
-      c.versions[0].id = services.newId();
-      if (mail.by === 'claude') c.versions[0].sentNote = 'Written by Claude from the onboarding form';
-      await store.put('campaign', clientId, c, meta.campaign(c));
       return wait({ clientId, slug, copyBy: site1.by }, 1800);
+    },
+
+    /* Launch setup (filled in by REPS after the intake form) */
+    async listLaunchSetups() {
+      await admin();
+      return wait(await store.list<LaunchDoc>('launch'));
+    },
+    async getLaunchSetup(clientId) {
+      await admin();
+      return wait(await store.get<LaunchDoc>('launch', clientId));
+    },
+    async saveLaunchSetup(clientId, setup, build) {
+      const v = await admin();
+      const old = await store.get<LaunchDoc>('launch', clientId);
+      const doc: LaunchDoc = { clientId, setup, savedAt: new Date().toISOString(), savedBy: actor(v), builtAt: old?.builtAt };
+      await store.put('launch', clientId, doc, { clientId, sort: doc.savedAt });
+      if (!build) return { built: false, notes: ['Saved.'] };
+      const notes = await buildLaunch(store, services, clientId);
+      await store.mutate<LaunchDoc>('launch', clientId, (x) => { x.builtAt = new Date().toISOString(); }, () => ({ clientId, sort: doc.savedAt }));
+      return wait({ built: true, notes }, 1500);
     },
 
     /* Agency */

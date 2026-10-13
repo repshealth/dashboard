@@ -3,7 +3,7 @@ import type { Lead, Site, SiteComment } from '../types';
 import { uid } from '../format';
 import { fallbackCopy } from '../site/copy';
 import { buildSpec } from '../site/compose';
-import { exampleAnswers, launchOf, type OnboardingAnswers } from '../site/onboarding';
+import { exampleAnswers, launchFrom, launchOf, type LaunchDoc, type OnboardingAnswers } from '../site/onboarding';
 import { buildPreReg, fallbackPreRegCopy } from '../site/prereg';
 import { amendWithRules } from '../site/amend-rules';
 import { makeAmendedVersion } from '../site/make-amend';
@@ -117,6 +117,7 @@ async function seedExample() {
     store.put('client', slug, client, meta.client(client)),
     store.put('site', slug, site, meta.site(site)),
     store.put('submission', sub.id, sub, meta.submission(sub)),
+    store.put('launch', slug, { clientId: slug, setup: launchFrom(a), savedAt: at('08T10:05'), savedBy: 'REPS team', builtAt: at('08T10:06') } as LaunchDoc, { clientId: slug, sort: at('08T10:05') }),
     store.put('campaign', slug, c, meta.campaign(c)),
     ...demoMeetings.map((m) => store.put('meeting', m.id, m, meta.meeting(m))),
     ...demoVoice.map((v) => store.put('voice', v.clientId, v, meta.voice(v))),

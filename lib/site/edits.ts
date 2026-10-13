@@ -2,7 +2,7 @@ import type { AnySpec } from './prereg';
 import type { SiteChange } from '../types';
 
 /** Fields that are never edited by an amend: identifiers and images. */
-const LOCKED = /(^slug$|^kind$|^launchDate$|(^|\.)(image|logoUrl|before|after|screens(\.\d+)?)$|^brand\.(ground|ink)$)/;
+const LOCKED = /(^slug$|^design$|^kind$|^launchDate$|(^|\.)(image|logoUrl|before|after|screens(\.\d+)?)$|^brand\.(ground|ink)$)/;
 const IMAGE_VALUE = /^(data:|https?:\/\/|\/)/;
 
 /**

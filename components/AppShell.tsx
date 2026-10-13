@@ -73,6 +73,15 @@ const AGENCY_NAV = [
     ),
   },
   {
+    href: '/agency/launch',
+    label: 'Launch setup',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+        <path d="M9.5 2.5c2.5.5 4 2 4 4.5L9 11.5 4.5 7 9 2.5h.5zM6 10l-3 3M4.5 7L2.5 7.5 4 5.5M9 11.5l-.5 2 2-1.5" />
+      </svg>
+    ),
+  },
+  {
     href: '/agency/emails',
     label: 'Emails',
     icon: (
@@ -206,7 +215,7 @@ function NavLink({ href, label, icon, exact, count }: { href: string; label: str
 }
 
 function Shell({ children }: { children: ReactNode }) {
-  const { ready, error, mode, viewer, client, approvalsCount, emailsCount, meetingsCount, tasksCount } = useData();
+  const { ready, error, mode, viewer, client, approvalsCount, emailsCount, meetingsCount, tasksCount, launchCount } = useData();
   const pathname = usePathname();
   const onAgency = pathname.startsWith('/agency');
   const admin = Boolean(viewer?.isAdmin);
@@ -223,13 +232,14 @@ function Shell({ children }: { children: ReactNode }) {
             <div className="nav-h">AGENCY</div>
             <NavLink {...AGENCY_NAV[0]} exact />
             <NavLink {...AGENCY_NAV[1]} count={approvalsCount} />
-            <NavLink {...AGENCY_NAV[2]} count={emailsCount} />
-            <NavLink {...AGENCY_NAV[3]} count={tasksCount} />
-            <NavLink {...AGENCY_NAV[4]} count={meetingsCount} />
-            <NavLink {...AGENCY_NAV[5]} />
+            <NavLink {...AGENCY_NAV[2]} count={launchCount} />
+            <NavLink {...AGENCY_NAV[3]} count={emailsCount} />
+            <NavLink {...AGENCY_NAV[4]} count={tasksCount} />
+            <NavLink {...AGENCY_NAV[5]} count={meetingsCount} />
+            <NavLink {...AGENCY_NAV[6]} />
             <Link href="/onboarding">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
-              New client form
+              Client intake form
             </Link>
             <CopyFormLink />
           </nav>

@@ -46,6 +46,8 @@ export interface Faq { q: string; a: string }
 
 export interface SiteSpec {
   slug: string;
+  /** Which website design draws it. Older sites without it use Shape Up. */
+  design?: 'shapeup' | 'pulse';
   brand: {
     name: string;
     logoUrl?: string;
@@ -131,6 +133,8 @@ export interface SiteSpec {
     body: string;
     button: string;
     small: string;
+    /** No free guide yet: the closing section asks people to join instead. */
+    off?: boolean;
   };
   footer: { blurb: string };
 }

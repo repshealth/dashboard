@@ -1,4 +1,4 @@
-import type { OnboardingAnswers } from '../site/onboarding';
+import type { LaunchDoc, LaunchSetup, OnboardingAnswers } from '../site/onboarding';
 import type { Client, Lead, LeadEvent, Site, SiteComment, SiteSource, SiteVersion, StageId, Viewer } from '../types';
 import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState } from '../emails/types';
 import type { Meeting, VoiceProfile } from '../meetings/types';
@@ -57,6 +57,11 @@ export interface Backend {
   approveVersion(clientId: string, versionId: string): Promise<void>;
   /** REPS discards a revised version; the request stays open for the team to handle. */
   rejectVersion(clientId: string, versionId: string, note: string): Promise<void>;
+  /** Launch setups saved by the team (one per client). */
+  listLaunchSetups(): Promise<LaunchDoc[]>;
+  getLaunchSetup(clientId: string): Promise<LaunchDoc | null>;
+  /** Saves the launch setup. With build, also updates the website, makes the pre-reg page and writes the emails. */
+  saveLaunchSetup(clientId: string, setup: LaunchSetup, build: boolean): Promise<{ built: boolean; notes: string[] }>;
   /** Every onboarding form submitted, newest first. */
   listSubmissions(): Promise<Submission[]>;
 

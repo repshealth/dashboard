@@ -19,12 +19,15 @@ const SECTION_NAMES: Record<string, string> = {
 
 /** Describes what a pin was dropped on, so the REPS team (and Claude) know what the comment is about. */
 function describeTarget(el: Element, pageName: string): CommentTarget {
-  const sec = el.closest('.t-navwrap, .t-hero, .t-bandzone, .t-foot, section[id]');
+  const sec = el.closest('.t-navwrap, .t-hero, .t-bandzone, .t-foot, .pz-nav, .pz-hero, .pz-band, .pz-promo, .pz-stats, .pz-foot, section[id]');
+  const has = (c: string) => sec?.classList.contains(c);
   const section = !sec ? pageName
-    : sec.classList.contains('t-navwrap') ? 'Menu'
-    : sec.classList.contains('t-hero') ? 'Hero'
-    : sec.classList.contains('t-bandzone') ? 'Highlights band'
-    : sec.classList.contains('t-foot') ? 'Footer'
+    : has('t-navwrap') || has('pz-nav') ? 'Menu'
+    : has('t-hero') || has('pz-hero') ? 'Hero'
+    : has('t-bandzone') || has('pz-band') ? 'Highlights band'
+    : has('pz-promo') ? 'Offer bar'
+    : has('pz-stats') ? 'Numbers'
+    : has('t-foot') || has('pz-foot') ? 'Footer'
     : SECTION_NAMES[sec.id] ?? pageName;
   const pic = el.closest('img, [role="img"]');
   if (pic) {

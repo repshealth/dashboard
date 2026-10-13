@@ -61,6 +61,7 @@ export function buildSpec(a: OnboardingAnswers, c: SiteCopy, slug: string): Site
 
   return {
     slug,
+    design: 'pulse',
     brand: {
       name: a.business.brandName,
       logoUrl: a.brand.logo,
@@ -163,6 +164,7 @@ export function buildSpec(a: OnboardingAnswers, c: SiteCopy, slug: string): Site
       body: c.capture_body,
       button: 'Send it to me',
       small: "We'll never share your email. Unsubscribe in one click.",
+      off: !a.leadMagnet.name.trim(),
     },
     footer: { blurb: c.footer_blurb },
   };

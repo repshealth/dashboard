@@ -64,19 +64,28 @@ To try live mode locally, copy `.env.example` to `.dev.vars`, then run `NEXT_PUB
 
 ## New client onboarding
 
-Send new clients to `https://<your-dashboard>/onboarding` (REPS admins also have a **New client form** link in the sidebar).
+Onboarding happens in two parts.
 
-When a client submits it:
+**1. The client fills in the intake form** at `https://<your-dashboard>/onboarding` (REPS admins also have **Client intake form** in the sidebar). It only asks about them and their brand: contact details, address, time zone, their domain, brand, audience, results and reviews, story and photos. When they submit it:
 
-1. A new account is created in the dashboard, named after their business.
-2. Their answers are saved (table `onboarding_submissions`) and their logo and photos go into the `client-uploads` bucket.
-3. Claude writes, in parallel: the website copy, the pre-registration page, and both launch email sequences (see below). The site and pre-registration page are built from the template with their colours, logo and photos.
-4. The Website section gets two pages, **Homepage** and **Pre-registration**, as **Draft · REPS only**. The Emails section gets the 12 launch emails, also as a draft. Clients can't see drafts.
-5. When you're happy, press **Send to client** in each section. The client is emailed a sign-in link to their account.
+- their sub account is created straight away,
+- their answers are saved (Agency · Onboarding shows them),
+- Claude writes a first draft of their website in the **Pulse** design with their branding. It appears in Website as **Draft · REPS only**, with the pricing section marked "to be added".
 
-To have Claude write the copy, add `ANTHROPIC_API_KEY` (from console.anthropic.com) in Cloudflare. Without it, sites are still built using standard wording drawn from the client's answers. Each site is one API call.
+**2. The REPS team fills in the launch setup** in **Agency · Launch setup**, which lists every sub account still waiting (with a count in the sidebar). It holds the offer and pricing, features and app screenshots, programmes, the free guide, and the app launch (date, website link, pre-reg offer and code). **Save** as you go; **Save and build launch** then:
 
-Claude is told to use only facts from the form, so it never invents member counts, reviews or results. Sections with nothing to show (no programmes, no transformations, coaching with no app) are left off the site.
+- rewrites the website with the offer and pricing, and adds the pre-registration page,
+- writes both launch email sequences (in the client's voice if their calls are in),
+- updates drafts in place. If the client has already seen something, the website gets a new version waiting in Approvals, and the emails keep their copy but take the new date, link and code.
+
+To have Claude write the copy, add `ANTHROPIC_API_KEY` in Cloudflare. Without it, standard wording drawn from the answers is used. Claude is told to use only facts from the form, so it never invents member counts, reviews or results.
+
+### Website designs
+
+- **Pulse** (`components/site/PulseSite.tsx`, `pulse.css`), used for new sites. Inspired by EvolveYou, Ladder, Sweat, Centr, Shreddy and similar app-launch sites: a dark campaign hero with a slowly moving glow in the brand colours, phones whose screens scroll through the app, a feature showcase where the phone follows the feature you're on, marquees for highlights and reviews, numbers that count up, and hover effects on buttons, cards, photos and plans. Without app screenshots the phones show a stand-in app screen built from the feature names. Motion switches off for people who ask their device for less motion.
+- **Shape Up** (`TemplateSite.tsx`, `template.css`), the original design. Sites saved before Pulse keep it.
+
+Both draw from the same `SiteSpec` (`lib/site/spec.ts`), so comments, amends and approvals work the same on either.
 
 ## Launch: pre-registration page and emails
 
@@ -140,9 +149,9 @@ The script checks the **Meet Recordings** folder in Drive every 15 minutes and s
 
 Gemini note-taking needs a Google Workspace plan that includes Gemini in Meet.
 
-### The website template
+### Working on the website designs
 
-`components/site/TemplateSite.tsx` and `components/site/template.css` draw the whole site from a `SiteSpec` (`lib/site/spec.ts`). `lib/site/compose.ts` turns onboarding answers and copy into a spec. To work on the design, run `npm run preview:template` and open `preview-dist/template.html`, which shows the template filled with example answers.
+`lib/site/compose.ts` turns the answers and copy into a `SiteSpec`. Run `npm run preview` and open Strong With Dani's Website to see Pulse with example answers.
 
 ## Websites updated from Claude (GitHub)
 

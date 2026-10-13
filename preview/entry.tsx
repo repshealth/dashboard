@@ -13,6 +13,7 @@ import AgencyMeetings from '@/components/agency/AgencyMeetings';
 import MeetingsView from '@/components/meetings/MeetingsView';
 import AgencyTasks from '@/components/agency/AgencyTasks';
 import TasksView from '@/components/tasks/TasksView';
+import LaunchSetupPage from '@/components/agency/LaunchSetupPage';
 import LoginPage from '@/app/login/page';
 import OnboardingScreen from '@/components/onboarding/OnboardingScreen';
 import { usePathname } from './shims/navigation';
@@ -26,6 +27,7 @@ function Screen() {
   if (path.startsWith('/emails')) return <EmailsView />;
   if (path === '/agency/meetings') return <AgencyMeetings />;
   if (path === '/agency/tasks') return <AgencyTasks />;
+  if (path === '/agency/launch') return <LaunchSetupPage />;
   if (path.startsWith('/tasks')) return <TasksView />;
   if (path.startsWith('/meetings')) return <MeetingsView />;
   return path.startsWith('/website') ? <WebsiteView /> : <LeadsView />;

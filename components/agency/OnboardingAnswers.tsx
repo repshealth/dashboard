@@ -7,12 +7,8 @@ import { useData } from '../DataProvider';
 import { backend, type Submission } from '@/lib/backend';
 import { SITE_STATUS } from '@/lib/constants';
 import { fmtWhen } from '@/lib/format';
-import { launchOf, type OnboardingAnswers as Answers } from '@/lib/site/onboarding';
-import { fmtLaunch } from '@/lib/emails/schedule';
+import type { OnboardingAnswers as Answers } from '@/lib/site/onboarding';
 
-const OFFER = { app: 'App membership', coaching: 'Online coaching', hybrid: 'App plus coaching' } as const;
-const WHERE = { gym: 'Gym', home: 'Home', both: 'Gym and home' } as const;
-const PERIOD = { week: 'per week', month: 'per month', quarter: 'every 3 months', year: 'per year', once: 'one-off' } as const;
 const FONT = { bold: 'Bold (tall, condensed capitals)', modern: 'Modern (clean and sporty)', elegant: 'Elegant (serif)' } as const;
 
 /** A question and its answer. Empty answers are shown as such, so gaps are easy to spot. */
@@ -51,8 +47,7 @@ function Section({ n, title, children }: { n: number; title: string; children: R
 }
 
 function AnswerSheet({ a }: { a: Answers }) {
-  const plans = a.offer.plans.filter((p) => p.price);
-  const l = launchOf(a);
+
   return (
     <div className="oa-sheet">
       <Section n={1} title="You and your business">
@@ -63,6 +58,13 @@ function AnswerSheet({ a }: { a: Answers }) {
         <Row q="Name clients know them by">{a.business.coachName}</Row>
         <Row q="Instagram">{a.business.instagram}</Row>
         <Row q="Public contact email">{a.business.publicEmail}</Row>
+        <Row q="Business address">{a.contact.address && <span className="oa-long">{a.contact.address}</span>}</Row>
+        <Row q="Time zone">{a.contact.timezone?.replace('_', ' ')}</Row>
+        <Row q="Owns a domain">{a.domain ? ({ yes: 'Yes', no: 'No, needs one', unsure: 'Not sure' } as const)[a.domain.has] : null}</Row>
+        <Row q="Domain">{a.domain?.name}</Row>
+        <Row q="Bought from">{a.domain?.registrar}</Row>
+        <Row q="Can log in to it">{a.domain?.has === 'yes' ? ({ yes: 'Yes', no: 'No', unsure: 'Not sure' } as const)[a.domain.access] : null}</Row>
+        <Row q="Current website">{a.domain?.currentSite}</Row>
       </Section>
 
       <Section n={2} title="Brand">
@@ -84,37 +86,7 @@ function AnswerSheet({ a }: { a: Answers }) {
         <Row q="What stops them signing up">{a.audience.objections}</Row>
       </Section>
 
-      <Section n={4} title="Offer">
-        <Row q="What they sell">{OFFER[a.offer.type]}</Row>
-        <Row q="Programme or app name">{a.offer.productName}</Row>
-        <Row q="Where clients train">{WHERE[a.offer.location]}</Row>
-        <Row q="Sessions per week">{a.offer.daysPerWeek}</Row>
-        <Row q="Session length">{a.offer.sessionLength}</Row>
-        <Row q="Free trial">{a.offer.freeTrialDays ? `${a.offer.freeTrialDays} days` : 'None'}</Row>
-        <Row q="What's included">{a.offer.features.length ? <span className="oa-chips">{a.offer.features.map((f) => <span key={f}>{f}</span>)}</span> : null}</Row>
-        <Row q="Plans">
-          {plans.length ? (
-            <span className="oa-list">
-              {plans.map((p) => <span key={p.name}><b>{p.name}</b> £{p.price} {PERIOD[p.period]}{p.popular ? ' · most popular' : ''}</span>)}
-            </span>
-          ) : null}
-        </Row>
-        {a.offer.type !== 'coaching' && <Row q="App screenshots"><Pics srcs={a.offer.appScreens} label="Screenshot" tall /></Row>}
-      </Section>
-
-      <Section n={5} title="One-off programmes">
-        {a.offer.programmes.length ? a.offer.programmes.map((p, i) => (
-          <Row key={i} q={p.name || `Programme ${i + 1}`}>
-            <span className="oa-list">
-              <span>{[p.meta, p.price && `£${p.price}`].filter(Boolean).join(' · ')}</span>
-              {p.description && <span>{p.description}</span>}
-              {p.image && <Pics srcs={[p.image]} label="Programme photo" />}
-            </span>
-          </Row>
-        )) : <Row q="Programmes">{null}</Row>}
-      </Section>
-
-      <Section n={6} title="Results and reviews">
+      <Section n={4} title="Results and reviews">
         <Row q="Qualification">{a.proof.qualification}</Row>
         <Row q="Years coaching">{a.proof.yearsCoaching}</Row>
         <Row q="Clients coached">{a.proof.clientsCoached}</Row>
@@ -137,7 +109,7 @@ function AnswerSheet({ a }: { a: Answers }) {
         {!a.proof.reviews.length && <Row q="Written reviews">{null}</Row>}
       </Section>
 
-      <Section n={7} title="Story and photos">
+      <Section n={5} title="Story and photos">
         <Row q="Their story">{a.about.story && <span className="oa-long">{a.about.story}</span>}</Row>
         <Row q="Main photo"><Pics srcs={[a.about.heroPhoto]} label="Main photo" /></Row>
         <Row q="Second photo"><Pics srcs={[a.about.aboutPhoto]} label="Second photo" /></Row>
@@ -145,19 +117,8 @@ function AnswerSheet({ a }: { a: Answers }) {
         <Row q="Pricing card photos"><Pics srcs={a.about.planPhotos} label="Pricing photo" /></Row>
       </Section>
 
-      <Section n={8} title="Free guide">
-        <Row q="Name">{a.leadMagnet.name}</Row>
-        <Row q="What's in it">{a.leadMagnet.description}</Row>
+      <Section n={6} title="Anything else">
         <Row q="Anything else">{a.extra && <span className="oa-long">{a.extra}</span>}</Row>
-      </Section>
-
-      <Section n={9} title="App launch">
-        <Row q="Launch date">{l.date && fmtLaunch(l.date)}</Row>
-        <Row q="Website address">{l.websiteUrl}</Row>
-        <Row q="Pre-registration offer">{l.offer}</Row>
-        <Row q="Discount code">{l.code}</Row>
-        <Row q="Offer stays open">{l.offerDays && `${l.offerDays} days`}</Row>
-        <Row q="Email list size">{l.listSize}</Row>
       </Section>
     </div>
   );
@@ -194,9 +155,10 @@ export default function OnboardingAnswers() {
       <header>
         <div>
           <h1>Onboarding</h1>
-          <p className="sub">Every onboarding form submitted, with the answers and photos exactly as the client sent them</p>
+          <p className="sub">Every intake form submitted, with the answers and photos exactly as the client sent them. The offer, pricing and launch are filled in by the team in Launch setup.</p>
         </div>
         <div className="actions">
+          <Link className="btn" href="/agency/launch">Launch setup</Link>
           <Link className="btn" href="/onboarding">Open the form</Link>
         </div>
       </header>

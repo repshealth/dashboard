@@ -2,7 +2,9 @@ import type { FontStyle } from './spec';
 
 /** What a client fills in on the onboarding form. Image fields hold a URL (live) or a data URL (preview). */
 export interface OnboardingAnswers {
-  contact: { name: string; email: string; phone: string };
+  contact: { name: string; email: string; phone: string; address: string; timezone: string };
+  /** Their web address, so the site can go live on it. */
+  domain: DomainAnswers;
   business: { brandName: string; coachName: string; instagram: string; publicEmail: string };
   brand: { primary: string; secondary: string; font: FontStyle; tone: string; logo?: string };
   audience: { who: string; struggles: string; goals: string; objections: string };
@@ -34,6 +36,45 @@ export interface OnboardingAnswers {
   extra: string;
 }
 
+export interface DomainAnswers {
+  has: 'yes' | 'no' | 'unsure';
+  name: string; // "strongwithdani.co.uk"
+  registrar: string; // where it was bought, e.g. GoDaddy
+  access: 'yes' | 'no' | 'unsure'; // can they log in to it
+  currentSite: string; // an existing website, if any
+}
+
+/**
+ * What the REPS team fills in for each client after their intake form (Agency · Launch setup):
+ * the offer and pricing, programmes, free guide and app launch.
+ */
+export type LaunchSetup = Pick<OnboardingAnswers, 'offer' | 'leadMagnet' | 'launch'>;
+
+/** A client's launch setup as saved by the team. */
+export interface LaunchDoc {
+  clientId: string;
+  setup: LaunchSetup;
+  savedAt: string;
+  savedBy: string;
+  /** When the website, pre-registration page and emails were last built from it. */
+  builtAt?: string;
+}
+
+export const emptyDomain = (): DomainAnswers => ({ has: 'unsure', name: '', registrar: '', access: 'unsure', currentSite: '' });
+
+/** The client's answers with the team's launch setup on top. Older submissions may hold their own offer. */
+export function withLaunch(intake: OnboardingAnswers, setup?: LaunchSetup | null): OnboardingAnswers {
+  const base = emptyAnswers();
+  const a = { ...base, ...intake, contact: { ...base.contact, ...intake.contact }, domain: { ...base.domain, ...(intake.domain ?? {}) } };
+  if (!setup) return a;
+  return { ...a, offer: setup.offer, leadMagnet: setup.leadMagnet, launch: { ...emptyLaunch(), ...setup.launch } };
+}
+
+export const launchFrom = (a: OnboardingAnswers): LaunchSetup => ({ offer: a.offer, leadMagnet: a.leadMagnet, launch: launchOf(a) });
+
+/** Whether the pricing is in yet (it comes from the launch setup). */
+export const hasPricing = (a: OnboardingAnswers) => a.offer.plans.some((p) => p.price.trim());
+
 export interface LaunchAnswers {
   date: string; // YYYY-MM-DD
   offer: string; // what pre-registered people get, e.g. "30% off your first 3 months"
@@ -59,7 +100,8 @@ export const FEATURE_OPTIONS = [
 
 export function emptyAnswers(): OnboardingAnswers {
   return {
-    contact: { name: '', email: '', phone: '' },
+    contact: { name: '', email: '', phone: '', address: '', timezone: 'Europe/London' },
+    domain: emptyDomain(),
     business: { brandName: '', coachName: '', instagram: '', publicEmail: '' },
     brand: { primary: '#5BB6F0', secondary: '#FBDD8A', font: 'bold', tone: '' },
     audience: { who: '', struggles: '', goals: '', objections: '' },
@@ -85,7 +127,8 @@ export function exampleAnswers(): OnboardingAnswers {
   const a = emptyAnswers();
   return {
     ...a,
-    contact: { name: 'Danielle Cole', email: 'dani@example.com', phone: '07700 900555' },
+    contact: { name: 'Danielle Cole', email: 'dani@example.com', phone: '07700 900555', address: '14 Marlow Road, Leeds LS6 2AB', timezone: 'Europe/London' },
+    domain: { has: 'yes', name: 'strongwithdani.co.uk', registrar: 'GoDaddy', access: 'yes', currentSite: '' },
     business: { brandName: 'Strong With Dani', coachName: 'Dani', instagram: '@strongwithdani', publicEmail: 'hello@strongwithdani.co.uk' },
     brand: { primary: '#E2557A', secondary: '#F7D9C4', font: 'bold', tone: 'Warm, direct, no-nonsense' },
     audience: {
@@ -131,3 +174,17 @@ export function exampleAnswers(): OnboardingAnswers {
     extra: '',
   };
 }
+
+/** Example client intake only (what the client fills in), for the form's example button. */
+export function exampleIntake(): OnboardingAnswers {
+  const e = exampleAnswers();
+  const blank = emptyAnswers();
+  return { ...e, offer: blank.offer, leadMagnet: blank.leadMagnet, launch: blank.launch };
+}
+
+export const TIMEZONES = [
+  'Europe/London', 'Europe/Dublin', 'Europe/Paris', 'Europe/Madrid', 'Europe/Amsterdam', 'Europe/Berlin',
+  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Toronto',
+  'Australia/Sydney', 'Australia/Melbourne', 'Australia/Brisbane', 'Australia/Perth', 'Pacific/Auckland',
+  'Asia/Dubai', 'Asia/Singapore', 'Africa/Johannesburg',
+];

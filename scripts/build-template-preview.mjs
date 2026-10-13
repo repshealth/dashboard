@@ -13,7 +13,7 @@ const r = await build({
   define: { 'process.env.NODE_ENV': '"production"' },
   logLevel: 'warning',
 });
-const css = readFileSync(join(root, 'app/globals.css'), 'utf8') + readFileSync(join(root, 'components/site/template.css'), 'utf8');
+const css = readFileSync(join(root, 'app/globals.css'), 'utf8') + readFileSync(join(root, 'components/site/template.css'), 'utf8') + readFileSync(join(root, 'components/site/pulse.css'), 'utf8');
 const fonts = readFileSync(join(root, 'lib/fonts.ts'), 'utf8').match(/https:\/\/fonts\.googleapis\.com[^'"`]+/)[0];
 mkdirSync(join(root, 'preview-dist'), { recursive: true });
 writeFileSync(

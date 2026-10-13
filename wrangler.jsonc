@@ -15,6 +15,15 @@
   },
   "observability": { "enabled": true },
 
+  // Plain settings. Secrets (API keys, GITHUB_TOKEN) are added with `wrangler secret put`.
+  "vars": {
+    // New clients' website pages are committed here for review in the "CRM - Website Designs" Claude Project.
+    "DESIGNS_REPO": "repshealth/website-designs",
+    "DESIGNS_BRANCH": "main",
+    // Finished client sites live in <owner>/<client-slug>-site.
+    "SITES_GITHUB_OWNER": "repshealth"
+  },
+
   // The database (clients, leads, sites, emails, meetings, logins).
   "d1_databases": [
     {

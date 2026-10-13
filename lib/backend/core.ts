@@ -16,6 +16,7 @@ import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/typ
 import type { DocMeta, DocStore } from './store';
 import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, Submission } from './types';
+import { STARTER_CLIENTS } from '../starter';
 
 /* Records ------------------------------------------------------------------------ */
 
@@ -287,6 +288,36 @@ export async function syncSiteFromGitHub(store: DocStore, services: Services, cl
   return { added: true, note: `${(added as SiteVersion | null)?.version ?? 'A new version'} added from GitHub.` };
 }
 
+/** "Latest from GitHub: <commit message>" on a starting client's website. */
+export const starterNote = (store: DocStore, clientId: string) => store.mutate<Site>('site', clientId, (x) => {
+  const v = x.versions[0];
+  if (v?.commit) { x.statusNote = `Latest from GitHub: ${v.commit.message}`; v.sentNote = 'From the latest commit on GitHub'; }
+}, meta.site);
+
+/**
+ * Adds the starting clients (lib/starter.ts) to an empty database, connects each website to its
+ * GitHub repo and pulls the latest commit. Runs once: a marker stops it running again.
+ */
+export async function seedStarter(store: DocStore, services: Services) {
+  if (await store.get('setting', 'starter')) return;
+  await store.put('setting', 'starter', { at: new Date().toISOString() }, {});
+  for (const c of STARTER_CLIENTS) {
+    if (await store.byKey('client', c.slug)) continue;
+    const client: ClientRec = {
+      id: c.id, slug: c.slug, name: c.name, growthNote: 'Site not live yet', revenueNote: 'No sales yet',
+      contactName: c.contactName, meetingEmails: [], members: [], createdAt: new Date().toISOString(),
+    };
+    await store.put('client', client.id, client, meta.client(client));
+    const site: Site = {
+      clientId: c.id, status: 'review', statusNote: 'Latest version from GitHub', contact: c.contactName, domain: c.name, versions: [],
+      github: { repo: c.repo, branch: c.branch, autoPublish: false },
+    };
+    await store.put('site', c.id, site, meta.site(site));
+    await syncSiteFromGitHub(store, services, c.id).catch((e) => console.error('Starter sync failed', c.repo, e));
+    await starterNote(store, c.id);
+  }
+}
+
 /** One Google Meet notes doc or transcript. Notes and transcript of the same call merge into one meeting. */
 export async function ingestMeetingDoc(store: DocStore, services: Services, d: {
   docId?: string; title: string; text: string; url?: string; attendees?: string[]; startedAt?: string | null; endedAt?: string | null;
@@ -463,6 +494,7 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
 
     async listClients() {
       const v = await signedIn();
+      if (v.isAdmin) await seedStarter(store, services).catch((e) => console.error('Starter data failed', e));
       const all = await store.list<ClientRec>('client');
       const mine = v.isAdmin ? all : all.filter((c) => c.members.includes(v.id));
       return wait(mine.map(publicClient).sort((a, b) => a.name.localeCompare(b.name)));

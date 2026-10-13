@@ -10,7 +10,7 @@
 export type Kind =
   | 'client' | 'lead' | 'site' | 'campaign' | 'submission'
   | 'meeting' | 'meetingdoc' | 'voice' | 'mailerlite' | 'task' | 'launch'
-  | 'user' | 'session' | 'token';
+  | 'user' | 'session' | 'token' | 'setting';
 
 export interface DocMeta {
   /** Which client the document belongs to, for listing and access. */

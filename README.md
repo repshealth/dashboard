@@ -6,7 +6,7 @@ Built with Next.js (React) and runs entirely on Cloudflare: Workers for hosting,
 
 ## Two modes
 
-- **Example mode** (the default): the dashboard runs on built-in example data in the browser. Nothing is saved and anything you change resets when the page reloads. Good for a preview link.
+- **Example mode** (the default): the dashboard runs in the browser with the starting clients only (Physique X, with its website at the latest commit when the preview was built). Nothing is saved and anything you change resets when the page reloads. Good for a preview link.
 - **Live mode**: real logins and data saved in Cloudflare D1. Switched on with the build variable `NEXT_PUBLIC_LIVE=true`.
 
 ## View it on GitHub Pages (no Cloudflare needed)
@@ -38,7 +38,7 @@ In the Worker's **Settings**:
    - `APP_URL` (optional): your dashboard's address, used in emailed links. Set it once you add a custom domain.
 3. Redeploy (push to GitHub, or **Deployments > Retry**).
 
-The app creates its own database table the first time it runs, so there's no SQL to run. Sign in at `/login` with an admin email and you'll get a link by email.
+The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds Physique X (`lib/starter.ts`), connects its website to repshealth/physique-x and pulls the latest commit. Sign in at `/login` with an admin email and you'll get a link by email.
 
 If emails aren't set up yet, sign-in links are written to the Worker's logs instead (**Workers > your worker > Logs**), so you can still get in while testing.
 
@@ -155,7 +155,7 @@ Gemini note-taking needs a Google Workspace plan that includes Gemini in Meet.
 
 ### Working on the website designs
 
-`lib/site/compose.ts` turns the answers and copy into a `SiteSpec`. Run `npm run preview` and open Strong With Dani's Website to see the Studio look with example answers, and use the Website look panel to compare the others.
+`lib/site/compose.ts` turns the answers and copy into a `SiteSpec`. To see a generated site in the preview, submit the Client intake form with **Fill with example answers**, then open the Website designs card in Launch setup.
 
 ## Websites updated from Claude (GitHub)
 
@@ -248,7 +248,8 @@ app/
 components/                    Screens, sidebar, top bar, shared state
 lib/backend/                   core.ts (every action and its access rules), demo.ts (example data), live.ts (browser to /api/rpc)
 lib/server/                    Cloudflare: D1 store, sign-in, Claude, MailerLite, emails
-lib/demo/seed.json             Example clients, leads and sites
+lib/starter.ts                 The clients the dashboard starts with (Physique X)
+lib/demo/physique-x.json       Latest Physique X commit, for the preview
 lib/site/                      Website and pre-registration page: specs, copy, amends
 lib/emails/                    Launch emails: schedule, copy, amends, HTML for MailerLite
 lib/meetings/                  Meetings: Gemini doc parser, client matching, voice profile

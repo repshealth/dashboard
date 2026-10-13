@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "renderer": "node scripts/build-renderer.mjs",
+    "prebuild": "node scripts/build-renderer.mjs",
     "build": "next build",
     "typecheck": "tsc --noEmit",
-    "preview": "node scripts/build-preview.mjs",
+    "preview": "node scripts/build-renderer.mjs && node scripts/build-preview.mjs",
     "preview:template": "node scripts/build-template-preview.mjs",
     "cf:build": "opennextjs-cloudflare build",
     "cf:local": "opennextjs-cloudflare build && opennextjs-cloudflare preview",

@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties, type FormEvent } from 'react';
 import type { PreRegSpec } from '@/lib/site/prereg';
 import { fmtLaunch } from '@/lib/emails/schedule';
 import { Check, FONTS, H, Phone, Pic, Spark } from './TemplateSite';
+import { captureAttrs } from './kit';
 
 /** Days, hours and minutes until 8am on launch day. */
 function useCountdown(date: string) {
@@ -69,31 +70,31 @@ export default function PreRegSite({ spec, formEndpoint }: { spec: PreRegSpec; f
             <p className="t-sub">{spec.hero.sub}</p>
             <div className="t-pr-perk"><Spark /><span>{spec.hero.perk}</span></div>
             {left && (
-              <div className="t-pr-count" aria-label={`Launches ${launch}`}>
+              <div className="t-pr-count" data-countdown={spec.launchDate} aria-label={`Launches ${launch}`}>
                 <div className="t-pr-when">Launches {launch}</div>
                 <div className="t-pr-boxes">
                   {([['d', 'days'], ['h', 'hours'], ['m', 'mins']] as const).map(([k, label]) => (
-                    <div key={k}><b>{String(left[k]).padStart(2, '0')}</b><span>{label}</span></div>
+                    <div key={k}><b data-k={k}>{String(left[k]).padStart(2, '0')}</b><span>{label}</span></div>
                   ))}
                 </div>
               </div>
             )}
           </div>
 
-          <form className="t-capture-card t-pr-form" onSubmit={submit} id="register">
+          <form className="t-capture-card t-pr-form" onSubmit={submit} id="register" {...captureAttrs(spec.slug, formEndpoint, { source: 'prereg', form: 'Pre-registration', page: '/pre-register', thanks: `You're on the list. Look out for an email from ${spec.brand.name} before launch day.`, thanksClass: 't-thanks' })}>
             {state === 'done' ? (
               <p className="t-thanks">You&apos;re on the list. Look out for an email from {spec.brand.name} before launch day.</p>
             ) : (
               <>
                 <h2 className="t-pr-ft">{spec.form.title}</h2>
                 <label className="t-label" htmlFor={id('name')}>Your name</label>
-                <input id={id('name')} className="t-input" required autoComplete="name" placeholder="First and last name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <input id={id('name')} name="name" className="t-input" required autoComplete="name" placeholder="First and last name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 <label className="t-label" htmlFor={id('email')}>Your email</label>
-                <input id={id('email')} className="t-input" type="email" required autoComplete="email" placeholder="you@email.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                <input id={id('email')} name="email" className="t-input" type="email" required autoComplete="email" placeholder="you@email.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 <label className="t-label" htmlFor={id('phone')}>Your phone</label>
-                <input id={id('phone')} className="t-input" type="tel" autoComplete="tel" placeholder="07..." value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <input id={id('phone')} name="phone" className="t-input" type="tel" autoComplete="tel" placeholder="07..." value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                 <button type="submit" className="t-btn t-btn-p t-btn-block" disabled={state === 'sending'}>{spec.form.button}</button>
-                <p className="t-capture-small">{state === 'error' ? 'That did not go through. Please try again.' : spec.form.small}</p>
+                <p className="t-capture-small" data-note="">{state === 'error' ? 'That did not go through. Please try again.' : spec.form.small}</p>
               </>
             )}
           </form>

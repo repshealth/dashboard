@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import type { FontStyle, Headline, SiteSpec } from '@/lib/site/spec';
+import { captureAttrs } from './kit';
 
 /**
  * "Pulse": the website design for new clients, after the app-launch sites REPS likes
@@ -88,7 +89,7 @@ function Count({ value }: { value: string }) {
     io.observe(el);
     return () => { io.disconnect(); cancelAnimationFrame(raf); };
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <span ref={ref}>{shown}</span>;
+  return <span ref={ref} data-count={value}>{shown}</span>;
 }
 
 /** An endless strip. Children are drawn twice so the loop is seamless. */
@@ -218,7 +219,7 @@ export default function PulseSite({ spec, formEndpoint }: { spec: SiteSpec; form
       </section>
 
       {/* Feature showcase: the phone follows the feature you're on */}
-      <section id="inside" className="pz-sec pz-show pz-night" onMouseLeave={() => setHeld(false)}>
+      <section id="inside" className="pz-sec pz-show pz-night" data-cycle="4200" onMouseLeave={() => setHeld(false)}>
         <div className="pz-aurora pz-aurora-soft" aria-hidden="true"><i /><i /></div>
         <div className="pz-wrap">
           <div className="pz-head">
@@ -229,7 +230,7 @@ export default function PulseSite({ spec, formEndpoint }: { spec: SiteSpec; form
             <ol className="pz-feats">
               {features.map((it, i) => (
                 <li key={it.title}>
-                  <button type="button" className={`pz-feat${i === active ? ' on' : ''}`} aria-pressed={i === active}
+                  <button type="button" data-ci={i} className={`pz-feat${i === active ? ' on' : ''}`} aria-pressed={i === active}
                     onMouseEnter={() => { setActive(i); setHeld(true); }} onFocus={() => { setActive(i); setHeld(true); }} onClick={() => { setActive(i); setHeld(true); }}>
                     <span className="pz-feat-t">{it.title}</span>
                     <span className="pz-feat-b">{it.body}</span>
@@ -240,7 +241,7 @@ export default function PulseSite({ spec, formEndpoint }: { spec: SiteSpec; form
             </ol>
             <div className="pz-show-phone">
               {features.map((it, i) => (
-                <div key={it.title} className={`pz-show-slide${i === active ? ' on' : ''}`} aria-hidden={i !== active}>
+                <div key={it.title} data-cs={i} className={`pz-show-slide${i === active ? ' on' : ''}`} aria-hidden={i !== active}>
                   <Phone src={screens.length ? screens[i % screens.length] : undefined} label={`${it.title} in the app`} items={[it.title, ...featureNames.filter((n) => n !== it.title)]} tone={i % 4} />
                 </div>
               ))}
@@ -363,7 +364,7 @@ export default function PulseSite({ spec, formEndpoint }: { spec: SiteSpec; form
             {spec.faq.items.map((it, i) => {
               const open = faqOpen === i;
               return (
-                <div key={i} className={`pz-q${open ? ' open' : ''}`}>
+                <div key={i} data-faq="" className={`pz-q${open ? ' open' : ''}`}>
                   <button type="button" aria-expanded={open} onClick={() => setFaqOpen(open ? -1 : i)}>
                     <span>{it.q}</span><i aria-hidden="true" />
                   </button>
@@ -392,15 +393,15 @@ export default function PulseSite({ spec, formEndpoint }: { spec: SiteSpec; form
                 <H h={spec.capture.headline} />
                 <p className="pz-sub">{spec.capture.body}</p>
               </div>
-              <form className="pz-capture" onSubmit={capture}>
+              <form className="pz-capture" onSubmit={capture} {...captureAttrs(spec.slug, formEndpoint, { source: 'magnet', form: spec.capture.headline.bold, page: '/', thanks: 'Thanks! Check your inbox in a few minutes.', thanksClass: 'pz-thanks' })}>
                 {captured === 'done' ? <p className="pz-thanks">Thanks! Check your inbox in a few minutes.</p> : (
                   <>
                     <label htmlFor={`pz-email-${spec.slug}`}>Your email</label>
                     <div className="pz-capture-row">
-                      <input id={`pz-email-${spec.slug}`} type="email" required placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                      <input id={`pz-email-${spec.slug}`} name="email" type="email" required placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
                       <button type="submit" className="pz-btn" disabled={captured === 'sending'}>{spec.capture.button}</button>
                     </div>
-                    <p className="pz-small">{captured === 'error' ? 'That did not go through. Please try again.' : spec.capture.small}</p>
+                    <p className="pz-small" data-note="">{captured === 'error' ? 'That did not go through. Please try again.' : spec.capture.small}</p>
                   </>
                 )}
               </form>

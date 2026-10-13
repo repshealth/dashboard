@@ -2,7 +2,7 @@
 
 import { useRef, useState, type CSSProperties } from 'react';
 import type { Headline, SiteSpec } from '@/lib/site/spec';
-import { Count, Logo, Marquee, Phone, Pic, Stars, faceVars, onColour, screensOf, spot, statsOf, useCapture, useCycle, useReveal, type Faces } from './kit';
+import { Count, Logo, captureAttrs, Marquee, Phone, Pic, Stars, faceVars, onColour, screensOf, spot, statsOf, useCapture, useCycle, useReveal, type Faces } from './kit';
 
 /**
  * "Arena": black, loud and athletic, after Centr, Ladder and the Physique X site. Huge stacked
@@ -27,7 +27,7 @@ const H = ({ h, as: Tag = 'h2', className = '' }: { h: Headline; as?: 'h1' | 'h2
 function Compare({ before, after }: { before?: string; after?: string }) {
   const [at, setAt] = useState(50);
   return (
-    <div className="ar-cmp" style={{ '--at': `${at}%` } as CSSProperties}>
+    <div className="ar-cmp" data-compare="" style={{ '--at': `${at}%` } as CSSProperties}>
       <Pic src={after} label="After photo" className="ar-cmp-after" />
       <div className="ar-cmp-before"><Pic src={before} label="Before photo" /></div>
       <span className="ar-cmp-tag b">Before</span><span className="ar-cmp-tag a">After</span>
@@ -135,7 +135,7 @@ export default function ArenaSite({ spec, formEndpoint }: { spec: SiteSpec; form
       </section>
 
       {/* Numbered features beside a phone that follows along */}
-      <section id="inside" className="ar-sec ar-feats" onMouseLeave={cycle.release}>
+      <section id="inside" className="ar-sec ar-feats" data-cycle="4500" onMouseLeave={cycle.release}>
         <div className="ar-wrap ar-feats-grid">
           <div>
             <p className="ar-kicker">{spec.features.eyebrow}</p>
@@ -143,7 +143,7 @@ export default function ArenaSite({ spec, formEndpoint }: { spec: SiteSpec; form
             <ol className="ar-list">
               {features.map((it, i) => (
                 <li key={it.title}>
-                  <button type="button" className={`ar-row${i === cycle.active ? ' on' : ''}`} aria-expanded={i === cycle.active}
+                  <button type="button" data-ci={i} className={`ar-row${i === cycle.active ? ' on' : ''}`} aria-expanded={i === cycle.active}
                     onMouseEnter={() => cycle.pick(i)} onFocus={() => cycle.pick(i)} onClick={() => cycle.pick(i)}>
                     <span className="ar-row-n">{String(i + 1).padStart(2, '0')}</span>
                     <span className="ar-row-t">{it.title}</span>
@@ -158,7 +158,7 @@ export default function ArenaSite({ spec, formEndpoint }: { spec: SiteSpec; form
           <div className="ar-feat-phone">
             <div className="ar-ring" aria-hidden="true" />
             {features.map((it, i) => (
-              <div key={it.title} className={`ar-slide${i === cycle.active ? ' on' : ''}`} aria-hidden={i !== cycle.active}>
+              <div key={it.title} data-cs={i} className={`ar-slide${i === cycle.active ? ' on' : ''}`} aria-hidden={i !== cycle.active}>
                 <Phone src={screens.length ? screens[i % screens.length] : undefined} label={`${it.title} in the app`} items={[it.title, ...names.filter((n) => n !== it.title)]} tone={i} />
               </div>
             ))}
@@ -176,7 +176,7 @@ export default function ArenaSite({ spec, formEndpoint }: { spec: SiteSpec; form
             </div>
             <div className="ar-posters">
               {spec.programmes.items.map((p, i) => (
-                <article key={p.name} className={`ar-poster sk-rv d${i % 3}`} onMouseMove={spot}>
+                <article key={p.name} className={`ar-poster sk-rv d${i % 3}`} data-spot="" onMouseMove={spot}>
                   <Pic src={p.image} label={`${p.name} photo`} className="ar-poster-img" />
                   {p.tag && <span className="ar-tag">{p.tag}</span>}
                   <div className="ar-poster-body">
@@ -212,7 +212,7 @@ export default function ArenaSite({ spec, formEndpoint }: { spec: SiteSpec; form
           {reviews.length > 0 && (
             <Marquee className="ar-reviews" speed={46}>
               {reviews.map((r, i) => (
-                <figure key={i} className="ar-review" onMouseMove={spot}><Stars /><blockquote>&ldquo;{r.quote}&rdquo;</blockquote><figcaption>{r.name} · {r.detail}</figcaption></figure>
+                <figure key={i} className="ar-review" data-spot="" onMouseMove={spot}><Stars /><blockquote>&ldquo;{r.quote}&rdquo;</blockquote><figcaption>{r.name} · {r.detail}</figcaption></figure>
               ))}
             </Marquee>
           )}
@@ -250,7 +250,7 @@ export default function ArenaSite({ spec, formEndpoint }: { spec: SiteSpec; form
           {plans.length ? (
             <div className={`ar-plans n${plans.length}`}>
               {plans.map((p, i) => (
-                <div key={p.name} className={`ar-plan sk-rv d${i}${p.popular ? ' pop' : ''}`} onMouseMove={spot}>
+                <div key={p.name} className={`ar-plan sk-rv d${i}${p.popular ? ' pop' : ''}`} data-spot="" onMouseMove={spot}>
                   {p.popular && <span className="ar-plan-tag">Most popular</span>}
                   <p className="ar-plan-name">{p.name}</p>
                   <p className="ar-price"><b>{p.price}</b><span>{p.period}</span></p>
@@ -282,7 +282,7 @@ export default function ArenaSite({ spec, formEndpoint }: { spec: SiteSpec; form
             {spec.faq.items.map((it, i) => {
               const open = faq === i;
               return (
-                <div key={i} className={`ar-q${open ? ' open' : ''}`}>
+                <div key={i} data-faq="" className={`ar-q${open ? ' open' : ''}`}>
                   <button type="button" aria-expanded={open} onClick={() => setFaq(open ? -1 : i)}>
                     <span className="ar-q-n">{String(i + 1).padStart(2, '0')}</span><span>{it.q}</span><i aria-hidden="true" />
                   </button>
@@ -311,13 +311,13 @@ export default function ArenaSite({ spec, formEndpoint }: { spec: SiteSpec; form
                 <H h={spec.capture.headline} />
                 <p className="ar-sub">{spec.capture.body}</p>
               </div>
-              <form className="ar-capture" onSubmit={cap.submit}>
+              <form className="ar-capture" onSubmit={cap.submit} {...captureAttrs(spec.slug, formEndpoint, { source: 'magnet', form: spec.capture.headline.bold, page: '/', thanks: 'Thanks! Check your inbox in a few minutes.', thanksClass: 'ar-thanks' })}>
                 {cap.state === 'done' ? <p className="ar-thanks">Thanks! Check your inbox in a few minutes.</p> : (
                   <>
                     <label htmlFor={`ar-email-${spec.slug}`}>Your email</label>
-                    <input id={`ar-email-${spec.slug}`} type="email" required placeholder="you@email.com" value={cap.email} onChange={(e) => cap.setEmail(e.target.value)} />
+                    <input id={`ar-email-${spec.slug}`} name="email" type="email" required placeholder="you@email.com" value={cap.email} onChange={(e) => cap.setEmail(e.target.value)} />
                     <button type="submit" className="ar-btn ar-btn-ink ar-btn-block" disabled={cap.state === 'sending'}>{spec.capture.button}</button>
-                    <p className="ar-small">{cap.state === 'error' ? 'That did not go through. Please try again.' : spec.capture.small}</p>
+                    <p className="ar-small" data-note="">{cap.state === 'error' ? 'That did not go through. Please try again.' : spec.capture.small}</p>
                   </>
                 )}
               </form>

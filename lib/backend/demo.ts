@@ -8,6 +8,7 @@ import { buildPreReg, fallbackPreRegCopy } from '../site/prereg';
 import { amendWithRules } from '../site/amend-rules';
 import { makeAmendedVersion } from '../site/make-amend';
 import type { SiteSpec } from '../site/spec';
+import { renderPage } from '../site/render/renderer.gen';
 import { buildCampaign, fallbackEmails, toEmails } from '../emails/copy';
 import { sequenceSlots } from '../emails/schedule';
 import { makeAmendedEmails, rulesEmailAmend } from '../emails/amend';
@@ -50,6 +51,13 @@ const services: Services = {
   // In the preview, public repos are read straight from GitHub by the browser.
   fetchSite: (repo, branch) => fetchSiteFromGitHub(repo, branch),
   storeHtml: async (_c, _sha, _path, html) => URL.createObjectURL(new Blob([html], { type: 'text/html' })),
+  renderPage: (spec, title) => renderPage(spec, { title }),
+  // In the preview the file is kept in the browser. Live, it's also committed to the designs repo.
+  saveDesign: async (_c, _file, html) => ({
+    url: URL.createObjectURL(new Blob([html], { type: 'text/html' })),
+    note: 'Example mode: live, this is also committed to the designs repo your Claude Project syncs from.',
+  }),
+  siteRepoFor: (slug) => `repshealth/${slug}-site`,
   sendInvite: async () => {},
 };
 

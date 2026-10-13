@@ -55,7 +55,7 @@ export interface Backend {
   /** REPS checks GitHub for a newer version now (pushes also arrive on their own). */
   syncSite(clientId: string): Promise<{ added: boolean; note: string }>;
   /** Admin: redraw a generated site in another design. Drafts change in place; otherwise a pending version. */
-  setSiteDesign(clientId: string, design: Exclude<SiteDesign, 'shapeup'>): Promise<{ pending: boolean }>;
+  setSiteDesign(clientId: string, design: Exclude<SiteDesign, 'shapeup'>): Promise<{ pending: boolean; file?: boolean }>;
   /** REPS approves a revised version: the client can now see it and approve it. */
   approveVersion(clientId: string, versionId: string): Promise<void>;
   /** REPS discards a revised version; the request stays open for the team to handle. */

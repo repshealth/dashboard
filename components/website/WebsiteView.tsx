@@ -180,6 +180,27 @@ export default function WebsiteView() {
     </header>
   );
 
+  // Generated in Claude, not committed yet: the team reviews the design files first.
+  if (site && !version && viewer?.isAdmin && site.status !== 'building') {
+    return (
+      <div className="view">
+        {head(false)}
+        <div className="sv-empty sv-design-wait">
+          <span className={`stbadge ${SITE_STATUS.draft.cls}`}>In design</span>
+          <div className="sv-et">{client.name}&apos;s website is being designed in Claude</div>
+          <p>
+            {site.designs?.length
+              ? <>{site.designs.map((d) => d.file).join(' and ')} {site.designs.length > 1 ? 'are' : 'is'} waiting in the <b>CRM - Website Designs</b> Claude Project. </>
+              : 'No design files yet. '}
+            A preview appears here once the final design is committed to {site.github?.repo ? <b>{site.github.repo}</b> : 'the client’s site repo'}.
+          </p>
+          <div className="actions"><Link href="/agency/launch" className="btn">Open Launch setup</Link></div>
+          <div className="sv-design-src"><SiteSource site={site} /></div>
+        </div>
+      </div>
+    );
+  }
+
   // Clients never see a draft; the REPS team does.
   if (!site || !version || !page || site.status === 'building' || (isDraft && !viewer?.isAdmin)) {
     return (

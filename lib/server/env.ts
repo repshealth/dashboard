@@ -9,9 +9,9 @@ export interface D1Statement {
   run(): Promise<D1Result<unknown>>;
 }
 export interface D1Database { prepare(query: string): D1Statement }
-export interface R2Object { body: ReadableStream; httpMetadata?: { contentType?: string } }
+export interface R2Object { body: ReadableStream; httpMetadata?: { contentType?: string; contentDisposition?: string } }
 export interface R2Bucket {
-  put(key: string, value: ArrayBuffer | ReadableStream, opts?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
+  put(key: string, value: ArrayBuffer | ReadableStream, opts?: { httpMetadata?: { contentType?: string; contentDisposition?: string } }): Promise<unknown>;
   get(key: string): Promise<R2Object | null>;
 }
 

@@ -70,7 +70,7 @@ Onboarding happens in two parts.
 
 - their sub account is created straight away,
 - their answers are saved (Agency · Onboarding shows them),
-- Claude writes a first draft of their website with their branding, in the look they picked on the form (Arena, Studio or Pulse; "Not sure" picks by headline style: serif goes Studio, condensed goes Arena, bold goes Pulse). It appears in Website as **Draft · REPS only**, with the pricing section marked "to be added".
+- Claude writes the first design of their website with their branding and saves it as **"Client Name - Website Page.html"** for the team to review in the **CRM - Website Designs** Claude Project (see *Website designs in Claude* below). Nothing appears in the client's Website section until the final design is committed to their site repo. It uses the look they picked on the form (Arena, Studio or Pulse; "Not sure" picks by headline style: serif goes Studio, condensed goes Arena, bold goes Pulse), with the pricing section marked "to be added" until the launch setup is built.
 
 **2. The REPS team fills in the launch setup** in **Agency · Launch setup**, which lists every sub account still waiting (with a count in the sidebar). It holds the offer and pricing, features and app screenshots, programmes, the free guide, and the app launch (date, website link, pre-reg offer and code). **Save** as you go; **Save and build launch** then:
 
@@ -270,3 +270,17 @@ wrangler.jsonc                 Cloudflare settings: database and bucket
 - Upload screenshot-based site versions (like Kieran's) from the dashboard. In live mode, sites currently come from the onboarding form.
 - Rate limiting on the public endpoints (`/api/forms`, `/api/upload`, the onboarding form) before sending ad traffic to them. Cloudflare's own rate limiting rules can do this without code.
 - Real date filtering behind "Last 30 days", plus manual "Add lead".
+
+
+## Website designs in Claude
+
+New clients' websites are reviewed and finished in the **CRM - Website Designs** Claude Project before anything shows in their Website section.
+
+1. When a client submits the intake form, the dashboard renders their page as one standalone HTML file (`lib/site/render/`), named **"Client Name - Website Page.html"**. Building the launch later updates it and adds **"Client Name - Pre-registration Page.html"**.
+2. Each file is stored for download and, when `DESIGNS_REPO` is set (e.g. `repshealth/website-designs`) with a `GITHUB_TOKEN` that can write to it, committed to that repo. Add the repo to the Claude Project once (Project knowledge, Add from GitHub) and sync it to pull in new designs.
+3. In Agency, Launch setup, each client has a **Website designs** card: Preview, Download, Open in GitHub, and a Website look switcher that redraws the file.
+4. When the design is right, commit the final page to the client's site repo, `repshealth/<client-slug>-site` by default (`SITES_GITHUB_OWNER` changes the owner), as `index.html` (and `pre-register.html`). The site is connected to that repo automatically. The first commit appears in the Website section straight away, for the REPS team only until you press Send to client.
+
+For pushes to reach the dashboard without pressing Check for updates, add one webhook on the repshealth organisation (Settings, Webhooks) pointing at `/api/github` with the `GITHUB_WEBHOOK_SECRET`, so every client site repo is covered.
+
+The exported pages work on their own: the moving parts (feature showcase, FAQ, counters, before and after slider, countdown, forms) run from a small script in `lib/site/render/runtime.js`, and forms post leads to `/api/forms`. `npm run renderer` rebuilds `renderer.gen.js` after changing a design; `npm run build` and `npm run preview` do it automatically.

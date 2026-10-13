@@ -26,7 +26,7 @@ export default function SiteSource({ site }: { site: Site }) {
       <div className="lbl" style={{ marginTop: 0 }}>UPDATES FROM CLAUDE</div>
       {src && !open ? (
         <>
-          <p className="sv-src-line">Connected to <a className="sv-inline-link" href={`https://github.com/${src.repo}`} target="_blank" rel="noreferrer">{src.repo}</a> ({src.branch}). Each push adds a new version{src.autoPublish ? ' and sends it straight to the client.' : ' that waits for you in Approvals.'}</p>
+          <p className="sv-src-line">Connected to <a className="sv-inline-link" href={`https://github.com/${src.repo}`} target="_blank" rel="noreferrer">{src.repo}</a> ({src.branch}). {site.versions.length ? <>Each push adds a new version{src.autoPublish ? ' and sends it straight to the client.' : ' that waits for you in Approvals.'}</> : 'The first commit shows here straight away, for the REPS team only until you send it to the client.'}</p>
           {src.lastSync && <p className="sv-src-note">Last checked {fmtWhen(src.lastSync)}{src.lastNote ? `: ${src.lastNote}` : ''}</p>}
           <div className="sv-src-btns">
             <button type="button" className="btn" disabled={busy} onClick={() => run(async () => { const r = await backend.syncSite(site.clientId); toast(r.note); })}>{busy ? 'Checking…' : 'Check for updates'}</button>

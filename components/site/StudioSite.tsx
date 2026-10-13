@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState, type CSSProperties } from 'react';
 import type { Headline, SiteSpec } from '@/lib/site/spec';
-import { Count, Logo, Marquee, Phone, Pic, Stars, faceVars, onColour, screensOf, spot, statsOf, useCapture, useCycle, useReveal, type Faces } from './kit';
+import { Count, Logo, captureAttrs, Marquee, Phone, Pic, Stars, faceVars, onColour, screensOf, spot, statsOf, useCapture, useCycle, useReveal, type Faces } from './kit';
 
 /**
  * "Studio": light, warm and editorial, after Lean with Lilly, Harriet Harper, Sweat, Shreddy
@@ -68,8 +68,8 @@ export default function StudioSite({ spec, formEndpoint }: { spec: SiteSpec; for
   const featCard = (i: number) => {
     const it = features[i];
     return (
-      <button key={it.title} type="button" className={`st-fc${i === cycle.active ? ' on' : ''}`} aria-pressed={i === cycle.active}
-        onMouseEnter={() => cycle.pick(i)} onFocus={() => cycle.pick(i)} onClick={() => cycle.pick(i)} onMouseMove={spot}>
+      <button key={it.title} type="button" data-ci={i} className={`st-fc${i === cycle.active ? ' on' : ''}`} aria-pressed={i === cycle.active}
+        onMouseEnter={() => cycle.pick(i)} onFocus={() => cycle.pick(i)} onClick={() => cycle.pick(i)} data-spot="" onMouseMove={spot}>
         <span className="st-fc-i" aria-hidden="true">{ICONS[i % ICONS.length]}</span>
         <span className="st-fc-t">{it.title}</span>
         <span className="st-fc-b">{it.body}</span>
@@ -143,7 +143,7 @@ export default function StudioSite({ spec, formEndpoint }: { spec: SiteSpec; for
       </section>
 
       {/* Features around a phone */}
-      <section id="inside" className="st-sec st-orbit" onMouseLeave={cycle.release}>
+      <section id="inside" className="st-sec st-orbit" data-cycle="3800" onMouseLeave={cycle.release}>
         <div className="st-wrap">
           <div className="st-head st-head-c sk-rv">
             <p className="st-kicker">{spec.features.eyebrow}</p>
@@ -155,7 +155,7 @@ export default function StudioSite({ spec, formEndpoint }: { spec: SiteSpec; for
             <div className="st-orbit-phone">
               <div className="st-halo" aria-hidden="true" />
               {features.map((it, i) => (
-                <div key={it.title} className={`st-slide${i === cycle.active ? ' on' : ''}`} aria-hidden={i !== cycle.active}>
+                <div key={it.title} data-cs={i} className={`st-slide${i === cycle.active ? ' on' : ''}`} aria-hidden={i !== cycle.active}>
                   <Phone src={screens.length ? screens[i % screens.length] : undefined} label={`${it.title} in the app`} items={[it.title, ...names.filter((n) => n !== it.title)]} tone={i} />
                 </div>
               ))}
@@ -265,7 +265,7 @@ export default function StudioSite({ spec, formEndpoint }: { spec: SiteSpec; for
           {plans.length ? (
             <div className={`st-plans n${plans.length}`}>
               {plans.map((p, i) => (
-                <div key={p.name} className={`st-plan sk-rv d${i}${p.popular ? ' pop' : ''}`} onMouseMove={spot}>
+                <div key={p.name} className={`st-plan sk-rv d${i}${p.popular ? ' pop' : ''}`} data-spot="" onMouseMove={spot}>
                   {p.popular && <span className="st-plan-tag">Best value</span>}
                   <p className="st-plan-name">{p.name}</p>
                   <p className="st-price"><b>{p.price}</b></p>
@@ -297,7 +297,7 @@ export default function StudioSite({ spec, formEndpoint }: { spec: SiteSpec; for
           {spec.faq.items.map((it, i) => {
             const open = faq === i;
             return (
-              <div key={i} className={`st-q${open ? ' open' : ''}`}>
+              <div key={i} data-faq="" className={`st-q${open ? ' open' : ''}`}>
                 <button type="button" aria-expanded={open} onClick={() => setFaq(open ? -1 : i)}>
                   <span>{it.q}</span><i aria-hidden="true" />
                 </button>
@@ -327,13 +327,13 @@ export default function StudioSite({ spec, formEndpoint }: { spec: SiteSpec; for
                   <H h={spec.capture.headline} />
                   <p className="st-sub">{spec.capture.body}</p>
                 </div>
-                <form className="st-capture" onSubmit={cap.submit}>
+                <form className="st-capture" onSubmit={cap.submit} {...captureAttrs(spec.slug, formEndpoint, { source: 'magnet', form: spec.capture.headline.bold, page: '/', thanks: 'Thanks! Check your inbox in a few minutes.', thanksClass: 'st-thanks' })}>
                   {cap.state === 'done' ? <p className="st-thanks">Thanks! Check your inbox in a few minutes.</p> : (
                     <>
                       <label htmlFor={`st-email-${spec.slug}`}>Your email</label>
-                      <input id={`st-email-${spec.slug}`} type="email" required placeholder="you@email.com" value={cap.email} onChange={(e) => cap.setEmail(e.target.value)} />
+                      <input id={`st-email-${spec.slug}`} name="email" type="email" required placeholder="you@email.com" value={cap.email} onChange={(e) => cap.setEmail(e.target.value)} />
                       <button type="submit" className="st-btn st-btn-ink st-btn-block" disabled={cap.state === 'sending'}>{spec.capture.button}</button>
-                      <p className="st-small">{cap.state === 'error' ? 'That did not go through. Please try again.' : spec.capture.small}</p>
+                      <p className="st-small" data-note="">{cap.state === 'error' ? 'That did not go through. Please try again.' : spec.capture.small}</p>
                     </>
                   )}
                 </form>

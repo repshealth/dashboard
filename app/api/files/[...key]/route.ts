@@ -14,6 +14,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
   return new Response(obj.body, {
     headers: {
       'Content-Type': obj.httpMetadata?.contentType || 'application/octet-stream',
+      ...(obj.httpMetadata?.contentDisposition ? { 'Content-Disposition': obj.httpMetadata.contentDisposition } : {}),
       'Cache-Control': 'public, max-age=31536000, immutable',
       'X-Content-Type-Options': 'nosniff',
       // SVGs can hold scripts: never run them when opened directly.

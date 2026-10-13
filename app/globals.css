@@ -685,3 +685,20 @@ textarea.em-subj{font-size:15px}
 .ls-intro{margin:0 0 10px}
 .ls-bar{position:sticky;bottom:0;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;box-shadow:0 -6px 20px rgba(20,10,40,.06)}
 .ls-notes ul{margin:6px 0 0;padding-left:18px}
+
+/* Website designs waiting to be reviewed in Claude (agency Launch setup) */
+.df{margin-bottom:16px}
+.df .sub code{font-size:12px;background:#F2F0F7;padding:1px 5px;border-radius:4px}
+.df-list{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.df-item{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#FAFAFC}
+.df-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.df-main b{font-size:13.5px;word-break:break-word}
+.df-meta{font-size:12px;color:var(--dim)}
+.df-note{font-size:12px;color:var(--dim)}
+.df-item .actions a.btn{text-decoration:none}
+.df-looks{margin-top:14px;display:flex;flex-direction:column;gap:6px;max-width:360px}
+.df-modal{max-width:min(1060px,96vw);width:100%;padding:14px}
+.df-mh{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.df-frame{display:flex;justify-content:center;background:#EEF;border-radius:8px;overflow:hidden}
+.sv-design-wait .actions{justify-content:center;margin-top:6px}
+.sv-design-src{max-width:460px;width:100%;margin:16px auto 0;text-align:left}

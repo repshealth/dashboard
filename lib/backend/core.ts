@@ -1,10 +1,10 @@
-import type { Client, Lead, LeadEvent, Site, SiteComment, SitePage, SiteSource, SiteVersion, SourceId, Viewer } from '../types';
+import type { Client, DesignFile, Lead, LeadEvent, Site, SiteComment, SitePage, SiteSource, SiteVersion, SourceId, Viewer } from '../types';
 import { pageName, type FetchedSite } from '../site/github';
 import { STAGE_NAME } from '../constants';
 import type { SiteCopy } from '../site/copy';
 import { buildSpec, slugify } from '../site/compose';
 import { emptyAnswers, emptyLaunch, launchOf, withLaunch, type LaunchDoc, type OnboardingAnswers } from '../site/onboarding';
-import { buildPreReg, isPreReg, type PreRegCopy } from '../site/prereg';
+import { buildPreReg, isPreReg, type AnySpec, type PreRegCopy, type PreRegSpec } from '../site/prereg';
 import { LOOKS, type SiteDesign, type SiteSpec } from '../site/spec';
 import { makeAmendedVersion, type AmendFn } from '../site/make-amend';
 import { buildCampaign } from '../emails/copy';
@@ -76,6 +76,15 @@ export interface Services {
   fetchSite(repo: string, branch: string): Promise<FetchedSite>;
   /** Stores one page's HTML and returns the address it can be loaded from. */
   storeHtml(clientId: string, sha: string, path: string, html: string): Promise<string>;
+  /** A generated page as one standalone HTML file. */
+  renderPage(spec: AnySpec, title: string): string;
+  /**
+   * Saves a generated page for the team to review in Claude: a stored copy to download and,
+   * when it's set up, a commit to the designs repo the "CRM - Website Designs" Project syncs from.
+   */
+  saveDesign(clientId: string, file: string, html: string): Promise<{ url: string; repoUrl?: string; note: string }>;
+  /** The GitHub repo a client's finished site is committed to, e.g. repshealth/strong-with-dani-site. */
+  siteRepoFor(slug: string): string | null;
   /** Emails a client a sign-in link, e.g. when their website or emails are ready. */
   sendInvite(u: UserRec, clientName: string, what: 'website' | 'emails'): Promise<void>;
 }
@@ -87,7 +96,8 @@ export class AccessError extends Error {
 /* Access ---------------------------------------------------------------------------- */
 
 /** What a client may see of their website: nothing while it's a draft, and never versions waiting for REPS. */
-export function siteForClient(s: Site): Site {
+export function siteForClient(full: Site): Site {
+  const { designs: _d, specs: _s, ...s } = full; // eslint-disable-line @typescript-eslint/no-unused-vars
   if (s.status === 'draft') return { ...s, versions: [] };
   return { ...s, versions: s.versions.filter((v) => (v.state ?? 'published') === 'published') };
 }
@@ -201,6 +211,36 @@ export async function tasksFromMeeting(store: DocStore, services: Services, meet
  * Pulls the latest version of a client's site from their GitHub repo. A new commit becomes
  * a new version: waiting in Approvals, or straight to the client if the team chose that.
  */
+/** "Strong With Dani - Website Page" */
+export const designName = (client: string, key: DesignFile['key']) =>
+  `${client.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim()} - ${key === 'home' ? 'Website Page' : 'Pre-registration Page'}`;
+
+/** True when a site's pages are drawn by the dashboard (older clients), not committed from Claude. */
+export const isTemplateSite = (s: Site) => s.versions.some((v) => v.pages.some((p) => p.kind === 'template'));
+
+/**
+ * Saves generated pages as HTML for the team to review in Claude, and remembers what they were
+ * made from. Nothing appears in the client's Website section until the final design is
+ * committed to their site repo.
+ */
+export async function saveDesigns(store: DocStore, services: Services, clientId: string, clientName: string, specs: { home?: SiteSpec; prereg?: PreRegSpec }, note: string) {
+  const saved: DesignFile[] = [];
+  for (const key of ['home', 'prereg'] as const) {
+    const spec = specs[key];
+    if (!spec) continue;
+    const name = designName(clientName, key);
+    const html = services.renderPage(spec, key === 'home' ? clientName : `Pre-registration | ${clientName}`);
+    const r = await services.saveDesign(clientId, `${name}.html`, html);
+    saved.push({ key, name, file: `${name}.html`, url: r.url, repoUrl: r.repoUrl, design: isPreReg(spec) ? undefined : spec.design, savedAt: new Date().toISOString(), note: [note, r.note].filter(Boolean).join(' ') });
+  }
+  await store.mutate<Site>('site', clientId, (x) => {
+    x.specs = { ...(x.specs ?? {}), ...specs };
+    x.designs = [...saved, ...(x.designs ?? []).filter((d) => !saved.some((n) => n.key === d.key))]
+      .sort((a, b) => (a.key === b.key ? 0 : a.key === 'home' ? -1 : 1));
+  }, meta.site);
+  return saved;
+}
+
 export async function syncSiteFromGitHub(store: DocStore, services: Services, clientId: string) {
   const s = await store.get<Site>('site', clientId);
   const src = s?.github;
@@ -226,8 +266,10 @@ export async function syncSiteFromGitHub(store: DocStore, services: Services, cl
   let added: SiteVersion | null = null;
   await store.mutate<Site>('site', clientId, (x) => {
     const n = `v${x.versions.filter((v) => v.state !== 'rejected').length + 1}`;
-    const auto = Boolean(x.github?.autoPublish);
     const base = x.versions.find((v) => (v.state ?? 'published') === 'published');
+    // The first commit is the design the team signed off in Claude: show it straight away.
+    // It stays REPS-only while the site is a draft.
+    const auto = Boolean(x.github?.autoPublish) || !base;
     added = {
       id: services.newId(), version: n, label: `${n} · ${fetched.message || 'Updated in Claude'}`.slice(0, 120),
       sentNote: auto ? 'Updated in Claude just now' : 'Updated in Claude, waiting for REPS approval',
@@ -239,6 +281,7 @@ export async function syncSiteFromGitHub(store: DocStore, services: Services, cl
     x.versions.forEach((v) => { if (v.state === 'pending' && v.commit) v.state = 'rejected'; });
     x.versions.unshift(added);
     if (auto && x.status !== 'draft') { x.status = 'review'; x.statusNote = `${n} sent for review just now`; }
+    if (!base && x.status === 'draft') x.statusNote = 'Committed from Claude. Check it over, then send it to the client.';
     if (x.github) Object.assign(x.github, { lastSha: fetched.sha, lastSync: new Date().toISOString(), lastNote: `Added ${n}` });
   }, meta.site);
   return { added: true, note: `${(added as SiteVersion | null)?.version ?? 'A new version'} added from GitHub.` };
@@ -316,7 +359,14 @@ export async function buildLaunch(store: DocStore, services: Services, clientId:
   const spec = buildSpec(a, site1.copy, client.slug);
   const prereg = buildPreReg(a, pre.copy, spec);
 
-  await store.mutate<Site>('site', clientId, (x) => {
+  const current = await store.get<Site>('site', clientId);
+  if (current && !isTemplateSite(current)) {
+    // Sites made in Claude: refresh the design files for the team to review and commit.
+    if (current.specs?.home?.design) spec.design = current.specs.home.design;
+    const saved = await saveDesigns(store, services, clientId, client.name, { home: spec, prereg }, 'Updated with the launch setup.');
+    const repo = current.github?.repo;
+    notes.push(`${saved.map((d) => `"${d.file}"`).join(' and ')} saved for review in Claude.${repo ? ` Commit them to ${repo} when they're ready and they'll appear in the Website section.` : ''}`);
+  } else await store.mutate<Site>('site', clientId, (x) => {
     const latest = x.versions.find((v) => (v.state ?? 'published') === 'published');
     const keep = (key: string) => latest?.pages.find((p) => p.key === key)?.id ?? services.newId();
     // Keep the look the team picked for this client.
@@ -524,20 +574,19 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       for (const m of prior) await store.mutate<Meeting>('meeting', m.id, (x) => { x.clientId = clientId; }, meta.meeting);
       if (prior.length) await refreshVoiceFor(store, services, clientId).catch(() => null);
 
-      // The first draft of the website, from their branding. Pricing is added in the launch setup.
+      // The first design of the website, from their branding, goes to the team to review in Claude.
+      // The Website section stays empty until the final design is committed to the client's repo.
       const site1 = await services.writeSiteCopy(a);
       const spec = buildSpec(a, site1.copy, slug);
+      const repo = services.siteRepoFor(slug);
       const s: Site = {
-        clientId, status: 'draft', statusNote: 'Built from the intake form. Add the launch setup to fill in the pricing.',
-        contact: client.contactName ?? client.name, domain: a.domain.name || client.name,
-        versions: [{
-          id: services.newId(), version: 'v1', label: 'v1 · First draft', state: 'published', createdAt: now,
-          sentNote: site1.by === 'claude' ? 'Built from the intake form, copy written by Claude' : 'Built from the intake form',
-          pages: [{ id: services.newId(), key: 'home', name: 'Homepage', path: ' · Homepage', kind: 'template', spec }],
-          comments: [],
-        }],
+        clientId, status: 'draft', statusNote: 'We’re designing your website.',
+        contact: client.contactName ?? client.name, domain: a.domain.name || client.name, versions: [],
+        github: repo ? { repo, branch: 'main', autoPublish: false } : undefined,
       };
       await store.put('site', clientId, s, meta.site(s));
+      await saveDesigns(store, services, clientId, client.name, { home: spec },
+        site1.by === 'claude' ? 'Made from the intake form, copy written by Claude.' : 'Made from the intake form.');
       return wait({ clientId, slug, copyBy: site1.by }, 1800);
     },
 
@@ -582,6 +631,14 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       await admin();
       const look = LOOKS.find((l) => l.id === design);
       if (!look) throw new AccessError('Unknown website look.', 400);
+      const current = await store.get<Site>('site', clientId);
+      if (current && !isTemplateSite(current)) {
+        const home = current.specs?.home;
+        if (!home) throw new AccessError('There’s no generated design for this client.', 400);
+        const client = await store.get<ClientRec>('client', clientId);
+        await saveDesigns(store, services, clientId, client?.name ?? home.brand.name, { home: { ...home, design } }, `Redrawn in the ${look.name} look.`);
+        return wait({ pending: false, file: true }, 300);
+      }
       let result: { pending: boolean } | null = null;
       const ok = await site(clientId, (x) => {
         const latest = x.versions.find((v) => (v.state ?? 'published') === 'published');

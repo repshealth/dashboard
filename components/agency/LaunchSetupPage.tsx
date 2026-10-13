@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useData } from '../DataProvider';
 import { LAUNCH_STEPS, type Draft } from '../onboarding/steps';
+import DesignFiles from './DesignFiles';
 import { backend, type Submission } from '@/lib/backend';
 import { fmtWhen } from '@/lib/format';
 import { exampleAnswers, launchFrom, withLaunch, type LaunchDoc } from '@/lib/site/onboarding';
@@ -132,6 +133,8 @@ export default function LaunchSetupPage() {
                   )}
                 </div>
               </div>
+
+              {current.sub.clientId && <DesignFiles clientId={current.sub.clientId} stamp={`${current.doc?.builtAt ?? ''}-${notes.length}`} />}
 
               {LAUNCH_STEPS.map((s, i) => (
                 <div key={s.title} className="detail ls-sec">

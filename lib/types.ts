@@ -1,4 +1,5 @@
-import type { AnySpec } from './site/prereg';
+import type { AnySpec, PreRegSpec } from './site/prereg';
+import type { SiteSpec } from './site/spec';
 
 export type SourceId = 'quiz' | 'magnet' | 'survey' | 'ads' | 'news' | 'prereg';
 export type StageId = 'new' | 'nurture' | 'call' | 'showed' | 'purchased' | 'lost';
@@ -163,7 +164,30 @@ export interface Site {
   brand?: MockBrand;
   /** Where updates come from: a GitHub repo the site is saved to from Claude. */
   github?: SiteSource;
+  /**
+   * REPS only. Pages generated from the intake form and launch setup, saved as HTML for the
+   * team to review in the "CRM - Website Designs" Claude Project before they're committed.
+   */
+  designs?: DesignFile[];
+  /** REPS only. What the design files were generated from, so they can be redrawn in another look. */
+  specs?: { home?: SiteSpec; prereg?: PreRegSpec };
   versions: SiteVersion[]; // newest first
+}
+
+/** One generated page, e.g. "Strong With Dani - Website Page.html". */
+export interface DesignFile {
+  key: 'home' | 'prereg';
+  /** "Strong With Dani - Website Page" */
+  name: string;
+  /** "Strong With Dani - Website Page.html" */
+  file: string;
+  /** Stored copy, for downloading. */
+  url: string;
+  /** The file in the designs repo on GitHub, when that's set up. */
+  repoUrl?: string;
+  design?: string;
+  savedAt: string;
+  note: string;
 }
 
 export interface SiteSource {

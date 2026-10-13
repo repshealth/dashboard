@@ -81,7 +81,7 @@ export function Count({ value }: { value: string }) {
     io.observe(el);
     return () => { io.disconnect(); cancelAnimationFrame(raf); };
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <span ref={ref}>{shown}</span>;
+  return <span ref={ref} data-count={value}>{shown}</span>;
 }
 
 /** An endless strip. Children are drawn twice so the loop is seamless. */
@@ -134,6 +134,12 @@ export const spot = (e: MouseEvent<HTMLElement>) => {
   el.style.setProperty('--mx', `${((e.clientX - r.left) / Math.max(r.width, 1)) * 100}%`);
   el.style.setProperty('--my', `${((e.clientY - r.top) / Math.max(r.height, 1)) * 100}%`);
 };
+
+/** Lets a form work in the exported HTML page too (see lib/site/render/runtime.js). */
+export const captureAttrs = (slug: string, endpoint: string | undefined, o: { source: string; form: string; page: string; thanks: string; thanksClass: string }) => ({
+  'data-capture': '', 'data-client': slug, 'data-endpoint': endpoint ?? '', 'data-source': o.source, 'data-form': o.form,
+  'data-page': o.page, 'data-thanks': o.thanks, 'data-thanks-class': o.thanksClass,
+});
 
 /** The free guide sign-up at the bottom of the page. */
 export function useCapture(spec: SiteSpec, formEndpoint?: string) {

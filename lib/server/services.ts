@@ -10,6 +10,8 @@ import { addSubscriber, scheduleLaunch } from './mailerlite';
 import { linkEmail, sendEmail, signInLink } from './auth';
 import { cf, setting } from './env';
 import { fetchSiteFromGitHub } from '../site/github';
+import { renderPage } from '../site/render/renderer.gen';
+import { saveDesign, siteRepoFor } from './designs';
 import { VOICE_SCHEMA, VOICE_SYSTEM, voiceFromRules, voicePrompt } from '../meetings/voice';
 import type { VoiceProfile } from '../meetings/types';
 import { TASKS_SCHEMA, TASKS_SYSTEM, tasksFromNotes, tasksPrompt, toAssignee } from '../tasks/extract';
@@ -48,6 +50,12 @@ export function liveServices(store: DocStore, origin: string): Services {
       return tasksFromNotes(m, names);
     },
     fetchSite: (repo, branch) => fetchSiteFromGitHub(repo, branch, setting('GITHUB_TOKEN') || undefined),
+    renderPage: (spec, title) => {
+      const base = (setting('APP_URL') || origin).replace(/\/$/, '');
+      return renderPage(spec, { title, formEndpoint: `${base}/api/forms`, origin: base });
+    },
+    saveDesign,
+    siteRepoFor,
     async storeHtml(clientId, sha, path, html) {
       const bucket = cf().UPLOADS;
       if (!bucket) throw new Error('File storage (R2) isn’t connected.');

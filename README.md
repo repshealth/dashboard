@@ -30,13 +30,13 @@ The first deploy also creates the D1 database (`reps-scaling-os`) and the R2 buc
 
 In the Worker's **Settings**:
 
-2. Under **Variables and Secrets**, add:
+1. Under **Variables and Secrets**, add:
    - `ADMIN_EMAILS`: the agency login's email (e.g. `james@fitpreneuragency.com`). It sees the agency side and every client account.
    - `ADMIN_PASSWORD` (as a secret): the agency login's password. At least 10 characters; a few random words works well.
    - `RESEND_API_KEY` and `EMAIL_FROM`: sign-in and invite emails are sent through [Resend](https://resend.com). Verify your domain there first, then use an address on it, e.g. `REPS <hello@fitpreneuragency.com>`.
    - `ANTHROPIC_API_KEY` (from console.anthropic.com): Claude writes the sites, pre-reg pages, emails, amends and voice profiles. Without it, standard wording drawn from the answers is used.
    - `APP_URL` (optional): your dashboard's address, used in emailed links. Set it once you add a custom domain.
-3. Redeploy (push to GitHub, or **Deployments > Retry**).
+2. Redeploy (push to GitHub, or **Deployments > Retry**).
 
 The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds the starting clients in `lib/starter.ts` (Physique X and Dailey Demolition), connects each website to its GitHub repo and pulls the latest commit. Open the dashboard and sign in with the agency email and password. Then give clients their own logins in **Agency > Logins**.
 

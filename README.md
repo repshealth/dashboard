@@ -6,7 +6,7 @@ Built with Next.js (React) and runs entirely on Cloudflare: Workers for hosting,
 
 ## Two modes
 
-- **Example mode** (the default): the dashboard runs in the browser with the starting clients only (Physique X, with its website at the latest commit when the preview was built). Nothing is saved and anything you change resets when the page reloads. Good for a preview link.
+- **Example mode** (the default): the dashboard runs in the browser with the starting clients only (Physique X and Dailey Demolition, with their websites at the latest commit when the preview was built). Nothing is saved and anything you change resets when the page reloads. Good for a preview link.
 - **Live mode**: real logins and data saved in Cloudflare D1. Switched on with the build variable `NEXT_PUBLIC_LIVE=true`.
 
 ## View it on GitHub Pages (no Cloudflare needed)
@@ -38,7 +38,7 @@ In the Worker's **Settings**:
    - `APP_URL` (optional): your dashboard's address, used in emailed links. Set it once you add a custom domain.
 3. Redeploy (push to GitHub, or **Deployments > Retry**).
 
-The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds Physique X (`lib/starter.ts`), connects its website to repshealth/physique-x and pulls the latest commit. Sign in at `/login` with an admin email and you'll get a link by email.
+The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds the starting clients in `lib/starter.ts` (Physique X and Dailey Demolition), connects each website to its GitHub repo and pulls the latest commit. Sign in at `/login` with an admin email and you'll get a link by email.
 
 If emails aren't set up yet, sign-in links are written to the Worker's logs instead (**Workers > your worker > Logs**), so you can still get in while testing.
 
@@ -248,8 +248,8 @@ app/
 components/                    Screens, sidebar, top bar, shared state
 lib/backend/                   core.ts (every action and its access rules), demo.ts (example data), live.ts (browser to /api/rpc)
 lib/server/                    Cloudflare: D1 store, sign-in, Claude, MailerLite, emails
-lib/starter.ts                 The clients the dashboard starts with (Physique X)
-lib/demo/physique-x.json       Latest Physique X commit, for the preview
+lib/starter.ts                 The clients the dashboard starts with (Physique X, Dailey Demolition)
+lib/demo/*.json                Their latest website commits, for the preview
 lib/site/                      Website and pre-registration page: specs, copy, amends
 lib/emails/                    Launch emails: schedule, copy, amends, HTML for MailerLite
 lib/meetings/                  Meetings: Gemini doc parser, client matching, voice profile

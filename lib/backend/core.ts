@@ -296,12 +296,14 @@ export const starterNote = (store: DocStore, clientId: string) => store.mutate<S
 
 /**
  * Adds the starting clients (lib/starter.ts) to an empty database, connects each website to its
- * GitHub repo and pulls the latest commit. Runs once: a marker stops it running again.
+ * GitHub repo and pulls the latest commit. Each one is added once: a marker stops it being added again.
  */
 export async function seedStarter(store: DocStore, services: Services) {
-  if (await store.get('setting', 'starter')) return;
-  await store.put('setting', 'starter', { at: new Date().toISOString() }, {});
   for (const c of STARTER_CLIENTS) {
+    // Each starting client is added once, so ones added to the list later still arrive.
+    const mark = `starter:${c.slug}`;
+    if (await store.get('setting', mark)) continue;
+    await store.put('setting', mark, { at: new Date().toISOString() }, {});
     if (await store.byKey('client', c.slug)) continue;
     const client: ClientRec = {
       id: c.id, slug: c.slug, name: c.name, growthNote: 'Site not live yet', revenueNote: 'No sales yet',

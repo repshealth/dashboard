@@ -15,4 +15,5 @@ export interface StarterClient {
 
 export const STARTER_CLIENTS: StarterClient[] = [
   { id: 'physique-x', slug: 'physique-x', name: 'Physique X', contactName: 'Kieran', repo: 'repshealth/physique-x', branch: 'main' },
+  { id: 'dailey-demolition', slug: 'dailey-demolition', name: 'Dailey Demolition', contactName: 'Kate Dailey', repo: 'repshealth/dailey', branch: 'main' },
 ];

@@ -63,6 +63,7 @@ const services: Services = {
 async function seedExample() {
   const snapshots: Record<string, () => Promise<FetchedSite>> = {
     'repshealth/physique-x': async () => (await import('../demo/physique-x.json')).default as FetchedSite,
+    'repshealth/dailey': async () => (await import('../demo/dailey.json')).default as FetchedSite,
   };
   for (const c of STARTER_CLIENTS) {
     const rec: ClientRec = {
@@ -79,7 +80,7 @@ async function seedExample() {
     if (snap) await syncSiteFromGitHub(store, { ...services, fetchSite: snap }, c.id).catch(() => null);
     await starterNote(store, c.id);
   }
-  await store.put('setting', 'starter', { at: new Date().toISOString() }, {});
+  for (const c of STARTER_CLIENTS) await store.put('setting', `starter:${c.slug}`, { at: new Date().toISOString() }, {});
 }
 
 let seeded: Promise<void> | null = null;

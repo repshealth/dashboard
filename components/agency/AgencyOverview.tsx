@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useData } from '../DataProvider';
 import LeadDetail from '../leads/LeadDetail';
 import { Kpis, LeadBoard, LeadTable, leadStats } from '../leads/parts';
-import { SITE_STATUS, SOURCES, STAGE_NAME } from '@/lib/constants';
+import { SITE_STATUS, STAGE_NAME } from '@/lib/constants';
+import { sourceLabel } from '../leads/SourceTag';
 import { downloadCsv, fmtDate, gbp, pct } from '@/lib/format';
 import { pendingVersion } from '@/lib/site/versions';
 import type { Site } from '@/lib/types';
@@ -52,7 +53,7 @@ export default function AgencyOverview() {
   const exportCsv = () =>
     downloadCsv(`reps-${oneClient?.slug || 'all-clients'}-leads.csv`, [
       ['Client', 'Name', 'Email', 'Phone', 'Source', 'Stage', 'Page', 'UTM', 'First seen', 'Value'],
-      ...shown.map((l) => [names[l.clientId] ?? '', l.name, l.email, l.phone ?? '', SOURCES[l.source].label, STAGE_NAME[l.stage], l.page ?? '', l.utm ?? '', fmtDate(l.firstSeen), l.value]),
+      ...shown.map((l) => [names[l.clientId] ?? '', l.name, l.email, l.phone ?? '', sourceLabel(l), STAGE_NAME[l.stage], l.page ?? '', l.utm ?? '', fmtDate(l.firstSeen), l.value]),
     ]);
 
   if (!viewer?.isAdmin) return null;

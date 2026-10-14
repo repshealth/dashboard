@@ -158,10 +158,12 @@ export async function captureLead(store: DocStore, services: Services, input: {
       l.events.unshift(event(label));
       if (input.answers?.length) l.answers = input.answers;
       if (!l.phone && input.phone) l.phone = input.phone;
+      if (!l.form && input.form) l.form = input.form;
     }, meta.lead))!;
   } else {
     lead = {
       id: services.newId(), clientId, name: input.name || email, email, phone: input.phone || undefined, source: input.source,
+      form: input.form || undefined,
       stage: 'new', page: input.page || undefined, utm: input.utm || undefined, firstSeen: new Date().toISOString(), value: 0,
       detail: input.answers?.[0] ? `${input.answers[0][0]}: ${input.answers[0][1]}` : input.form || undefined,
       answersTitle: titles[input.source], answers: input.answers ?? [], events: [event(label)],

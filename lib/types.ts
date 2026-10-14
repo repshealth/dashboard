@@ -31,6 +31,10 @@ export interface Lead {
   email: string;
   phone?: string;
   source: SourceId;
+  /** The form this lead came through, e.g. "Homepage form". Shown on the card and
+      used for the source filter, so a client sees their own forms rather than the
+      generic source names. Falls back to the source label when absent. */
+  form?: string;
   stage: StageId;
   page?: string;
   utm?: string;

@@ -1,9 +1,9 @@
 'use client';
 
-import SourceTag from './SourceTag';
-import { SOURCES, SOURCE_IDS, STAGES, STAGE_NAME, STAGE_ORDER } from '@/lib/constants';
+import SourceTag, { sourceLabel } from './SourceTag';
+import { STAGES, STAGE_NAME, STAGE_ORDER } from '@/lib/constants';
 import { gbp, pct, timeAgo } from '@/lib/format';
-import type { Lead, SourceId } from '@/lib/types';
+import type { Lead } from '@/lib/types';
 
 /** Shared pieces of the client Leads screen and the agency Overview. */
 
@@ -40,12 +40,37 @@ export function Kpis({ leads, growthNote, revenueNote }: { leads: Lead[]; growth
   );
 }
 
-export function SourcePills({ value, onChange }: { value: 'all' | SourceId; onChange: (v: 'all' | SourceId) => void }) {
+/**
+ * The sources this client actually has leads from, most used first.
+ *
+ * Built from the leads themselves rather than the fixed list, so a client only
+ * ever sees their own live forms, named as they are on their site.
+ */
+export function activeSources(leads: Lead[]) {
+  const counts = new Map<string, number>();
+  for (const l of leads) {
+    const label = sourceLabel(l);
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([label, count]) => ({ label, count }));
+}
+
+export function SourcePills({ leads, value, onChange }: {
+  leads: Lead[]; value: string; onChange: (v: string) => void;
+}) {
+  const sources = activeSources(leads);
+  // One source is no choice at all, so the filter stays out of the way.
+  if (sources.length < 2) return null;
   return (
     <>
-      {(['all', ...SOURCE_IDS] as const).map((id) => (
-        <button key={id} type="button" className={`pill${value === id ? ' on' : ''}`} onClick={() => onChange(id)}>
-          {id === 'all' ? 'All sources' : SOURCES[id].label}
+      <button type="button" className={`pill${value === 'all' ? ' on' : ''}`} onClick={() => onChange('all')}>
+        All sources
+      </button>
+      {sources.map((s) => (
+        <button key={s.label} type="button" className={`pill${value === s.label ? ' on' : ''}`} onClick={() => onChange(s.label)}>
+          {s.label} <span className="pill-n">{s.count}</span>
         </button>
       ))}
     </>
@@ -68,7 +93,7 @@ export function LeadBoard({ leads, selectedId, onSelect, clientNames }: {
               <button key={l.id} type="button" className={`lcard${selectedId === l.id ? ' on' : ''}`} onClick={() => onSelect(l.id)}>
                 {clientNames && <div className="lc-client">{clientNames[l.clientId]}</div>}
                 <div className="n">{l.name}</div>
-                <div className="r"><SourceTag source={l.source} /><span className="b">{headline(l)}</span></div>
+                <div className="r"><SourceTag lead={l} /><span className="b">{headline(l)}</span></div>
                 <div className="m">{detail(l)}</div>
               </button>
             )) : <div className="empty">No leads here</div>}
@@ -99,7 +124,7 @@ export function LeadTable({ leads, selectedId, onSelect, clientNames }: {
                 <div className="email">{l.email}</div>
               </td>
               {clientNames && <td>{clientNames[l.clientId]}</td>}
-              <td><SourceTag source={l.source} /></td>
+              <td><SourceTag lead={l} /></td>
               <td style={{ color: 'var(--accent)', fontWeight: 600 }}>{STAGE_NAME[l.stage]}</td>
               <td>{headline(l)}</td>
               <td style={{ color: 'var(--muted)' }}>{detail(l)}</td>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useData } from '../DataProvider';
 import { SOURCES, STAGES, STAGE_NAME } from '@/lib/constants';
+import { sourceLabel } from './SourceTag';
 import { fmtDate } from '@/lib/format';
 import type { Lead } from '@/lib/types';
 
@@ -25,7 +26,8 @@ export default function LeadDetail({ lead, clientName, showClient }: { lead: Lea
   }
 
   const facts: [string, string | undefined][] = [
-    ['Source', SOURCES[lead.source]?.label],
+    ['Source', sourceLabel(lead)],
+    ['Source type', lead.form ? SOURCES[lead.source]?.label : undefined],
     ['Page', lead.page],
     ['Campaign (UTM)', lead.utm],
     ['First seen', fmtDate(lead.firstSeen)],

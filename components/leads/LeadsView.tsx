@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useData } from '../DataProvider';
 import LeadDetail from './LeadDetail';
 import { Kpis, LeadBoard, LeadTable, SourcePills } from './parts';
-import { AUTO_MOVES, SOURCES, STAGE_NAME } from '@/lib/constants';
+import { sourceLabel } from './SourceTag';
+import { AUTO_MOVES, STAGE_NAME } from '@/lib/constants';
 import { downloadCsv, fmtDate } from '@/lib/format';
-import type { SourceId } from '@/lib/types';
 
 type View = 'board' | 'list';
 
@@ -17,7 +17,8 @@ const Arrow = () => (
 
 export default function LeadsView() {
   const { client, leads } = useData();
-  const [source, setSource] = useState<'all' | SourceId>('all');
+  // 'all', or the label of one of this client's forms.
+  const [source, setSource] = useState<string>('all');
   const [view, setView] = useState<View>('board');
   const [q, setQ] = useState('');
   const [selId, setSelId] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export default function LeadsView() {
   useEffect(() => { setSource('all'); setQ(''); setSelId(null); }, [client?.id]);
 
   const all = leads ?? [];
-  const bySource = useMemo(() => all.filter((l) => source === 'all' || l.source === source), [all, source]);
+  const bySource = useMemo(() => all.filter((l) => source === 'all' || sourceLabel(l) === source), [all, source]);
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
     return bySource.filter((l) => !s || l.name.toLowerCase().includes(s) || l.email.toLowerCase().includes(s));
@@ -37,7 +38,7 @@ export default function LeadsView() {
   const exportCsv = () =>
     downloadCsv(`${client?.slug || 'leads'}-leads.csv`, [
       ['Name', 'Email', 'Phone', 'Source', 'Stage', 'Page', 'UTM', 'First seen', 'Value'],
-      ...shown.map((l) => [l.name, l.email, l.phone ?? '', SOURCES[l.source].label, STAGE_NAME[l.stage], l.page ?? '', l.utm ?? '', fmtDate(l.firstSeen), l.value]),
+      ...shown.map((l) => [l.name, l.email, l.phone ?? '', sourceLabel(l), STAGE_NAME[l.stage], l.page ?? '', l.utm ?? '', fmtDate(l.firstSeen), l.value]),
     ]);
 
   if (!client) return <div className="loading">No clients on this account yet.</div>;
@@ -66,7 +67,7 @@ export default function LeadsView() {
       </section>
 
       <div className="filters">
-        <SourcePills value={source} onChange={setSource} />
+        <SourcePills leads={all} value={source} onChange={setSource} />
         <div className="seg" role="group" aria-label="View">
           <button type="button" className={view === 'board' ? 'on' : ''} onClick={() => setView('board')}>Board</button>
           <button type="button" className={view === 'list' ? 'on' : ''} onClick={() => setView('list')}>List</button>

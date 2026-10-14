@@ -21,11 +21,31 @@ export type LaunchSettings = Pick<EmailCampaign, 'launchDate' | 'websiteUrl' | '
  * Everything the dashboard reads or writes goes through this interface.
  * `demo` serves the built-in example data; `live` calls the server, which keeps everything in Cloudflare D1.
  */
+export interface LoginInfo {
+  id: string;
+  name: string;
+  email: string;
+  /** REPS agency login: every client account. */
+  isAdmin: boolean;
+  clientIds: string[];
+  hasPassword: boolean;
+  createdAt: string;
+  lastSignIn?: string;
+}
+export interface LoginInput { id?: string; name: string; email: string; password?: string; clientIds: string[] }
+
 export interface Backend {
   mode: 'demo' | 'live';
   /** Returns null when nobody is signed in (live mode only). Sign-in itself goes through /api/auth. */
   getViewer(): Promise<Viewer | null>;
+  /** Email and password sign-in. Live mode sets the session cookie through /api/auth/login. */
+  signIn(email: string, password: string): Promise<Viewer>;
   signOut(): Promise<void>;
+  /** Admin: everyone who can sign in, and which client accounts they can open. */
+  listLogins(): Promise<LoginInfo[]>;
+  /** Admin: adds or updates a login. A password is needed for a new login; for an existing one it resets it. */
+  saveLogin(x: LoginInput): Promise<LoginInfo>;
+  removeLogin(id: string): Promise<void>;
   listClients(): Promise<Client[]>;
   listLeads(clientId: string): Promise<Lead[]>;
   moveLead(lead: Lead, stage: StageId, by: string): Promise<LeadEvent>;

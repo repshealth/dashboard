@@ -15,7 +15,8 @@ import { matchClient } from '../meetings/match';
 import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/types';
 import type { DocMeta, DocStore } from './store';
 import type { Assignee, FoundTask, Task } from '../tasks/types';
-import type { Backend, Submission } from './types';
+import type { Backend, LoginInfo, Submission } from './types';
+import { hashPassword, passwordProblem, verifyPassword } from './password';
 import { STARTER_CLIENTS } from '../starter';
 
 /* Records ------------------------------------------------------------------------ */
@@ -37,6 +38,9 @@ export interface UserRec {
   name: string;
   isAdmin?: boolean;
   createdAt: string;
+  /** Salted PBKDF2 hash (lib/backend/password.ts). Never sent to the browser. */
+  passwordHash?: string;
+  lastSignIn?: string;
 }
 
 export type ViewerRec = Viewer & { id: string };
@@ -120,6 +124,18 @@ export async function ensureUser(store: DocStore, services: Services, email: str
   const u: UserRec = { id: services.newId(), email: e, name: name || e, createdAt: new Date().toISOString() };
   await store.put('user', u.id, u, meta.user(u));
   return u;
+}
+
+/**
+ * Checks an email and password against the stored logins. Returns the user, or null for a wrong
+ * email or password (the same either way, so it doesn't reveal who has a login).
+ */
+export async function checkLogin(store: DocStore, email: string, password: string): Promise<UserRec | null> {
+  const found = await store.byKey<UserRec>('user', email.trim().toLowerCase());
+  const ok = await verifyPassword(password, found?.doc.passwordHash ?? 'pbkdf2$100000$AAAAAAAAAAAAAAAAAAAAAA==$x');
+  if (!found || !ok) return null;
+  await store.mutate<UserRec>('user', found.id, (u) => { u.lastSignIn = new Date().toISOString(); }, meta.user);
+  return found.doc;
 }
 
 /** A lead from a website or pre-registration form. A returning email adds to the timeline instead. */
@@ -492,7 +508,59 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       const v = await who();
       return v ? { name: v.name, email: v.email, isAdmin: v.isAdmin } : null;
     },
+    async signIn() {
+      throw new AccessError('Sign in through /api/auth/login.', 400);
+    },
     async signOut() {},
+
+    /* Logins (agency only) */
+    async listLogins() {
+      await admin();
+      const [users, clients] = await Promise.all([store.list<UserRec>('user'), store.list<ClientRec>('client')]);
+      return wait(users.map((u): LoginInfo => ({
+        id: u.id, name: u.name, email: u.email, isAdmin: Boolean(u.isAdmin), hasPassword: Boolean(u.passwordHash),
+        clientIds: clients.filter((c) => c.members.includes(u.id)).map((c) => c.id), createdAt: u.createdAt, lastSignIn: u.lastSignIn,
+      })).sort((a, b) => Number(b.isAdmin) - Number(a.isAdmin) || a.name.localeCompare(b.name)));
+    },
+    async saveLogin(x) {
+      const v = await admin();
+      const email = String(x.email || '').trim().toLowerCase();
+      const name = String(x.name || '').trim();
+      if (!name) throw new AccessError('Please add their name.', 400);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new AccessError('Please add a valid email address.', 400);
+      if (x.password) { const p = passwordProblem(x.password); if (p) throw new AccessError(p, 400); }
+      const same = await store.byKey<UserRec>('user', email);
+      if (same && same.id !== x.id) throw new AccessError('There is already a login with that email.', 400);
+      let u: UserRec;
+      if (x.id) {
+        const cur = await store.get<UserRec>('user', x.id);
+        if (!cur) throw new AccessError('Login not found.', 404);
+        if (cur.isAdmin && cur.id !== v.id) throw new AccessError('Agency logins are managed in Cloudflare.', 400);
+        const passwordHash = x.password ? await hashPassword(x.password) : cur.passwordHash;
+        u = (await store.mutate<UserRec>('user', x.id, (d) => Object.assign(d, { name, email, passwordHash }), meta.user))!;
+      } else {
+        if (!x.password) throw new AccessError('Please set a password.', 400);
+        u = { id: services.newId(), email, name, createdAt: new Date().toISOString(), passwordHash: await hashPassword(x.password) };
+        await store.put('user', u.id, u, meta.user(u));
+      }
+      // Which client accounts they can open. Agency logins already see everything.
+      const want = new Set(u.isAdmin ? [] : x.clientIds ?? []);
+      for (const c of await store.list<ClientRec>('client')) {
+        const has = c.members.includes(u.id);
+        if (has !== want.has(c.id)) await store.mutate<ClientRec>('client', c.id, (d) => { d.members = want.has(c.id) ? [...new Set([...d.members, u.id])] : d.members.filter((m) => m !== u.id); }, meta.client);
+      }
+      return wait({ id: u.id, name: u.name, email: u.email, isAdmin: Boolean(u.isAdmin), hasPassword: Boolean(u.passwordHash), clientIds: [...want], createdAt: u.createdAt, lastSignIn: u.lastSignIn });
+    },
+    async removeLogin(id) {
+      const v = await admin();
+      const u = await store.get<UserRec>('user', id);
+      if (!u) return;
+      if (u.isAdmin || u.id === v.id) throw new AccessError('Agency logins are managed in Cloudflare.', 400);
+      for (const c of await store.list<ClientRec>('client', {})) {
+        if (c.members.includes(id)) await store.mutate<ClientRec>('client', c.id, (d) => { d.members = d.members.filter((m) => m !== id); }, meta.client);
+      }
+      await store.del('user', id);
+    },
 
     async listClients() {
       const v = await signedIn();

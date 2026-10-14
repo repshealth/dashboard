@@ -14,7 +14,7 @@ import { tasksFromNotes } from '../tasks/extract';
 import { fetchSiteFromGitHub, type FetchedSite } from '../site/github';
 import { STARTER_CLIENTS } from '../starter';
 import { MemoryStore } from './store';
-import { createBackend, meta, starterNote, syncSiteFromGitHub, type ClientRec, type Services } from './core';
+import { checkLogin, createBackend, meta, starterNote, syncSiteFromGitHub, type ClientRec, type Services, type UserRec, type ViewerRec } from './core';
 import type { Backend } from './types';
 
 /**
@@ -81,14 +81,37 @@ async function seedExample() {
     await starterNote(store, c.id);
   }
   for (const c of STARTER_CLIENTS) await store.put('setting', `starter:${c.slug}`, { at: new Date().toISOString() }, {});
+  const admin: UserRec = { id: agency.id, email: agency.email!, name: agency.name, isAdmin: true, createdAt: new Date().toISOString() };
+  await store.put('user', admin.id, admin, meta.user(admin));
 }
 
 let seeded: Promise<void> | null = null;
 
+/** The preview's agency login, shown on its sign-in page. Live, it's ADMIN_EMAILS with ADMIN_PASSWORD. */
+export const DEMO_AGENCY = { email: 'agency@reps.preview', password: 'preview-agency' };
+const agency: ViewerRec = { id: 'reps', name: 'REPS team', email: DEMO_AGENCY.email, isAdmin: true };
+
+// Who is signed in to the preview. Kept in memory, so a reload signs out (and resets the data).
+let current: ViewerRec | null = null;
+
 const base = createBackend(store, services, async () => {
   await (seeded ??= seedExample());
-  return { id: 'reps', name: 'REPS team', isAdmin: true };
+  return current;
 }, 'demo');
 
-export const demoBackend: Backend = base;
+export const demoBackend: Backend = {
+  ...base,
+  async signIn(email, password) {
+    await (seeded ??= seedExample());
+    const e = email.trim().toLowerCase();
+    if (e === DEMO_AGENCY.email && password === DEMO_AGENCY.password) current = agency;
+    else {
+      const u = await checkLogin(store, e, password);
+      if (!u) { await new Promise((r) => setTimeout(r, 400)); throw new Error('That email and password don’t match.'); }
+      current = { id: u.id, name: u.name, email: u.email, isAdmin: Boolean(u.isAdmin) };
+    }
+    return { name: current.name, email: current.email, isAdmin: current.isAdmin };
+  },
+  async signOut() { current = null; },
+};
 export type { OnboardingAnswers };

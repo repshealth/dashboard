@@ -32,13 +32,14 @@ In the Worker's **Settings**:
 
 1. Under **Build > Variables**, add `NEXT_PUBLIC_LIVE` = `true`. This is read when the app is built.
 2. Under **Variables and Secrets**, add:
-   - `ADMIN_EMAILS`: your REPS team emails, comma separated. These people can always sign in and see the agency side.
+   - `ADMIN_EMAILS`: the agency login's email (e.g. `james@fitpreneuragency.com`). It sees the agency side and every client account.
+   - `ADMIN_PASSWORD` (as a secret): the agency login's password. At least 10 characters; a few random words works well.
    - `RESEND_API_KEY` and `EMAIL_FROM`: sign-in and invite emails are sent through [Resend](https://resend.com). Verify your domain there first, then use an address on it, e.g. `REPS <hello@fitpreneuragency.com>`.
    - `ANTHROPIC_API_KEY` (from console.anthropic.com): Claude writes the sites, pre-reg pages, emails, amends and voice profiles. Without it, standard wording drawn from the answers is used.
    - `APP_URL` (optional): your dashboard's address, used in emailed links. Set it once you add a custom domain.
 3. Redeploy (push to GitHub, or **Deployments > Retry**).
 
-The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds the starting clients in `lib/starter.ts` (Physique X and Dailey Demolition), connects each website to its GitHub repo and pulls the latest commit. Sign in at `/login` with an admin email and you'll get a link by email.
+The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds the starting clients in `lib/starter.ts` (Physique X and Dailey Demolition), connects each website to its GitHub repo and pulls the latest commit. Open the dashboard and sign in with the agency email and password. Then give clients their own logins in **Agency > Logins**.
 
 If emails aren't set up yet, sign-in links are written to the Worker's logs instead (**Workers > your worker > Logs**), so you can still get in while testing.
 
@@ -47,6 +48,16 @@ If emails aren't set up yet, sign-in links are written to the Worker's logs inst
 In the Worker's **Settings > Domains & Routes**, add e.g. `app.repsscaling.com`. If the domain's DNS is already on Cloudflare this takes a minute. Then set `APP_URL` to it.
 
 ## How logins work
+
+Everyone signs in on the home page with an email and password.
+
+- **Agency login:** the email in `ADMIN_EMAILS` with the `ADMIN_PASSWORD` secret. Full access to the agency side and every client account.
+- **Client logins:** made in **Agency > Logins**. Add their name, email and a password (or press **Make one**), and tick the client accounts they can see, e.g. Kate Dailey with Dailey Demolition only. A client login only ever sees the accounts ticked. Edit a login to change its accounts or set a new password; remove it to stop them signing in.
+- Passwords are stored only as salted PBKDF2 hashes. After 8 wrong passwords for one email, sign-in for that email pauses for 15 minutes.
+- Sessions last 30 days in a secure, HttpOnly cookie.
+
+The emailed sign-in links below still work for invites (when you send a client their website or emails), so a client without a password can still get in that way.
+
 
 - No passwords. People type their email and get a one-time sign-in link that expires in 30 minutes. Sessions last 30 days.
 - REPS admins are the emails in `ADMIN_EMAILS`.

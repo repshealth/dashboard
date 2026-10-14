@@ -109,6 +109,15 @@ const AGENCY_NAV = [
     ),
   },
   {
+    href: '/agency/logins',
+    label: 'Logins',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+        <rect x="3" y="7" width="10" height="7.5" rx="1.5" /><path d="M5.5 7V5a2.5 2.5 0 015 0v2" />
+      </svg>
+    ),
+  },
+  {
     href: '/agency/onboarding',
     label: 'Onboarding',
     icon: (
@@ -180,7 +189,7 @@ function AccountMenu() {
         <div className="who">{viewer?.name}{viewer?.email ? <><br />{viewer.email}</> : null}</div>
         {mode === 'live'
           ? <button type="button" role="menuitem" onClick={signOut}>Sign out</button>
-          : <button type="button" role="menuitem" disabled>Example data (no sign in yet)</button>}
+          : <button type="button" role="menuitem" onClick={signOut}>Sign out (preview)</button>}
       </div>
     </div>
   );
@@ -236,6 +245,7 @@ function Shell({ children }: { children: ReactNode }) {
             <NavLink {...AGENCY_NAV[3]} count={emailsCount} />
             <NavLink {...AGENCY_NAV[4]} count={tasksCount} />
             <NavLink {...AGENCY_NAV[5]} count={meetingsCount} />
+            <NavLink {...AGENCY_NAV[7]} />
             <NavLink {...AGENCY_NAV[6]} />
             <Link href="/onboarding">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>

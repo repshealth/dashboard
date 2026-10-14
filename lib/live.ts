@@ -1,6 +1,6 @@
 /**
- * Live mode is switched on by setting NEXT_PUBLIC_LIVE=true when the app is built
- * (a build variable in Cloudflare). Without it the dashboard runs on example data,
- * which is handy for a preview link before the database is set up.
+ * The deployed dashboard always runs live: real logins and data in Cloudflare D1.
+ * Only the single-file preview (npm run preview, GitHub Pages) uses example data; it's built
+ * with NEXT_PUBLIC_LIVE=false. Set that yourself to try example data with `npm run dev`.
  */
-export const isLive = process.env.NEXT_PUBLIC_LIVE === 'true';
+export const isLive = process.env.NEXT_PUBLIC_LIVE !== 'false';

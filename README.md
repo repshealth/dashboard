@@ -7,7 +7,7 @@ Built with Next.js (React) and runs entirely on Cloudflare: Workers for hosting,
 ## Two modes
 
 - **Example mode** (the default): the dashboard runs in the browser with the starting clients only (Physique X and Dailey Demolition, with their websites at the latest commit when the preview was built). Nothing is saved and anything you change resets when the page reloads. Good for a preview link.
-- **Live mode**: real logins and data saved in Cloudflare D1. Switched on with the build variable `NEXT_PUBLIC_LIVE=true`.
+- **Live mode**: real logins and data saved in Cloudflare D1. The deployed dashboard is always live; only the single-file preview uses example data.
 
 ## View it on GitHub Pages (no Cloudflare needed)
 
@@ -30,7 +30,6 @@ The first deploy also creates the D1 database (`reps-scaling-os`) and the R2 buc
 
 In the Worker's **Settings**:
 
-1. Under **Build > Variables**, add `NEXT_PUBLIC_LIVE` = `true`. This is read when the app is built.
 2. Under **Variables and Secrets**, add:
    - `ADMIN_EMAILS`: the agency login's email (e.g. `james@fitpreneuragency.com`). It sees the agency side and every client account.
    - `ADMIN_PASSWORD` (as a secret): the agency login's password. At least 10 characters; a few random words works well.
@@ -71,7 +70,7 @@ npm install
 npm run dev            # example mode at http://localhost:3000
 ```
 
-To try live mode locally, copy `.env.example` to `.dev.vars`, then run `NEXT_PUBLIC_LIVE=true npm run cf:local`. This runs the real Cloudflare Worker with a local database and bucket. Sign-in links appear in the terminal.
+To try live mode locally, copy `.env.example` to `.dev.vars`, then run `npm run cf:local`. This runs the real Cloudflare Worker with a local database and bucket. Sign-in links appear in the terminal.
 
 ## New client onboarding
 

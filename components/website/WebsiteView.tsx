@@ -9,6 +9,7 @@ import HtmlFrame from '../site/HtmlFrame';
 import SiteSource from './SiteSource';
 import SiteLook from './SiteLook';
 import { SITE_STATUS } from '@/lib/constants';
+import { backend } from '@/lib/backend';
 import { fmtWhen } from '@/lib/format';
 import { pendingVersion, publishedVersions } from '@/lib/site/versions';
 import type { CommentTarget, Device, PinAnchor, SiteComment } from '@/lib/types';
@@ -49,7 +50,25 @@ function anchorEl(pv: HTMLElement, a: PinAnchor, all: Element[]) {
 }
 
 export default function WebsiteView() {
-  const { client, site, viewer, addComment, toggleResolved, requestChanges, approve, sendToClient, toast } = useData();
+  const { client, site, viewer, addComment, toggleResolved, requestChanges, approve, sendToClient, toast, refreshSite, refreshAgency } = useData();
+
+  // Sites saved from Claude: when the team opens one, check GitHub for a newer commit
+  // (at most every few minutes), so the latest version shows without pressing anything.
+  const checked = useRef<Record<string, number>>({});
+  useEffect(() => {
+    const src = site?.github;
+    if (!viewer?.isAdmin || !site || !src?.repo || site.status === 'approved') return;
+    const id = site.clientId;
+    const last = Math.max(checked.current[id] ?? 0, src.lastSync ? Date.parse(src.lastSync) : 0);
+    if (Date.now() - last < 3 * 60e3) return;
+    checked.current[id] = Date.now();
+    backend.syncSite(id).then(async (r) => {
+      if (!r.added) return;
+      await refreshSite(id);
+      refreshAgency().catch(() => {});
+      toast(`Newer version found on GitHub: ${r.note}`);
+    }).catch(() => {});
+  }, [site, viewer?.isAdmin, refreshSite, refreshAgency, toast]);
   const [vi, setVi] = useState(0);
   const [pageKey, setPageKey] = useState<string | null>(null);
   const [device, setDevice] = useState<Device>('desktop');

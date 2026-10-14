@@ -15,7 +15,10 @@
   },
   "observability": { "enabled": true },
 
-  // Plain settings. Secrets (API keys, GITHUB_TOKEN) are added with `wrangler secret put`.
+  // Keep variables added in the Cloudflare dashboard (e.g. ADMIN_EMAILS) when deploying.
+  "keep_vars": true,
+
+  // Plain settings. Secrets (API keys, GITHUB_TOKEN) are added in the dashboard as secrets.
   "vars": {
     // New clients' website pages are committed here for review in the "CRM - Website Designs" Claude Project.
     "DESIGNS_REPO": "repshealth/website-designs",

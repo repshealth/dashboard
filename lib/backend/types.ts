@@ -80,6 +80,11 @@ export interface Backend {
   approveVersion(clientId: string, versionId: string): Promise<void>;
   /** REPS discards a revised version; the request stays open for the team to handle. */
   rejectVersion(clientId: string, versionId: string, note: string): Promise<void>;
+  /**
+   * Admin: closes change requests on the client's current version as done or declined. When none
+   * are left open, the site goes back to the client to review and drops out of Approvals.
+   */
+  closeComments(clientId: string, commentIds: string[], outcome: 'done' | 'declined', note?: string): Promise<{ open: number }>;
   /** Launch setups saved by the team (one per client). */
   listLaunchSetups(): Promise<LaunchDoc[]>;
   getLaunchSetup(clientId: string): Promise<LaunchDoc | null>;

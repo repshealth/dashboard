@@ -78,6 +78,11 @@ export interface SiteComment {
   resolved: boolean;
   createdAt: string; // ISO date
   target?: CommentTarget;
+  /** Set when the REPS team closes a change request from Approvals. */
+  outcome?: 'done' | 'declined';
+  /** Why it was declined, shown to the client. */
+  outcomeNote?: string;
+  closedAt?: string;
 }
 
 /** One edit made to a site when amending it from comments. */

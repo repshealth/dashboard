@@ -727,3 +727,17 @@ textarea.em-subj{font-size:15px}
 .lg-opt{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;cursor:pointer;background:#fff}
 .lg-opt.on{border-color:#6C55A3;background:#F4F1FA}
 .lg-details{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;resize:none}
+
+/* Change requests in Approvals: complete or reject each one */
+.chg-item.ap-req{display:flex;flex-direction:row;gap:14px;align-items:flex-start;justify-content:space-between}
+.ap-req-main{flex:1;min-width:0}
+.ap-req-act{display:flex;flex-direction:column;gap:6px;flex:none}
+.ap-req-act .btn{min-width:110px;justify-content:center}
+.ap-done{border-color:#2E8B57;color:#1F6B41}
+.ap-done:hover{background:#EAF6EF}
+.ap-no{border-color:#C2410C;color:#9A3412}
+.ap-no:hover{background:#FDF0EA}
+.cm-outcome{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px}
+.cm-outcome.done{background:#EAF6EF;color:#1F6B41}
+.cm-outcome.declined{background:#FDF0EA;color:#9A3412}
+.cm-outcome-note{font-size:12.5px;color:var(--muted);margin-top:4px}

@@ -34,7 +34,9 @@ function buildQueue(sites: Site[], clients: Client[]): Item[] {
 
 export default function Approvals() {
   const router = useRouter();
-  const { viewer, clients, allSites, refreshAgency, approveVersion, rejectVersion, setClientId, toast } = useData();
+  const { viewer, clients, allSites, refreshAgency, approveVersion, rejectVersion, closeComments, setClientId, toast } = useData();
+  const [declining, setDeclining] = useState<string | null>(null);
+  const [why, setWhy] = useState('');
   const [selKey, setSelKey] = useState<string | null>(null);
   const [showing, setShowing] = useState<'new' | 'old'>('new');
   const [device, setDevice] = useState<Device>('desktop');
@@ -50,12 +52,26 @@ export default function Approvals() {
   const key = (i: Item) => `${i.kind}:${i.site.clientId}`;
   const item = queue.find((i) => key(i) === selKey) ?? queue[0];
 
-  useEffect(() => { setShowing('new'); setPageIdx(0); setRejecting(false); setNote(''); }, [item && key(item)]);
+  useEffect(() => { setShowing('new'); setPageIdx(0); setRejecting(false); setNote(''); setDeclining(null); setWhy(''); }, [item && key(item)]);
 
   if (!viewer?.isAdmin) return null;
   if (allSites === null) return <div className="loading">Loading approvals…</div>;
 
   const openWebsite = (clientId: string) => { setClientId(clientId); router.push('/website'); };
+
+  /** Closes change requests as done or declined. The item leaves Approvals once none are open. */
+  const close = async (ids: string[], outcome: 'done' | 'declined', note?: string) => {
+    if (!item) return;
+    setBusy(true);
+    try {
+      const left = (item.kind === 'manual' ? item.open.length : 0) - ids.length;
+      await closeComments(item.site.clientId, ids, outcome, note);
+      setDeclining(null); setWhy('');
+      toast(left > 0 ? (outcome === 'done' ? 'Marked complete.' : 'Marked rejected.')
+        : `All done. ${item.client.name}'s site is back with ${item.site.contact || 'them'} to review.`);
+    } catch (e) { toast(e instanceof Error ? e.message : 'Could not save. Please try again.'); }
+    finally { setBusy(false); }
+  };
 
   const commentFor = (id?: string) => (id ? item?.base?.comments.find((c) => c.id === id) : undefined);
 
@@ -227,21 +243,43 @@ export default function Approvals() {
                 <div>
                   <div className="ap-eyebrow">{item.client.name}</div>
                   <h2>Changes to make by hand</h2>
-                  <p className="sub">This site is made from designs or screenshots, so Claude can&apos;t edit it directly. Here&apos;s what {item.site.contact || 'the client'} asked for on {item.base.version}.</p>
+                  <p className="sub">This site is made in Claude, so make these changes there and commit them. Here&apos;s what {item.site.contact || 'the client'} asked for on {item.base.version}.</p>
                 </div>
                 <div className="actions">
-                  <button type="button" className="btn gold" onClick={() => openWebsite(item.site.clientId)}>Open their website</button>
+                  <button type="button" className="btn" onClick={() => openWebsite(item.site.clientId)}>Open their website</button>
+                  {item.open.length > 1 && (
+                    <button type="button" className="btn gold" disabled={busy} onClick={() => close(item.open.map((c) => c.id), 'done')}>Mark all complete</button>
+                  )}
                 </div>
               </div>
               <div className="detail ap-manual">
                 {item.open.map((c, i) => (
-                  <div key={c.id} className="chg-item">
-                    <div className="chg-label">{i + 1}. {c.target?.section ?? item.base.pages.find((p) => p.id === c.pageId)?.name ?? 'Website'}{c.device ? ` · ${c.device}` : ''}</div>
-                    {c.target?.text && <div className="chg-before chg-ctx">{c.target.text}</div>}
-                    <div className="chg-why"><b>{c.author}:</b> {c.text}</div>
-                    <div className="cm-t" style={{ marginLeft: 0 }}>{fmtWhen(c.createdAt)}</div>
+                  <div key={c.id} className="chg-item ap-req">
+                    <div className="ap-req-main">
+                      <div className="chg-label">{i + 1}. {c.target?.section ?? item.base.pages.find((p) => p.id === c.pageId)?.name ?? 'Website'}{c.device ? ` · ${c.device}` : ''}</div>
+                      {c.target?.text && <div className="chg-before chg-ctx">{c.target.text}</div>}
+                      <div className="chg-why"><b>{c.author}:</b> {c.text}</div>
+                      <div className="cm-t" style={{ marginLeft: 0 }}>{fmtWhen(c.createdAt)}</div>
+                      {declining === c.id && (
+                        <div className="ap-reject">
+                          <label htmlFor={`why-${c.id}`} className="ob-label">Why? {item.site.contact || 'The client'} sees this (optional)</label>
+                          <textarea id={`why-${c.id}`} rows={2} placeholder="e.g. We've kept the original photo as it fits the brand better." value={why} onChange={(e) => setWhy(e.target.value)} />
+                          <div className="cp-a">
+                            <button type="button" className="btn" onClick={() => { setDeclining(null); setWhy(''); }}>Cancel</button>
+                            <button type="button" className="btn gold" disabled={busy} onClick={() => close([c.id], 'declined', why)}>Reject request</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {declining !== c.id && (
+                      <div className="ap-req-act">
+                        <button type="button" className="btn ap-done" disabled={busy} onClick={() => close([c.id], 'done')}>✓ Complete</button>
+                        <button type="button" className="btn ap-no" disabled={busy} onClick={() => { setDeclining(c.id); setWhy(''); }}>✕ Reject</button>
+                      </div>
+                    )}
                   </div>
                 ))}
+                <p className="ap-hint">Complete or reject each request. Once none are left, this drops out of Approvals and the site goes back to {item.site.contact || 'the client'} to review.</p>
               </div>
             </section>
           )}

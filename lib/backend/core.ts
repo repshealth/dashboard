@@ -784,6 +784,31 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       });
       await inviteFor(clientId, 'website');
     },
+    async closeComments(clientId, commentIds, outcome, note) {
+      await admin();
+      let open = 0;
+      const ok = await site(clientId, (x) => {
+        const base = x.versions.find((v) => (v.state ?? 'published') === 'published');
+        if (!base) return;
+        const at = new Date().toISOString();
+        const why = (note ?? '').trim().slice(0, 500);
+        base.comments.forEach((c) => {
+          if (!commentIds.includes(c.id) || c.resolved) return;
+          Object.assign(c, { resolved: true, outcome, closedAt: at, ...(outcome === 'declined' && why ? { outcomeNote: why } : {}) });
+        });
+        open = base.comments.filter((c) => !c.resolved).length;
+        if (!open && x.status === 'changes') {
+          const done = base.comments.some((c) => c.outcome === 'done');
+          const declined = base.comments.some((c) => c.outcome === 'declined');
+          x.status = 'review';
+          x.statusNote = done && declined ? 'Your changes have been made, with a note on any we left as they were. Take a look and approve when you’re happy.'
+            : done ? 'Your changes have been made. Take a look and approve when you’re happy.'
+            : 'The REPS team has gone through your requests. See the notes on each comment.';
+        }
+      });
+      if (!ok) throw new AccessError('Website not found.', 404);
+      return wait({ open }, 300);
+    },
     async rejectVersion(clientId, versionId, note) {
       await admin();
       await site(clientId, (x) => {

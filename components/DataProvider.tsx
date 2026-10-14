@@ -58,6 +58,7 @@ interface DataCtx {
   refreshAgency: () => Promise<void>;
   approveVersion: (clientId: string, versionId: string) => Promise<void>;
   rejectVersion: (clientId: string, versionId: string, note: string) => Promise<void>;
+  closeComments: (clientId: string, commentIds: string[], outcome: 'done' | 'declined', note?: string) => Promise<void>;
   toast: (msg: string) => void;
   signOut: () => Promise<void>;
 }
@@ -283,6 +284,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await Promise.all([refreshAgency(), sitesBy[cid] !== undefined ? reloadSite(cid) : Promise.resolve()]);
   }, [refreshAgency, reloadSite, sitesBy]);
 
+  const closeComments = useCallback(async (cid: string, ids: string[], outcome: 'done' | 'declined', note?: string) => {
+    await backend.closeComments(cid, ids, outcome, note);
+    await Promise.all([refreshAgency(), sitesBy[cid] !== undefined ? reloadSite(cid) : Promise.resolve()]);
+  }, [refreshAgency, reloadSite, sitesBy]);
+
   const refreshSite = useCallback(async (cid?: string) => {
     const id = cid ?? clientId;
     if (id) await reloadSite(id);
@@ -301,9 +307,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DataCtx>(() => ({
     mode: backend.mode, ready, error, viewer, clients, client, setClientId, leads, site,
     moveLead, saveNotes, addComment, toggleResolved, requestChanges, approve, sendToClient, refreshSite,
-    allLeads, allSites, approvalsCount, allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, launchCount, refreshLaunch, refreshAgency, approveVersion, rejectVersion, toast, signOut,
+    allLeads, allSites, approvalsCount, allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, launchCount, refreshLaunch, refreshAgency, approveVersion, rejectVersion, closeComments, toast, signOut,
   }), [allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, launchCount, refreshLaunch, ready, error, viewer, clients, client, setClientId, leads, site, moveLead, saveNotes, addComment, toggleResolved,
-    requestChanges, approve, sendToClient, refreshSite, allLeads, allSites, approvalsCount, refreshAgency, approveVersion, rejectVersion, toast, signOut]);
+    requestChanges, approve, sendToClient, refreshSite, allLeads, allSites, approvalsCount, refreshAgency, approveVersion, rejectVersion, closeComments, toast, signOut]);
 
   return (
     <Ctx.Provider value={value}>

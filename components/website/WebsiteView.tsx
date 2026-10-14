@@ -426,7 +426,9 @@ export default function WebsiteView() {
                   <span className="cm-t">{fmtWhen(c.createdAt)}</span>
                 </div>
                 <div className="cm-b">{c.text}</div>
-                {!locked && (
+                {c.outcome && <span className={`cm-outcome ${c.outcome}`}>{c.outcome === 'done' ? 'Done by REPS' : 'Not changed'}</span>}
+                {c.outcomeNote && <div className="cm-outcome-note">REPS: {c.outcomeNote}</div>}
+                {!locked && !c.outcome && (
                   <button type="button" className="cm-r" onClick={(e) => { e.stopPropagation(); toggleResolved(version.id, c.id); }}>
                     {c.resolved ? 'Reopen' : 'Resolve'}
                   </button>

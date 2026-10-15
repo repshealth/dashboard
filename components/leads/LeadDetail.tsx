@@ -7,6 +7,17 @@ import { sourceLabel } from './SourceTag';
 import { fmtDate } from '@/lib/format';
 import type { Lead } from '@/lib/types';
 
+/**
+ * Answers grouped by the form they came from, newest first. Leads from before answers were
+ * kept per form have one set: put under the form they last submitted.
+ */
+function answerSets(lead: Lead): { form: string; at?: string; answers: [string, string][] }[] {
+  if (lead.submissions?.length) return lead.submissions;
+  if (!lead.answers.length) return [];
+  const last = lead.events.find((e) => /^Submitted /.test(e.label) && !/^Submitted (a form on|a website form)/.test(e.label));
+  return [{ form: last ? last.label.slice(10) : lead.form || lead.answersTitle || 'Form answers', at: last?.at, answers: lead.answers }];
+}
+
 export default function LeadDetail({ lead, clientName, showClient }: { lead: Lead | null; clientName: string; showClient?: boolean }) {
   const { moveLead, saveNotes } = useData();
   const [note, setNote] = useState(lead?.notes ?? '');
@@ -59,16 +70,18 @@ export default function LeadDetail({ lead, clientName, showClient }: { lead: Lea
         ))}
       </dl>
 
-      {lead.answers.length > 0 && (
-        <>
-          <div className="lbl">{lead.answersTitle || 'FORM ANSWERS'}</div>
-          <dl>
-            {lead.answers.map(([k, v]) => (
-              <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
-            ))}
-          </dl>
-        </>
-      )}
+      {answerSets(lead).map((set) => (
+        <div key={set.form} className="ld-set">
+          <div className="lbl ld-set-h"><span>{set.form.toUpperCase()}</span>{set.at && <span className="ld-set-at">{fmtDate(set.at)}</span>}</div>
+          {set.answers.length ? (
+            <dl>
+              {set.answers.map(([k, v]) => (
+                <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+              ))}
+            </dl>
+          ) : <p className="ld-set-none">No answers on this form, just their details.</p>}
+        </div>
+      ))}
 
       <div className="lbl">TIMELINE</div>
       <ol>

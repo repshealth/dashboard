@@ -1,4 +1,4 @@
-import type { Client, DesignFile, Lead, LeadEvent, Site, SiteComment, SitePage, SiteSource, SiteVersion, SourceId, Viewer } from '../types';
+import type { Client, DesignFile, FormSubmission, Lead, LeadEvent, Site, SiteComment, SitePage, SiteSource, SiteVersion, SourceId, Viewer } from '../types';
 import { pageName, type FetchedSite } from '../site/github';
 import { STAGE_NAME } from '../constants';
 import type { SiteCopy } from '../site/copy';
@@ -138,6 +138,32 @@ export async function checkLogin(store: DocStore, email: string, password: strin
   return found.doc;
 }
 
+const SOURCE_FORM: Record<string, string> = { quiz: 'Quiz', magnet: 'Lead magnet', survey: 'Survey', ads: 'Ad form', news: 'Newsletter', prereg: 'Pre-registration' };
+
+/**
+ * The lead forms on a site's pages, by the name each one sends with its leads: a `form: '…'`
+ * in the page's script (sites made in Claude), a data-form attribute (the dashboard's own
+ * designs) or a hidden input named form.
+ */
+export function formsInPages(files: { path: string; html: string }[]) {
+  const found = new Map<string, string>();
+  const add = (name: string, page: string) => {
+    const n = name.replace(/\s+/g, ' ').trim();
+    if (n.length >= 3 && n.length <= 60 && !found.has(n.toLowerCase())) found.set(n.toLowerCase(), JSON.stringify({ name: n, page }));
+  };
+  for (const f of files) {
+    const page = '/' + f.path.replace(/(^|\/)index\.html?$/i, '$1').replace(/\.html?$/i, '');
+    // Only look at scripts that post somewhere, so an unrelated "form:" in other code is ignored.
+    for (const m of f.html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)) {
+      if (!/fetch\(|XMLHttpRequest|sendBeacon/.test(m[1])) continue;
+      for (const x of m[1].matchAll(/\bform\s*:\s*(['"])([^'"\n]{3,60})\1/g)) add(x[2], page);
+    }
+    for (const x of f.html.matchAll(/\bdata-form=(['"])([^'"]{3,60})\1/g)) add(x[2], page);
+    for (const x of f.html.matchAll(/<input[^>]*name=(['"])form\1[^>]*value=(['"])([^'"]{3,60})\2/gi)) add(x[3], page);
+  }
+  return [...found.values()].map((v) => JSON.parse(v) as { name: string; page: string });
+}
+
 /** A lead from a website or pre-registration form. A returning email adds to the timeline instead. */
 export async function captureLead(store: DocStore, services: Services, input: {
   slug: string; email: string; name?: string; phone?: string; source: SourceId; form?: string; page?: string; utm?: string;
@@ -151,12 +177,19 @@ export async function captureLead(store: DocStore, services: Services, input: {
   const event = (l: string, source = 'Website'): LeadEvent => ({ id: services.newId(), label: l, source, at: new Date().toISOString() });
   const titles: Record<string, string> = { quiz: 'QUIZ ANSWERS', magnet: 'LEAD MAGNET', survey: 'SURVEY ANSWERS', ads: 'FORM ANSWERS', news: 'SIGNUP', prereg: 'PRE-REGISTRATION' };
 
+  // Answers are kept per form, so a quiz and a calculator from the same person stay apart.
+  const formName = (input.form || '').trim() || SOURCE_FORM[input.source] || 'Website form';
+  const sub: FormSubmission | null = input.answers?.length || input.form
+    ? { form: formName, source: input.source, page: input.page || undefined, at: new Date().toISOString(), answers: input.answers ?? [] }
+    : null;
+
   const existing = await store.byKey<Lead>('lead', `${clientId}|${email}`);
   let lead: Lead;
   if (existing) {
     lead = (await store.mutate<Lead>('lead', existing.id, (l) => {
       l.events.unshift(event(label));
       if (input.answers?.length) l.answers = input.answers;
+      if (sub) l.submissions = [sub, ...(l.submissions ?? []).filter((x) => x.form !== sub.form)];
       if (!l.phone && input.phone) l.phone = input.phone;
       if (!l.form && input.form) l.form = input.form;
     }, meta.lead))!;
@@ -166,7 +199,7 @@ export async function captureLead(store: DocStore, services: Services, input: {
       form: input.form || undefined,
       stage: 'new', page: input.page || undefined, utm: input.utm || undefined, firstSeen: new Date().toISOString(), value: 0,
       detail: input.answers?.[0] ? `${input.answers[0][0]}: ${input.answers[0][1]}` : input.form || undefined,
-      answersTitle: titles[input.source], answers: input.answers ?? [], events: [event(label)],
+      answersTitle: titles[input.source], answers: input.answers ?? [], submissions: sub ? [sub] : [], events: [event(label)],
     };
     await store.put('lead', lead.id, lead, meta.lead(lead));
   }
@@ -302,6 +335,7 @@ export async function syncSiteFromGitHub(store: DocStore, services: Services, cl
     if (auto && x.status !== 'draft') { x.status = 'review'; x.statusNote = `${n} sent for review just now`; }
     if (!base && x.status === 'draft') x.statusNote = 'Committed from Claude. Check it over, then send it to the client.';
     if (x.github) Object.assign(x.github, { lastSha: fetched.sha, lastSync: new Date().toISOString(), lastNote: `Added ${n}` });
+    x.forms = formsInPages(fetched.files);
   }, meta.site);
   return { added: true, note: `${(added as SiteVersion | null)?.version ?? 'A new version'} added from GitHub.` };
 }

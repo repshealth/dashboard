@@ -1,6 +1,6 @@
 'use client';
 
-import SourceTag, { sourceLabel } from './SourceTag';
+import SourceTag, { leadForms } from './SourceTag';
 import { STAGES, STAGE_NAME, STAGE_ORDER } from '@/lib/constants';
 import { gbp, pct, timeAgo } from '@/lib/format';
 import type { Lead } from '@/lib/types';
@@ -46,21 +46,22 @@ export function Kpis({ leads, growthNote, revenueNote }: { leads: Lead[]; growth
  * Built from the leads themselves rather than the fixed list, so a client only
  * ever sees their own live forms, named as they are on their site.
  */
-export function activeSources(leads: Lead[]) {
+export function activeSources(leads: Lead[], forms: string[] = []) {
   const counts = new Map<string, number>();
+  // Forms found on the client's site show straight away, before their first lead.
+  for (const f of forms) counts.set(f, 0);
   for (const l of leads) {
-    const label = sourceLabel(l);
-    counts.set(label, (counts.get(label) ?? 0) + 1);
+    for (const label of leadForms(l)) counts.set(label, (counts.get(label) ?? 0) + 1);
   }
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([label, count]) => ({ label, count }));
 }
 
-export function SourcePills({ leads, value, onChange }: {
-  leads: Lead[]; value: string; onChange: (v: string) => void;
+export function SourcePills({ leads, forms, value, onChange }: {
+  leads: Lead[]; forms?: string[]; value: string; onChange: (v: string) => void;
 }) {
-  const sources = activeSources(leads);
+  const sources = activeSources(leads, forms);
   // One source is no choice at all, so the filter stays out of the way.
   if (sources.length < 2) return null;
   return (

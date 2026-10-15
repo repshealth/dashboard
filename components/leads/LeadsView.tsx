@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useData } from '../DataProvider';
 import LeadDetail from './LeadDetail';
 import { Kpis, LeadBoard, LeadTable, SourcePills } from './parts';
-import { sourceLabel } from './SourceTag';
+import { leadForms, sourceLabel } from './SourceTag';
 import { AUTO_MOVES, STAGE_NAME } from '@/lib/constants';
 import { downloadCsv, fmtDate } from '@/lib/format';
 
@@ -16,7 +16,8 @@ const Arrow = () => (
 
 
 export default function LeadsView() {
-  const { client, leads } = useData();
+  const { client, leads, site } = useData();
+  const siteForms = useMemo(() => (site?.forms ?? []).map((f) => f.name), [site]);
   // 'all', or the label of one of this client's forms.
   const [source, setSource] = useState<string>('all');
   const [view, setView] = useState<View>('board');
@@ -27,7 +28,7 @@ export default function LeadsView() {
   useEffect(() => { setSource('all'); setQ(''); setSelId(null); }, [client?.id]);
 
   const all = leads ?? [];
-  const bySource = useMemo(() => all.filter((l) => source === 'all' || sourceLabel(l) === source), [all, source]);
+  const bySource = useMemo(() => all.filter((l) => source === 'all' || leadForms(l).includes(source)), [all, source]);
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
     return bySource.filter((l) => !s || l.name.toLowerCase().includes(s) || l.email.toLowerCase().includes(s));
@@ -67,7 +68,7 @@ export default function LeadsView() {
       </section>
 
       <div className="filters">
-        <SourcePills leads={all} value={source} onChange={setSource} />
+        <SourcePills leads={all} forms={siteForms} value={source} onChange={setSource} />
         <div className="seg" role="group" aria-label="View">
           <button type="button" className={view === 'board' ? 'on' : ''} onClick={() => setView('board')}>Board</button>
           <button type="button" className={view === 'list' ? 'on' : ''} onClick={() => setView('list')}>List</button>

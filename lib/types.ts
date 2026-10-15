@@ -24,6 +24,16 @@ export interface LeadEvent {
   at?: string; // ISO date
 }
 
+/** One form a lead filled in, and what they answered on it. */
+export interface FormSubmission {
+  /** The form's name, e.g. "Calorie calculator". */
+  form: string;
+  source: SourceId;
+  page?: string;
+  at: string;
+  answers: [string, string][];
+}
+
 export interface Lead {
   id: string;
   clientId: string;
@@ -49,7 +59,10 @@ export interface Lead {
   calendly?: string;
   stripe?: string;
   answersTitle?: string;
+  /** The latest answers (any form). Kept for older leads; the panel uses `submissions`. */
   answers: [string, string][];
+  /** Answers per form, newest first: one entry per form, replaced when they fill it in again. */
+  submissions?: FormSubmission[];
   events: LeadEvent[]; // newest first
   notes?: string;
 }
@@ -178,6 +191,12 @@ export interface Site {
    * team to review in the "CRM - Website Designs" Claude Project before they're committed.
    */
   designs?: DesignFile[];
+  /**
+   * The lead forms found on the site's pages at the latest GitHub sync, e.g. "Homepage quiz"
+   * and "Calorie calculator". They show as source filters on the Leads board before any
+   * leads have come through them.
+   */
+  forms?: { name: string; page: string }[];
   /** REPS only. What the design files were generated from, so they can be redrawn in another look. */
   specs?: { home?: SiteSpec; prereg?: PreRegSpec };
   versions: SiteVersion[]; // newest first

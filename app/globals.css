@@ -741,3 +741,8 @@ textarea.em-subj{font-size:15px}
 .cm-outcome.done{background:#EAF6EF;color:#1F6B41}
 .cm-outcome.declined{background:#FDF0EA;color:#9A3412}
 .cm-outcome-note{font-size:12.5px;color:var(--muted);margin-top:4px}
+
+/* Lead answers, one block per form */
+.ld-set-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ld-set-at{font-weight:500;letter-spacing:0;text-transform:none;color:var(--dim)}
+.ld-set-none{font-size:13px;color:var(--dim);margin:4px 0 0}

@@ -295,3 +295,8 @@ New clients' websites are reviewed and finished in the **CRM - Website Designs**
 For pushes to reach the dashboard without pressing Check for updates, add one webhook on the repshealth organisation (Settings, Webhooks) pointing at `/api/github` with the `GITHUB_WEBHOOK_SECRET`, so every client site repo is covered.
 
 The exported pages work on their own: the moving parts (feature showcase, FAQ, counters, before and after slider, countdown, forms) run from a small script in `lib/site/render/runtime.js`, and forms post leads to `/api/forms`. `npm run renderer` rebuilds `renderer.gen.js` after changing a design; `npm run build` and `npm run preview` do it automatically.
+
+## Lead sources and answers
+
+- **Source filters on the Leads board** come from the client's own forms. When a site is synced from GitHub, the dashboard reads its pages for the forms that send leads (a `form: '…'` name in the page's script, a `data-form` attribute, or a hidden `form` input), so a new form shows as a filter as soon as it's committed, before its first lead. Forms that leads have come through are added too, with a count each.
+- **Answers are kept per form.** A lead who does the quiz and then the calorie calculator shows two blocks in their details, one per form with its date, and a lead shows under each form's filter they've used.

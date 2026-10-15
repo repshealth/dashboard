@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useData } from '../DataProvider';
 import LeadDetail from './LeadDetail';
+import StripeConnect from './StripeConnect';
 import { Kpis, LeadBoard, LeadTable, SourcePills } from './parts';
 import { leadForms, sourceLabel } from './SourceTag';
 import { AUTO_MOVES, STAGE_NAME } from '@/lib/constants';
@@ -16,7 +17,7 @@ const Arrow = () => (
 
 
 export default function LeadsView() {
-  const { client, leads, site } = useData();
+  const { client, leads, site, refreshLeads } = useData();
   const siteForms = useMemo(() => (site?.forms ?? []).map((f) => f.name), [site]);
   // 'all', or the label of one of this client's forms.
   const [source, setSource] = useState<string>('all');
@@ -53,6 +54,7 @@ export default function LeadsView() {
         </div>
         <div className="actions">
           <button className="btn" type="button" title="Date filtering arrives with live data">Last 30 days ▾</button>
+          <StripeConnect client={client} onImported={() => { refreshLeads().catch(() => {}); }} />
           <button className="btn" type="button" onClick={exportCsv}>Export CSV</button>
           <button className="btn gold" type="button" title="Manual lead entry is coming next">+ Add lead</button>
         </div>

@@ -4,6 +4,7 @@ import SourceTag, { leadForms } from './SourceTag';
 import { STAGES, STAGE_NAME, STAGE_ORDER } from '@/lib/constants';
 import { gbp, pct, timeAgo } from '@/lib/format';
 import type { Lead } from '@/lib/types';
+import { RECURRING } from '@/lib/stripe/types';
 
 /** Shared pieces of the client Leads screen and the agency Overview. */
 
@@ -18,8 +19,10 @@ export function leadStats(leads: Lead[]) {
   const attended = past.filter((l) => l.attended).length;
   const bought = leads.filter((l) => l.stage === 'purchased');
   const revenue = bought.reduce((a, l) => a + l.value, 0);
+  // Monthly recurring revenue from active Stripe subscriptions.
+  const mrr = Math.round(leads.reduce((a, l) => a + (l.payments && RECURRING.includes(l.payments.status ?? '') ? l.payments.mrr ?? 0 : 0), 0) * 100) / 100;
   const week = leads.filter((l) => Date.now() - new Date(l.firstSeen).getTime() < 7 * 86400000).length;
-  return { total: leads.length, booked, past: past.length, attended, bought: bought.length, revenue, week };
+  return { total: leads.length, booked, past: past.length, attended, bought: bought.length, revenue, week, mrr };
 }
 
 export function Kpis({ leads, growthNote, revenueNote }: { leads: Lead[]; growthNote?: string; revenueNote?: string }) {
@@ -29,7 +32,7 @@ export function Kpis({ leads, growthNote, revenueNote }: { leads: Lead[]; growth
     { l: 'CALLS BOOKED', v: String(s.booked), s: `${pct(s.booked, s.total)} of leads` },
     { l: 'SHOW RATE', v: pct(s.attended, s.past), s: `${s.attended} of ${s.past}` },
     { l: 'PURCHASED', v: String(s.bought), s: `${pct(s.bought, s.booked)} of calls` },
-    { l: 'REVENUE', v: gbp(s.revenue), s: revenueNote ?? 'From Stripe payments' },
+    { l: 'REVENUE', v: gbp(Math.round(s.revenue * 100) / 100), s: revenueNote ?? (s.mrr ? `${gbp(s.mrr)} a month recurring` : 'From Stripe payments') },
   ];
   return (
     <section className="kpis" aria-label="Key numbers">

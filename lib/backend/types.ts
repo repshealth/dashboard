@@ -1,3 +1,4 @@
+import type { StripePublic } from '../stripe/types';
 import type { SiteDesign } from '../site/spec';
 import type { LaunchDoc, LaunchSetup, OnboardingAnswers } from '../site/onboarding';
 import type { Client, Lead, LeadEvent, Site, SiteComment, SiteSource, SiteVersion, StageId, Viewer } from '../types';
@@ -46,6 +47,12 @@ export interface Backend {
   /** Admin: adds or updates a login. A password is needed for a new login; for an existing one it resets it. */
   saveLogin(x: LoginInput): Promise<LoginInfo>;
   removeLogin(id: string): Promise<void>;
+  /** Admin: a client's Stripe connection (never the secrets). */
+  getStripe(clientId: string): Promise<StripePublic | null>;
+  /** Admin: saves the webhook signing secret and, optionally, a read-only key. Empty keeps the saved one. */
+  saveStripe(clientId: string, x: { signingSecret?: string; apiKey?: string; disconnect?: boolean }): Promise<StripePublic | null>;
+  /** Admin: imports past payments with the read-only key. */
+  importStripe(clientId: string): Promise<{ charges: number; customers: number; note: string }>;
   listClients(): Promise<Client[]>;
   listLeads(clientId: string): Promise<Lead[]>;
   moveLead(lead: Lead, stage: StageId, by: string): Promise<LeadEvent>;

@@ -7,6 +7,7 @@ export const SOURCES: Record<SourceId, { label: string; rgb: string; text: strin
   ads: { label: 'Ads', rgb: '194,24,91', text: '#A3154D' },
   news: { label: 'Newsletter', rgb: '22,120,77', text: '#13663F' },
   prereg: { label: 'Pre-reg page', rgb: '201,112,10', text: '#8F4E05' },
+  stripe: { label: 'Stripe', rgb: '99,91,255', text: '#4B44C9' },
 };
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 

@@ -16,6 +16,8 @@ import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/typ
 import type { DocMeta, DocStore } from './store';
 import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, LoginInfo, Submission } from './types';
+import type { StripePublic, StripeSettings } from '../stripe/types';
+import { importStripeHistory, type StripeCtx } from '../stripe/apply';
 import { hashPassword, passwordProblem, verifyPassword } from './password';
 import { STARTER_CLIENTS } from '../starter';
 
@@ -90,6 +92,8 @@ export interface Services {
   saveDesign(clientId: string, file: string, html: string): Promise<{ url: string; repoUrl?: string; note: string }>;
   /** The GitHub repo a client's finished site is committed to, e.g. repshealth/strong-with-dani-site. */
   siteRepoFor(slug: string): string | null;
+  /** GET from the Stripe API with a client's restricted key. */
+  stripeGet?(apiKey: string, path: string): Promise<Record<string, unknown>>;
   /** Emails a client a sign-in link, e.g. when their website or emails are ready. */
   sendInvite(u: UserRec, clientName: string, what: 'website' | 'emails'): Promise<void>;
 }
@@ -138,7 +142,7 @@ export async function checkLogin(store: DocStore, email: string, password: strin
   return found.doc;
 }
 
-const SOURCE_FORM: Record<string, string> = { quiz: 'Quiz', magnet: 'Lead magnet', survey: 'Survey', ads: 'Ad form', news: 'Newsletter', prereg: 'Pre-registration' };
+const SOURCE_FORM: Record<string, string> = { quiz: 'Quiz', magnet: 'Lead magnet', survey: 'Survey', ads: 'Ad form', news: 'Newsletter', prereg: 'Pre-registration', stripe: 'Stripe checkout' };
 
 /**
  * The lead forms on a site's pages, by the name each one sends with its leads: a `form: '…'`
@@ -162,6 +166,19 @@ export function formsInPages(files: { path: string; html: string }[]) {
     for (const x of f.html.matchAll(/<input[^>]*name=(['"])form\1[^>]*value=(['"])([^'"]{3,60})\2/gi)) add(x[3], page);
   }
   return [...found.values()].map((v) => JSON.parse(v) as { name: string; page: string });
+}
+
+const stripePublic = (clientId: string, s: StripeSettings | null): StripePublic | null => (s ? {
+  clientId, connected: Boolean(s.signingSecret), hasKey: Boolean(s.apiKey), connectedAt: s.connectedAt, lastEventAt: s.lastEventAt, lastNote: s.lastNote,
+} : null);
+
+/** What the Stripe code needs to read and update a client's leads. */
+export function stripeCtx(store: DocStore, services: Services, clientId: string, s: StripeSettings | null): StripeCtx {
+  const key = s?.apiKey;
+  return {
+    store, clientId, newId: () => services.newId(), meta,
+    get: key && services.stripeGet ? (path: string) => services.stripeGet!(key, path) : undefined,
+  };
 }
 
 /** A lead from a website or pre-registration form. A returning email adds to the timeline instead. */
@@ -586,6 +603,34 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
         if (has !== want.has(c.id)) await store.mutate<ClientRec>('client', c.id, (d) => { d.members = want.has(c.id) ? [...new Set([...d.members, u.id])] : d.members.filter((m) => m !== u.id); }, meta.client);
       }
       return wait({ id: u.id, name: u.name, email: u.email, isAdmin: Boolean(u.isAdmin), hasPassword: Boolean(u.passwordHash), clientIds: [...want], createdAt: u.createdAt, lastSignIn: u.lastSignIn });
+    },
+    /* Stripe (agency only) */
+    async getStripe(clientId) {
+      await admin();
+      return wait(stripePublic(clientId, await store.get<StripeSettings>('stripe', clientId)));
+    },
+    async saveStripe(clientId, x) {
+      await admin();
+      if (!(await store.get<ClientRec>('client', clientId))) throw new AccessError('Client not found.', 404);
+      if (x.disconnect) { await store.del('stripe', clientId); return null; }
+      const old = await store.get<StripeSettings>('stripe', clientId);
+      const secret = String(x.signingSecret ?? '').trim();
+      const key = String(x.apiKey ?? '').trim();
+      if (secret && !/^whsec_\w{10,}$/.test(secret)) throw new AccessError('The signing secret starts with whsec_. Copy it again from the webhook in Stripe.', 400);
+      if (key && !/^(rk|sk)_(live|test)_\w{10,}$/.test(key)) throw new AccessError('The key starts with rk_live_ (a restricted key). Copy it again from Stripe.', 400);
+      const signingSecret = secret || old?.signingSecret || '';
+      if (!signingSecret) throw new AccessError('Paste the signing secret from Stripe first.', 400);
+      const s: StripeSettings = { ...(old ?? {}), clientId, signingSecret, apiKey: key || old?.apiKey, connectedAt: old?.connectedAt ?? new Date().toISOString() };
+      await store.put('stripe', clientId, s, { clientId });
+      return stripePublic(clientId, s);
+    },
+    async importStripe(clientId) {
+      await admin();
+      const s = await store.get<StripeSettings>('stripe', clientId);
+      if (!s?.apiKey || !services.stripeGet) throw new AccessError('Add a read-only Stripe key first.', 400);
+      const r = await importStripeHistory(stripeCtx(store, services, clientId, s));
+      await store.mutate<StripeSettings>('stripe', clientId, (x) => { x.lastNote = r.note; x.lastEventAt = new Date().toISOString(); }, () => ({ clientId }));
+      return wait(r, 300);
     },
     async removeLogin(id) {
       const v = await admin();

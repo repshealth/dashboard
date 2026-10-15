@@ -56,6 +56,12 @@ export function liveServices(store: DocStore, origin: string): Services {
     },
     saveDesign,
     siteRepoFor,
+    async stripeGet(apiKey, path) {
+      const res = await fetch(`https://api.stripe.com${path}`, { headers: { Authorization: `Bearer ${apiKey}`, 'Stripe-Version': '2024-06-20' } });
+      const out = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok) throw new Error(String((out.error as { message?: string } | undefined)?.message || `Stripe returned ${res.status}`));
+      return out;
+    },
     async storeHtml(clientId, sha, path, html) {
       const bucket = cf().UPLOADS;
       if (!bucket) throw new Error('File storage (R2) isn’t connected.');

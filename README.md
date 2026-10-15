@@ -300,3 +300,12 @@ The exported pages work on their own: the moving parts (feature showcase, FAQ, c
 
 - **Source filters on the Leads board** come from the client's own forms. When a site is synced from GitHub, the dashboard reads its pages for the forms that send leads (a `form: '…'` name in the page's script, a `data-form` attribute, or a hidden `form` input), so a new form shows as a filter as soon as it's committed, before its first lead. Forms that leads have come through are added too, with a count each.
 - **Answers are kept per form.** A lead who does the quiz and then the calorie calculator shows two blocks in their details, one per form with its date, and a lead shows under each form's filter they've used.
+
+## Stripe (payments and revenue)
+
+Each client's Stripe account can send payment updates to `/api/stripe/<client-slug>`, e.g. `/api/stripe/physique-x`.
+
+- **Set up:** open the client's **Leads** page as the agency and press **Stripe**. Give the client the webhook address shown there, with these events: `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`. Paste the signing secret (`whsec_…`) they send back and save.
+- **What it does:** each payment is matched to a lead by email (or Stripe customer) and moves them to Purchased with their total paid, plan, subscription status, monthly value and renewal date. Refunds and cancellations update it. People who pay without filling in a form are added as new leads with the source Stripe. The Revenue box shows the total and the monthly recurring revenue from active subscriptions.
+- **Past payments:** add a read-only restricted key (`rk_live_…`, with read access to Customers, Charges and Subscriptions) and press **Import past payments**. It recalculates totals, so it's safe to run again.
+- Events are signature-checked with the client's own secret, and each event is only applied once. Until the secret is saved, the address accepts events and ignores them, so Stripe doesn't report errors during setup.

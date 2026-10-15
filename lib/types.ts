@@ -1,7 +1,8 @@
 import type { AnySpec, PreRegSpec } from './site/prereg';
 import type { SiteSpec } from './site/spec';
+import type { LeadPayments } from './stripe/types';
 
-export type SourceId = 'quiz' | 'magnet' | 'survey' | 'ads' | 'news' | 'prereg';
+export type SourceId = 'quiz' | 'magnet' | 'survey' | 'ads' | 'news' | 'prereg' | 'stripe';
 export type StageId = 'new' | 'nurture' | 'call' | 'showed' | 'purchased' | 'lost';
 export type Device = 'desktop' | 'mobile';
 /** draft = generated from onboarding and only visible to the REPS team. */
@@ -58,6 +59,8 @@ export interface Lead {
   mailerlite?: string;
   calendly?: string;
   stripe?: string;
+  /** Money and subscription details from the client's Stripe. */
+  payments?: LeadPayments;
   answersTitle?: string;
   /** The latest answers (any form). Kept for older leads; the panel uses `submissions`. */
   answers: [string, string][];

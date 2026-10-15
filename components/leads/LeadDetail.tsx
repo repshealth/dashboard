@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useData } from '../DataProvider';
 import { SOURCES, STAGES, STAGE_NAME } from '@/lib/constants';
 import { sourceLabel } from './SourceTag';
+import { money } from '@/lib/stripe/types';
 import { fmtDate } from '@/lib/format';
 import type { Lead } from '@/lib/types';
 
@@ -46,6 +47,15 @@ export default function LeadDetail({ lead, clientName, showClient }: { lead: Lea
     ['Calendly', lead.calendly || 'Not booked'],
     ['Stripe', lead.stripe || 'No purchase yet'],
   ];
+  const pay = lead.payments;
+  const payRows: [string, string | undefined][] = pay ? [
+    ['Total paid', money(pay.totalPaid, pay.currency)],
+    ['Plan', pay.plan],
+    ['Status', pay.status ? pay.status.charAt(0).toUpperCase() + pay.status.slice(1) : undefined],
+    ['Monthly value', pay.mrr ? `${money(pay.mrr, pay.currency)} a month` : undefined],
+    ['Renews', pay.renewsAt ? fmtDate(pay.renewsAt) : undefined],
+    ['Last payment', pay.lastPaidAt ? fmtDate(pay.lastPaidAt) : undefined],
+  ].filter(([, v]) => v) as [string, string][] : [];
   const dirty = note !== (lead.notes ?? '');
 
   return (
@@ -69,6 +79,13 @@ export default function LeadDetail({ lead, clientName, showClient }: { lead: Lea
           <div key={k}><dt>{k}</dt><dd>{v || '–'}</dd></div>
         ))}
       </dl>
+
+      {payRows.length > 0 && (
+        <>
+          <div className="lbl">PAYMENTS</div>
+          <dl>{payRows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+        </>
+      )}
 
       {answerSets(lead).map((set) => (
         <div key={set.form} className="ld-set">

@@ -926,11 +926,14 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
     },
     async listEmails(clientId) {
       const v = await access(clientId);
+      if (v.isAdmin) await seedFlows(store, services).catch((e) => console.error('Starter flows failed', e));
       const all = await store.list<EmailCampaign>('campaign', { clientId });
       return wait(all.map((c) => (v.isAdmin ? c : campaignForClient(c))).sort((a, b) => Number(isFlow(a)) - Number(isFlow(b))));
     },
     async listEmailCampaigns() {
       await admin();
+      // Flows written for starting clients appear here even if this loads before the client list.
+      await seedFlows(store, services).catch((e) => console.error('Starter flows failed', e));
       return wait(await store.list<EmailCampaign>('campaign'));
     },
     async addEmailComment(x) {

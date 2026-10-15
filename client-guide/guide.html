@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scaling OS: Your Client Guide</title>
+<style>
+@font-face{font-family:'Montserrat';src:url('fonts/montserrat-latin-wght-normal.woff2') format('woff2');font-weight:100 900}
+@page{size:A4;margin:0}
+:root{--ink:#16151A;--muted:#5E5C68;--purple:#6C55A3;--soft:#F4F1FA;--line:#E6E3EE;--yellow:#FFE14D;--green:#1F6B41;--orange:#9A3412}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Montserrat',sans-serif;font-weight:400;color:var(--ink);font-size:10.5pt;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:210mm;height:297mm;padding:20mm 18mm 16mm;position:relative;page-break-after:always;overflow:hidden;display:flex;flex-direction:column}
+.page:last-child{page-break-after:auto}
+.foot{position:absolute;left:18mm;right:18mm;bottom:9mm;display:flex;justify-content:space-between;font-size:8pt;color:#9A98A3}
+.hl{background:var(--yellow);padding:0 .18em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+h1,h2,h3{font-weight:700;margin:0}
+h1{font-size:30pt;line-height:1.15;text-align:center}
+h2{font-size:19pt;line-height:1.25;margin:0 0 3mm}
+h3{font-size:12.5pt;margin:6mm 0 2mm}
+p{margin:0 0 3mm}
+.kicker{font-size:8.5pt;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);margin-bottom:2mm}
+.lead{font-size:11.5pt;color:var(--muted);margin-bottom:5mm}
+ul{margin:0 0 3mm;padding-left:5mm}
+li{margin:0 0 1.6mm}
+li b{font-weight:700}
+.shot{border:1px solid var(--line);border-radius:3mm;overflow:hidden;box-shadow:0 2mm 6mm rgba(40,30,80,.08);background:#fff}
+.shot img{display:block;width:100%}
+.cap{font-size:8.5pt;color:var(--muted);margin-top:1.8mm}
+.row{display:flex;gap:7mm;align-items:flex-start}
+.row>*{flex:1;min-width:0}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;position:relative;padding-left:10mm;margin-bottom:3.2mm}
+.steps li::before{content:counter(s);position:absolute;left:0;top:-.3mm;width:6.5mm;height:6.5mm;border-radius:50%;background:var(--purple);color:#fff;font-weight:700;font-size:9pt;display:grid;place-items:center}
+.tip{background:var(--soft);border-radius:3mm;padding:3.5mm 4.5mm;font-size:9.8pt;margin-top:4mm}
+.tip b{color:var(--purple)}
+.chips{display:flex;flex-wrap:wrap;gap:2mm;margin:2mm 0 3mm}
+.chip{font-size:8.6pt;font-weight:600;padding:1.2mm 3mm;border-radius:99px;border:1px solid var(--line);background:#fff}
+.chip.done{background:#EAF6EF;color:var(--green);border-color:#CDE8D7}
+.chip.no{background:#FDF0EA;color:var(--orange);border-color:#F6D6C6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:3mm 6mm}
+.stage{border:1px solid var(--line);border-radius:2.5mm;padding:3mm 3.5mm}
+.stage b{display:block;font-size:9.8pt}
+.stage span{font-size:9pt;color:var(--muted)}
+
+/* Cover */
+.cover{justify-content:center;align-items:center;text-align:center;background:linear-gradient(180deg,#fff 0%,#F6F3FC 100%)}
+.cover img.logo{height:20mm;margin-bottom:14mm}
+.cover h1{font-size:34pt;margin-bottom:6mm}
+.cover .sub{font-size:13pt;color:var(--muted);max-width:135mm;margin:0 auto 14mm}
+.toc{display:grid;grid-template-columns:repeat(2,62mm);gap:3mm 6mm;text-align:left;margin:0 auto}
+.toc div{background:#fff;border:1px solid var(--line);border-radius:3mm;padding:3.5mm 4mm;font-size:10pt}
+.toc div b{display:block;color:var(--purple);font-size:8.5pt;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.6mm}
+.cover .note{position:absolute;bottom:16mm;left:0;right:0;font-size:9pt;color:#9A98A3}
+.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm;margin:4mm 0 2mm}
+.big3 div{border:1px solid var(--line);border-radius:3mm;padding:4mm;background:#fff}
+.big3 div b{display:block;font-size:11pt;margin-bottom:1mm}
+.big3 div span{font-size:9.3pt;color:var(--muted)}
+.qa{margin-bottom:4mm}
+.qa>b{display:block;font-size:10.5pt;margin-bottom:.8mm}
+.qa span{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<section class="page cover">
+  <img class="logo" src="../public/reps-logo.png" alt="REPS">
+  <h1><span class="hl">Your Scaling OS Guide</span></h1>
+  <p class="sub">Everything you need to know about your leads and your website, in a few short pages.</p>
+  <div class="toc">
+    <div><b>Page 2</b>Signing in</div>
+    <div><b>Page 3</b>Your leads board</div>
+    <div><b>Page 4</b>Looking at a lead</div>
+    <div><b>Page 5</b>Viewing your website</div>
+    <div><b>Page 6</b>Comments and changes</div>
+    <div><b>Page 7</b>Approving, and quick answers</div>
+  </div>
+  <p class="note">REPS Scaling OS · Client guide · October 2026</p>
+</section>
+
+<!-- SIGNING IN -->
+<section class="page">
+  <div class="kicker">Getting started</div>
+  <h2><span class="hl">Signing in</span></h2>
+  <p class="lead">Your dashboard is one link, one email and one password. That's it.</p>
+  <div class="row">
+    <div>
+      <ol class="steps">
+        <li>Open the dashboard link the REPS team sent you.</li>
+        <li>Enter your <b>email</b> and <b>password</b>, then press <b>Sign in</b>.</li>
+        <li>You'll stay signed in on that device for 30 days.</li>
+      </ol>
+      <div class="tip"><b>Forgotten your password?</b> Just message the REPS team and we'll set you a new one.</div>
+      <h3><span class="hl">What's in the menu</span></h3>
+      <ul>
+        <li><b>Leads:</b> everyone who's filled in a form on your site, and where they are now.</li>
+        <li><b>Website:</b> your site, where you leave comments and approve designs.</li>
+        <li><b>Emails:</b> your launch emails, to read and approve.</li>
+        <li><b>Tasks:</b> your to-dos from our calls.</li>
+        <li><b>Meetings:</b> notes from every call with us.</li>
+      </ul>
+    </div>
+    <div style="flex:.85">
+      <div class="shot"><img src="shots/login.png" alt="The sign-in page"></div>
+      <p class="cap">The sign-in page.</p>
+    </div>
+  </div>
+  <div class="foot"><span>REPS Scaling OS · Client guide</span><span>2</span></div>
+</section>
+
+<!-- LEADS BOARD -->
+<section class="page">
+  <div class="kicker">Leads</div>
+  <h2><span class="hl">Your leads board</span></h2>
+  <p class="lead">Every person who fills in a form on your site lands here automatically. No copying, no spreadsheets.</p>
+  <div class="shot"><img src="shots/m-leads.png" alt="The leads board"></div>
+  <p class="cap">The board: your numbers along the top, then one column per stage.</p>
+  <h3><span class="hl">The columns</span></h3>
+  <div class="grid2">
+    <div class="stage"><b>New lead</b><span>They've just filled in a form on your site.</span></div>
+    <div class="stage"><b>Nurturing</b><span>They're getting your emails.</span></div>
+    <div class="stage"><b>Call booked</b><span>They've booked a call with you.</span></div>
+    <div class="stage"><b>Showed / No-show</b><span>The call time has passed.</span></div>
+    <div class="stage"><b>Purchased</b><span>They've paid. The amount shows on the card.</span></div>
+    <div class="stage"><b>Lost</b><span>Not going ahead. You move them here yourself.</span></div>
+  </div>
+  <div class="tip"><b>Cards can move by themselves.</b> Once your booking calendar and payments are connected, a card moves to the right column when someone books a call or pays.</div>
+  <div class="foot"><span>REPS Scaling OS · Client guide</span><span>3</span></div>
+</section>
+
+<!-- A LEAD -->
+<section class="page">
+  <div class="kicker">Leads</div>
+  <h2><span class="hl">Looking at a lead</span></h2>
+  <p class="lead">Click any card to see everything about that person on the right.</p>
+  <div class="row">
+    <div style="flex:.8">
+      <div class="shot"><img src="shots/answers.png" alt="A lead's answers by form"></div>
+      <p class="cap">Answers are kept separately for each form they filled in.</p>
+    </div>
+    <div>
+      <ul>
+        <li><b>Their details:</b> name, email and phone, ready to contact.</li>
+        <li><b>Their answers:</b> what they told you, under each form's name. Did your quiz and your calculator? You'll see both.</li>
+        <li><b>Move manually:</b> tap a stage to move their card yourself, e.g. to <b>Lost</b>.</li>
+        <li><b>Timeline:</b> everything they've done, newest first.</li>
+        <li><b>Notes:</b> anything you want to remember about them. Only you and the REPS team can see these.</li>
+      </ul>
+      <div class="shot" style="margin-top:4mm"><img src="shots/stage-buttons.png" alt="Move manually buttons"></div>
+      <p class="cap">Tap a stage to move a lead yourself.</p>
+    </div>
+  </div>
+  <h3><span class="hl">Finding the right leads</span></h3>
+  <div class="shot"><img src="shots/filters.png" alt="Source filters"></div>
+  <p class="cap">Source filters, Board or List, and search.</p>
+  <div class="grid2" style="margin-top:3mm">
+    <div class="stage"><b>Source filters</b><span>One button per form on your site, with a count. Tap one to see only those leads. New forms appear here by themselves.</span></div>
+    <div class="stage"><b>Search</b><span>Type a name or email to find someone fast.</span></div>
+    <div class="stage"><b>Board or List</b><span>Switch to List for a simple table of everyone.</span></div>
+    <div class="stage"><b>Export CSV</b><span>Download your leads as a spreadsheet, top right.</span></div>
+  </div>
+  <div class="foot"><span>REPS Scaling OS · Client guide</span><span>4</span></div>
+</section>
+
+<!-- WEBSITE -->
+<section class="page">
+  <div class="kicker">Website</div>
+  <h2><span class="hl">Viewing your website</span></h2>
+  <p class="lead">This is your actual site, exactly as your visitors will see it. Scroll it, click around, take your time.</p>
+  <div class="shot"><img src="shots/m-website.png" alt="The website section"></div>
+  <p class="cap">Your site on the left, comments on the right.</p>
+  <div class="big3">
+    <div><b>Pages</b><span>The tabs at the top (e.g. Homepage, Calorie Calculator) switch between your pages.</span></div>
+    <div><b>Desktop / Mobile</b><span>See how it looks on a laptop or a phone. Check both.</span></div>
+    <div><b>Status</b><span>Top right shows where things are, e.g. <b>Ready for review</b>.</span></div>
+  </div>
+  <div class="tip"><b>When we update your site,</b> the newest version appears here automatically. You'll always be looking at the latest.</div>
+  <div class="foot"><span>REPS Scaling OS · Client guide</span><span>5</span></div>
+</section>
+
+<!-- COMMENTS -->
+<section class="page">
+  <div class="kicker">Website</div>
+  <h2><span class="hl">Comments and changes</span></h2>
+  <p class="lead">Want something changed? Point at it and tell us, like sticking a note on the page.</p>
+  <div class="row">
+    <div style="flex:1.5">
+      <div class="shot"><img src="shots/c-pin.png" alt="A comment pin on the headline"></div>
+      <p class="cap">1. Click the spot. A numbered pin marks it.</p>
+    </div>
+    <div>
+      <div class="shot"><img src="shots/c-box.png" alt="Typing a comment"></div>
+      <p class="cap">2. Type what you'd like and press Post.</p>
+    </div>
+  </div>
+  <div class="row" style="margin-top:4mm">
+    <div>
+      <ol class="steps">
+        <li>Press <b>+ Add comment</b>.</li>
+        <li>Click the exact spot on your site: a headline, a photo, a button.</li>
+        <li>Type what you'd like changed and press <b>Post</b>.</li>
+        <li>Add as many as you like, on any page, on desktop or mobile.</li>
+        <li>When you're done, press <b>Request changes</b>. That sends them all to us at once.</li>
+      </ol>
+      <div class="tip"><b>Be specific.</b> "Change this to: Your next level starts now" is quicker for us than "make this better".</div>
+    </div>
+    <div style="flex:.8">
+      <div class="shot"><img src="shots/c-list.png" alt="Your comments listed"></div>
+      <p class="cap">Your comments, listed on the right. Click one to jump to it.</p>
+    </div>
+  </div>
+  <h3><span class="hl">What happens next</span></h3>
+  <p>We go through every comment and mark each one <span class="chip done">Done by REPS</span> or <span class="chip no">Not changed</span>. If we don't change something, we leave a short note saying why. Once we've been through them all, your site comes back to you as <b>Ready for review</b>.</p>
+  <div class="foot"><span>REPS Scaling OS · Client guide</span><span>6</span></div>
+</section>
+
+<!-- APPROVE + FAQ -->
+<section class="page">
+  <div class="kicker">Website</div>
+  <h2><span class="hl">Approving your design</span></h2>
+  <div class="row">
+    <div>
+      <p>Happy with everything? Press <b>Approve design</b>, then confirm. That's your sign-off, and we'll take it from there to put it live.</p>
+      <p>Not quite there? Leave more comments and press <b>Request changes</b> again. There's no limit.</p>
+      <div class="shot" style="margin-top:2mm"><img src="shots/after-comments.png" alt="Comments after the REPS team has been through them"></div>
+      <p class="cap">Your comments after we've been through them.</p>
+    </div>
+    <div>
+      <h3 style="margin-top:0"><span class="hl">Quick answers</span></h3>
+      <div class="qa"><b>Do I need to refresh to see new leads?</b><span>New leads show whenever you open Leads. If the page has been open a while, refresh it to see the latest.</span></div>
+      <div class="qa"><b>Someone filled in two forms. Are they in twice?</b><span>No. It's one card, with the answers from each form inside.</span></div>
+      <div class="qa"><b>Can I undo a comment?</b><span>Yes. Press <b>Resolve</b> on it before you request changes and it won't be sent.</span></div>
+      <div class="qa"><b>Why are the buttons greyed out?</b><span>You've sent changes and we're working on them. They come back once we're done.</span></div>
+      <div class="qa"><b>Can my team have a login?</b><span>Yes. Ask us and we'll set one up for them.</span></div>
+      <div class="qa"><b>Something not right?</b><span>Message the REPS team any time. We're here to help.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>REPS Scaling OS · Client guide</span><span>7</span></div>
+</section>
+
+</body>
+</html>

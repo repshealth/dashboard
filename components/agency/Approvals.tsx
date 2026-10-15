@@ -62,6 +62,10 @@ export default function Approvals() {
   /** Closes change requests as done or declined. The item leaves Approvals once none are open. */
   const close = async (ids: string[], outcome: 'done' | 'declined', note?: string) => {
     if (!item) return;
+    // A site that lives on GitHub only changes when the edit is committed. Any request still
+    // listed here was made after the latest commit, so check before telling the client it's done.
+    if (outcome === 'done' && item.kind === 'manual' && item.site.github && typeof window !== 'undefined'
+      && !window.confirm(`Nothing new has been committed to ${item.site.github.repo} since ${ids.length === 1 ? 'this was' : 'these were'} requested, so ${item.site.contact || 'the client'} won't see a change yet.\n\nMark as complete anyway?`)) return;
     setBusy(true);
     try {
       const left = (item.kind === 'manual' ? item.open.length : 0) - ids.length;

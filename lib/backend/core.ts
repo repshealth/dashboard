@@ -9,7 +9,7 @@ import { LOOKS, type SiteDesign, type SiteSpec } from '../site/spec';
 import { makeAmendedVersion, type AmendFn } from '../site/make-amend';
 import { buildCampaign } from '../emails/copy';
 import { applyRepsEdits, makeAmendedEmails, type EmailAmendFn } from '../emails/amend';
-import type { EmailCampaign, EmailComment, LaunchEmail, MailerLiteSettings, MailerLiteState } from '../emails/types';
+import { clientOfKey, isFlow, latestEmailVersion, pendingEmailVersion, type EmailCampaign, type EmailComment, type LaunchEmail, type MailerLiteSettings, type MailerLiteState } from '../emails/types';
 import { meetingKey, parseMeetingText } from '../meetings/parse';
 import { matchClient } from '../meetings/match';
 import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/types';
@@ -19,7 +19,7 @@ import type { Backend, LoginInfo, Submission } from './types';
 import type { StripePublic, StripeSettings } from '../stripe/types';
 import { importStripeHistory, type StripeCtx } from '../stripe/apply';
 import { hashPassword, passwordProblem, verifyPassword } from './password';
-import { STARTER_CLIENTS } from '../starter';
+import { STARTER_CLIENTS, STARTER_FLOWS } from '../starter';
 
 /* Records ------------------------------------------------------------------------ */
 
@@ -387,6 +387,21 @@ export async function seedStarter(store: DocStore, services: Services) {
     await syncSiteFromGitHub(store, services, c.id).catch((e) => console.error('Starter sync failed', c.repo, e));
     await starterNote(store, c.id);
   }
+  await seedFlows(store, services);
+}
+
+/** Adds the starting follow-up flows, once each, to clients that exist. */
+export async function seedFlows(store: DocStore, services: Pick<Services, 'newId'>) {
+  for (const f of STARTER_FLOWS) {
+    const key = `${f.clientId}~${f.flowId}`;
+    const mark = `starter-flow:${key}`;
+    if (await store.get('setting', mark)) continue;
+    if (!(await store.get('client', f.clientId))) continue;
+    await store.put('setting', mark, { at: new Date().toISOString() }, {});
+    if (await store.get('campaign', key)) continue;
+    const c = f.make(f.clientId, services.newId());
+    await store.put('campaign', key, c, meta.campaign(c));
+  }
 }
 
 /** One Google Meet notes doc or transcript. Notes and transcript of the same call merge into one meeting. */
@@ -545,7 +560,8 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
     return l;
   };
   const site = (clientId: string, fn: (s: Site) => void) => store.mutate<Site>('site', clientId, fn, meta.site);
-  const campaign = (clientId: string, fn: (c: EmailCampaign) => void) => store.mutate<EmailCampaign>('campaign', clientId, fn, meta.campaign);
+  /** Launch emails are keyed by client id; follow-up flows by "<clientId>~<flowId>". */
+  const campaign = (key: string, fn: (c: EmailCampaign) => void) => store.mutate<EmailCampaign>('campaign', key, fn, meta.campaign);
   const inviteFor = async (clientId: string, what: 'website' | 'emails') => {
     const c = await store.get<ClientRec>('client', clientId);
     if (!c?.contactEmail) return;
@@ -902,40 +918,47 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       return wait(await store.list<Submission>('submission'));
     },
 
-    /* Launch emails */
-    async getEmails(clientId) {
-      const v = await access(clientId);
-      const c = await store.get<EmailCampaign>('campaign', clientId);
+    /* Launch emails and follow-up flows. "key" is the campaign key: the client id for launch emails. */
+    async getEmails(key) {
+      const v = await access(clientOfKey(key));
+      const c = await store.get<EmailCampaign>('campaign', key);
       return wait(c ? (v.isAdmin ? c : campaignForClient(c)) : null);
+    },
+    async listEmails(clientId) {
+      const v = await access(clientId);
+      const all = await store.list<EmailCampaign>('campaign', { clientId });
+      return wait(all.map((c) => (v.isAdmin ? c : campaignForClient(c))).sort((a, b) => Number(isFlow(a)) - Number(isFlow(b))));
     },
     async listEmailCampaigns() {
       await admin();
       return wait(await store.list<EmailCampaign>('campaign'));
     },
     async addEmailComment(x) {
-      const v = await access(x.clientId);
-      const c = await store.get<EmailCampaign>('campaign', x.clientId);
+      const key = x.campaign ?? x.clientId;
+      const v = await access(clientOfKey(key));
+      const c = await store.get<EmailCampaign>('campaign', key);
       if (!c || (!v.isAdmin && c.status === 'draft')) throw new AccessError('These emails aren’t ready for comments yet.');
-      const { clientId, versionId, ...rest } = x;
+      const { clientId: _c, campaign: _k, versionId, ...rest } = x; // eslint-disable-line @typescript-eslint/no-unused-vars
       const saved: EmailComment = {
         ...rest, author: actor(v), role: v.isAdmin ? 'agency' : 'client', resolved: false, text: rest.text.slice(0, 4000),
         id: services.newId(), createdAt: new Date().toISOString(),
       };
-      await campaign(clientId, (cc) => cc.versions.find((y) => y.id === versionId && (v.isAdmin || y.state === 'published'))?.comments.push(saved));
+      await campaign(key, (cc) => cc.versions.find((y) => y.id === versionId && (v.isAdmin || y.state === 'published'))?.comments.push(saved));
       return saved;
     },
-    async setEmailCommentResolved(clientId, commentId, resolved) {
-      await access(clientId);
-      await campaign(clientId, (c) => c.versions.forEach((ver) => ver.comments.forEach((x) => { if (x.id === commentId) x.resolved = resolved; })));
+    async setEmailCommentResolved(key, commentId, resolved) {
+      await access(clientOfKey(key));
+      await campaign(key, (c) => c.versions.forEach((ver) => ver.comments.forEach((x) => { if (x.id === commentId) x.resolved = resolved; })));
     },
-    async sendEmailsToClient(clientId) {
+    async sendEmailsToClient(key) {
       await admin();
-      await campaign(clientId, (c) => { c.status = 'review'; c.statusNote = 'Sent for review just now by REPS team'; });
-      await inviteFor(clientId, 'emails');
+      await campaign(key, (c) => { c.status = 'review'; c.statusNote = 'Sent for review just now by REPS team'; });
+      await inviteFor(clientOfKey(key), 'emails');
     },
-    async requestEmailChanges(clientId, versionId) {
+    async requestEmailChanges(key, versionId) {
+      const clientId = clientOfKey(key);
       const v = await access(clientId);
-      const c = await store.get<EmailCampaign>('campaign', clientId);
+      const c = await store.get<EmailCampaign>('campaign', key);
       const base = c?.versions.find((x) => x.id === versionId && x.state === 'published');
       if (!c || !base) throw new AccessError('These emails were not found.', 404);
       if (c.status === 'draft' && !v.isAdmin) throw new AccessError('These emails aren’t ready yet.');
@@ -943,7 +966,7 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       if (!open) return { open: 0, pending: false };
       const voice = voiceForPrompt(await store.get<VoiceProfile>('voice', clientId));
       const pending = await makeAmendedEmails(c, base, services.amendEmails(voice), services.newId);
-      await campaign(clientId, (x) => {
+      await campaign(key, (x) => {
         x.status = 'changes';
         x.statusNote = `Changes requested just now by ${actor(v)}`;
         if (pending) {
@@ -953,33 +976,47 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       });
       return wait({ open, pending: Boolean(pending) }, 900);
     },
-    async approveEmails(clientId, versionId) {
-      const v = await access(clientId);
-      const c = await store.get<EmailCampaign>('campaign', clientId);
+    async approveEmails(key, versionId) {
+      const v = await access(clientOfKey(key));
+      const c = await store.get<EmailCampaign>('campaign', key);
       const ver = c?.versions.find((x) => x.id === versionId && x.state === 'published');
       if (!c || !ver) throw new AccessError('These emails were not found.', 404);
       if (c.status === 'draft' && !v.isAdmin) throw new AccessError('These emails aren’t ready yet.');
-      await campaign(clientId, (x) => {
+      await campaign(key, (x) => {
         x.versions.filter((y) => y.id === versionId).forEach((y) => y.comments.forEach((cm) => (cm.resolved = true)));
         x.status = 'approved';
         x.statusNote = `Approved just now by ${actor(v)}`;
       });
-      const ml = await services.scheduleLaunch({ ...c, status: 'approved' }, ver.emails);
-      await campaign(clientId, (x) => { x.mailerlite = ml; });
+      // A follow-up flow runs as an automation in MailerLite, which the REPS team builds from the approved copy.
+      const ml: MailerLiteState = isFlow(c)
+        ? { state: 'not_scheduled', note: `Approved. Build it as an automation in MailerLite that starts ${(c.flow?.trigger ?? 'when someone signs up').replace(/^W/, 'w')}, then sends these ${ver.emails.length} emails on the days shown.` }
+        : await services.scheduleLaunch({ ...c, status: 'approved' }, ver.emails);
+      await campaign(key, (x) => { x.mailerlite = ml; });
       return wait(v.isAdmin ? ml : { state: ml.state, note: '' }, 700);
     },
-    async scheduleEmails(clientId) {
+    async scheduleEmails(key) {
       await admin();
-      const c = await store.get<EmailCampaign>('campaign', clientId);
+      const c = await store.get<EmailCampaign>('campaign', key);
       const ver = c?.versions.find((x) => x.state === 'published');
       if (!c || !ver || c.status !== 'approved') throw new AccessError('The client has to approve the emails first.', 400);
+      if (isFlow(c)) throw new AccessError('Follow-up flows are set up as an automation in MailerLite, not scheduled from here.', 400);
       const ml = await services.scheduleLaunch(c, ver.emails);
-      await campaign(clientId, (x) => { x.mailerlite = ml; });
+      await campaign(key, (x) => { x.mailerlite = ml; });
       return wait(ml, 600);
     },
-    async approveEmailVersion(clientId, versionId) {
+    async markFlowLive(key, live) {
       await admin();
-      await campaign(clientId, (c) => {
+      const c = await store.get<EmailCampaign>('campaign', key);
+      if (!c || !isFlow(c)) throw new AccessError('This flow was not found.', 404);
+      await campaign(key, (x) => {
+        x.mailerlite = live
+          ? { state: 'scheduled', note: 'Live in MailerLite as an automation.', at: new Date().toISOString() }
+          : { state: 'not_scheduled', note: 'Marked as not live yet.' };
+      });
+    },
+    async approveEmailVersion(key, versionId) {
+      await admin();
+      await campaign(key, (c) => {
         const ver = c.versions.find((x) => x.id === versionId);
         if (!ver) return;
         ver.state = 'published';
@@ -989,19 +1026,21 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
         c.status = 'review';
         c.statusNote = `${ver.version} sent for review just now by REPS team`;
       });
-      await inviteFor(clientId, 'emails');
+      await inviteFor(clientOfKey(key), 'emails');
     },
-    async rejectEmailVersion(clientId, versionId, note) {
+    async rejectEmailVersion(key, versionId, note) {
       await admin();
-      await campaign(clientId, (c) => {
+      await campaign(key, (c) => {
         c.versions.filter((x) => x.id === versionId).forEach((x) => (x.state = 'rejected'));
         c.statusNote = note || 'The REPS team is making your changes';
       });
     },
-    async saveEmailEdits(clientId, emails) {
+    async saveEmailEdits(key, emails) {
       await admin();
-      if (!Array.isArray(emails) || emails.length !== 12) throw new AccessError('Could not read the emails.', 400);
-      await campaign(clientId, (c) => { applyRepsEdits(c, emails, services.newId); });
+      const c = await store.get<EmailCampaign>('campaign', key);
+      const count = (pendingEmailVersion(c) ?? latestEmailVersion(c) ?? c?.versions[0])?.emails.length ?? 12;
+      if (!Array.isArray(emails) || emails.length !== count) throw new AccessError('Could not read the emails.', 400);
+      await campaign(key, (cc) => { applyRepsEdits(cc, emails, services.newId); });
     },
     async saveLaunchSettings(clientId, x) {
       await admin();
@@ -1034,6 +1073,7 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
         store.get<EmailCampaign>('campaign', clientId), store.get<VoiceProfile>('voice', clientId), store.list<Submission>('submission', { clientId, limit: 1 }),
       ]);
       if (!c) throw new AccessError('These emails were not found.', 404);
+      if (isFlow(c)) throw new AccessError('Rewriting from calls is only for launch emails for now. Use Edit emails for this flow.', 400);
       if (c.status === 'approved') throw new AccessError('These emails are already approved.', 400);
       if (!voice) throw new AccessError('No voice profile yet. Add a call transcript for this client first.', 400);
       if (!subs[0]) throw new AccessError('No onboarding answers for this client.', 400);

@@ -9,7 +9,7 @@ const METHODS = new Set<keyof Backend>([
   'getViewer', 'listLogins', 'saveLogin', 'removeLogin', 'getStripe', 'saveStripe', 'importStripe', 'listClients', 'listLeads', 'moveLead', 'saveNotes',
   'getSite', 'addComment', 'setCommentResolved', 'approveSite', 'submitOnboarding', 'sendSiteToClient',
   'listAllLeads', 'listSites', 'requestChanges', 'approveVersion', 'rejectVersion', 'listSubmissions',
-  'getEmails', 'listEmailCampaigns', 'addEmailComment', 'setEmailCommentResolved', 'sendEmailsToClient',
+  'getEmails', 'listEmails', 'markFlowLive', 'listEmailCampaigns', 'addEmailComment', 'setEmailCommentResolved', 'sendEmailsToClient',
   'requestEmailChanges', 'approveEmails', 'scheduleEmails', 'approveEmailVersion', 'rejectEmailVersion',
   'saveEmailEdits', 'saveLaunchSettings', 'getMailerLite', 'saveMailerLite', 'rewriteEmails',
   'listMeetings', 'addMeeting', 'updateMeeting', 'deleteMeeting', 'getVoice', 'refreshVoice', 'saveVoice',

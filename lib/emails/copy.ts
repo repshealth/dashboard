@@ -1,7 +1,7 @@
 import { answersForPrompt } from '../site/copy';
 import { launchOf, type OnboardingAnswers } from '../site/onboarding';
 import { fmtLaunch, sequenceSlots, type Slot } from './schedule';
-import type { EmailBrand, EmailCampaign, EmailListId, LaunchEmail } from './types';
+import type { EmailBrand, EmailCampaign, LaunchListId, LaunchEmail } from './types';
 
 /** What Claude writes for one email. */
 export interface EmailCopy {
@@ -72,7 +72,7 @@ const lower = (s: string) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
 const firstSentence = (s: string) => (s.split(/(?<=[.!?])\s+/)[0] || '').trim();
 
 /** Email copy from fixed sentence patterns, for preview mode or if Claude is unavailable. */
-export function fallbackEmails(a: OnboardingAnswers): Record<EmailListId, EmailCopy[]> {
+export function fallbackEmails(a: OnboardingAnswers): Record<LaunchListId, EmailCopy[]> {
   const l = launchOf(a);
   const brand = a.business.brandName || 'the app';
   const coach = a.business.coachName || a.contact.name.split(' ')[0] || 'Your coach';
@@ -176,9 +176,9 @@ export function fallbackEmails(a: OnboardingAnswers): Record<EmailListId, EmailC
 }
 
 /** Turns the copy into the emails, with their send slots. */
-export function toEmails(copy: Record<EmailListId, EmailCopy[]>, slots: Slot[], fallback: Record<EmailListId, EmailCopy[]>): LaunchEmail[] {
+export function toEmails(copy: Record<LaunchListId, EmailCopy[]>, slots: Slot[], fallback: Record<LaunchListId, EmailCopy[]>): LaunchEmail[] {
   const out: LaunchEmail[] = [];
-  for (const list of ['prereg', 'public'] as EmailListId[]) {
+  for (const list of ['prereg', 'public'] as LaunchListId[]) {
     slots.forEach((s, i) => {
       const c = copy[list]?.[i] ?? fallback[list][i];
       const f = fallback[list][i];

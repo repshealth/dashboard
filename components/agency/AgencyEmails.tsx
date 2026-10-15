@@ -11,11 +11,21 @@ import { SITE_STATUS } from '@/lib/constants';
 import { fmtLaunch, fmtSend, sendAt } from '@/lib/emails/schedule';
 import { flattenEmails } from '@/lib/emails/amend';
 import {
-  fieldLabel, latestEmailVersion, pendingEmailVersion,
+  campaignKey, clientOfKey, fieldLabel, isFlow, latestEmailVersion, pendingEmailVersion,
   type EmailCampaign, type EmailListId, type LaunchEmail,
 } from '@/lib/emails/types';
+import type { Lead } from '@/lib/types';
 import type { Device } from '@/lib/types';
 import type { MailerLiteSettings } from '@/lib/emails/types';
+
+/** "Pre-reg list", "General list" or "Follow-up", from an email id like "prereg-3". */
+const listOf = (emailId: string) => (emailId.startsWith('prereg') ? 'Pre-reg list' : emailId.startsWith('public') ? 'General list' : 'Follow-up');
+const listIdOf = (emailId: string): EmailListId => (emailId.startsWith('prereg') ? 'prereg' : emailId.startsWith('public') ? 'public' : 'flow');
+
+/** People who have entered a campaign: pre-reg sign-ups for launch emails, the flow's form for a follow-up flow. */
+const entrants = (c: EmailCampaign, leads: Lead[] | null) => (leads ?? []).filter((l) => l.clientId === c.clientId && (isFlow(c)
+  ? Boolean(c.flow?.form) && (l.form === c.flow!.form || (l.submissions ?? []).some((x) => x.form === c.flow!.form))
+  : l.source === 'prereg')).length;
 
 const ML_BADGE: Record<string, { label: string; cls: string }> = {
   scheduled: { label: 'Scheduled', cls: 'st-approved' },
@@ -35,7 +45,7 @@ function nextStep(c: EmailCampaign) {
   if (pendingEmailVersion(c)) return 'Approve revised version';
   if (c.status === 'draft') return 'Check and send to client';
   if (c.status === 'changes') return 'Make the requested changes';
-  if (c.status === 'approved' && c.mailerlite.state !== 'scheduled') return 'Finish scheduling';
+  if (c.status === 'approved' && c.mailerlite.state !== 'scheduled') return isFlow(c) ? 'Set it live' : 'Finish scheduling';
   if (c.status === 'review') return 'With the client';
   return 'Done';
 }
@@ -43,7 +53,7 @@ function nextStep(c: EmailCampaign) {
 /** The next email still to send, across both lists. */
 function nextSend(c: EmailCampaign) {
   const v = latestEmailVersion(c);
-  if (!v || !c.launchDate) return null;
+  if (!v || !c.launchDate || isFlow(c)) return null;
   const now = new Date().toISOString().slice(0, 16);
   return v.emails.map((e) => ({ e, at: sendAt(c.launchDate, e.offset, e.time) })).filter((x) => x.at > now).sort((a, b) => (a.at < b.at ? -1 : 1))[0] ?? null;
 }
@@ -57,14 +67,13 @@ export default function AgencyEmails() {
   if (!viewer?.isAdmin) return null;
 
   const name = (id: string) => clients.find((c) => c.id === id)?.name ?? 'Client';
-  const signups = (id: string) => (allLeads ?? []).filter((l) => l.clientId === id && l.source === 'prereg').length;
   const rows = (allCampaigns ?? []).slice().sort((a, b) => {
     const w = (c: EmailCampaign) => (['Done', 'With the client'].includes(nextStep(c)) ? 1 : 0);
-    return w(a) - w(b) || name(a.clientId).localeCompare(name(b.clientId));
+    return w(a) - w(b) || name(a.clientId).localeCompare(name(b.clientId)) || Number(isFlow(a)) - Number(isFlow(b));
   });
   const without = clients.filter((c) => !(allCampaigns ?? []).some((x) => x.clientId === c.id));
 
-  if (sel) return <CampaignDetail clientId={sel} name={name(sel)} onBack={() => { setSel(null); refreshAgency().catch(() => {}); }} />;
+  if (sel) return <CampaignDetail ckey={sel} name={name(clientOfKey(sel))} onBack={() => { setSel(null); refreshAgency().catch(() => {}); }} />;
 
   const scheduled = rows.filter((c) => c.mailerlite.state === 'scheduled').length;
   const needs = rows.filter((c) => !['Done', 'With the client'].includes(nextStep(c))).length;
@@ -74,46 +83,50 @@ export default function AgencyEmails() {
       <header>
         <div>
           <h1>Emails</h1>
-          <p className="sub">Every client&apos;s launch emails: check them, make amends, approve revisions and track MailerLite scheduling</p>
+          <p className="sub">Every client&apos;s launch emails and follow-up flows: check them, make amends, approve revisions and track MailerLite</p>
         </div>
       </header>
 
       <div className="kpis">
-        <div className="kpi"><div className="l">CLIENTS WITH LAUNCH EMAILS</div><div className="v">{rows.length}</div></div>
+        <div className="kpi"><div className="l">EMAIL CAMPAIGNS</div><div className="v">{rows.length}</div></div>
         <div className="kpi"><div className="l">NEED THE TEAM</div><div className="v">{needs}</div></div>
-        <div className="kpi"><div className="l">SCHEDULED IN MAILERLITE</div><div className="v">{scheduled}</div></div>
-        <div className="kpi"><div className="l">PRE-REG SIGN-UPS</div><div className="v">{rows.reduce((s, c) => s + signups(c.clientId), 0)}</div></div>
+        <div className="kpi"><div className="l">LIVE IN MAILERLITE</div><div className="v">{scheduled}</div></div>
+        <div className="kpi"><div className="l">PEOPLE IN THEM</div><div className="v">{rows.reduce((s, c) => s + entrants(c, allLeads), 0)}</div></div>
       </div>
 
       {allCampaigns === null ? <div className="loading">Loading emails…</div> : (
-        <section className="list ag-clients ae-table" aria-label="Launch emails by client">
+        <section className="list ag-clients ae-table" aria-label="Email campaigns by client">
           <table>
             <thead>
-              <tr><th>CLIENT</th><th>STATUS</th><th>LAUNCH</th><th>PRE-REG SIGN-UPS</th><th>NEXT EMAIL</th><th>MAILERLITE</th><th>NEXT STEP</th></tr>
+              <tr><th>CLIENT</th><th>STATUS</th><th>LAUNCH OR TRIGGER</th><th>PEOPLE IN IT</th><th>NEXT EMAIL</th><th>MAILERLITE</th><th>NEXT STEP</th></tr>
             </thead>
             <tbody>
               {rows.map((c) => {
                 const st = SITE_STATUS[c.status];
                 const d = daysTo(c.launchDate);
                 const nx = nextSend(c);
-                const ml = ML_BADGE[c.mailerlite.state] ?? ML_BADGE.not_scheduled;
+                const ml = c.mailerlite.state === 'scheduled' && isFlow(c) ? { label: 'Live', cls: 'st-approved' } : ML_BADGE[c.mailerlite.state] ?? ML_BADGE.not_scheduled;
                 const step = nextStep(c);
+                const k = campaignKey(c);
                 return (
-                  <tr key={c.clientId} className="row">
-                    <td><button type="button" className="namebtn" onClick={() => setSel(c.clientId)}>{name(c.clientId)}</button></td>
+                  <tr key={k} className="row">
+                    <td>
+                      <button type="button" className="namebtn" onClick={() => setSel(k)}>{name(c.clientId)}</button>
+                      <span className="ae-kind">{isFlow(c) ? c.flow?.name ?? 'Follow-up flow' : 'Launch emails'}</span>
+                    </td>
                     <td><span className={`stbadge sm ${st.cls}`}>{st.label}</span></td>
-                    <td>{c.launchDate ? <>{fmtLaunch(c.launchDate)}<span className="ae-dim">{d === null ? '' : d > 0 ? ` · in ${d} day${d === 1 ? '' : 's'}` : d === 0 ? ' · today' : ' · launched'}</span></> : 'Not set'}</td>
-                    <td className="num">{signups(c.clientId)}</td>
+                    <td>{isFlow(c) ? <span className="ae-dim">{c.flow?.trigger ?? 'Follow-up flow'}</span> : c.launchDate ? <>{fmtLaunch(c.launchDate)}<span className="ae-dim">{d === null ? '' : d > 0 ? ` · in ${d} day${d === 1 ? '' : 's'}` : d === 0 ? ' · today' : ' · launched'}</span></> : 'Not set'}</td>
+                    <td className="num">{entrants(c, allLeads)}</td>
                     <td>{nx ? <>{fmtSend(nx.at)}<span className="ae-dim"> · {nx.e.list === 'prereg' ? 'Pre-reg' : 'General'} {nx.e.n}</span></> : '–'}</td>
                     <td><span className={`stbadge sm ${ml.cls}`}>{ml.label}</span></td>
-                    <td><button type="button" className={`btn${['Done', 'With the client'].includes(step) ? '' : ' gold'} btn-sm`} onClick={() => setSel(c.clientId)}>{step === 'Done' || step === 'With the client' ? 'Open' : step}</button></td>
+                    <td><button type="button" className={`btn${['Done', 'With the client'].includes(step) ? '' : ' gold'} btn-sm`} onClick={() => setSel(k)}>{step === 'Done' || step === 'With the client' ? 'Open' : step}</button></td>
                   </tr>
                 );
               })}
               {without.map((c) => (
                 <tr key={c.id} className="row ae-none">
                   <td>{c.name}</td>
-                  <td colSpan={5}><span className="ae-dim">No launch emails. They&apos;re written when the onboarding form is submitted.</span></td>
+                  <td colSpan={5}><span className="ae-dim">No emails yet. Launch emails are written when the onboarding form is submitted.</span></td>
                   <td><button type="button" className="ob-link" onClick={() => { setClientId(c.id); router.push('/leads'); }}>Leads</button></td>
                 </tr>
               ))}
@@ -127,10 +140,11 @@ export default function AgencyEmails() {
 }
 
 /** One client's emails: approve a revision, edit any email, change launch settings, schedule. */
-function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: string; onBack: () => void }) {
+function CampaignDetail({ ckey, name, onBack }: { ckey: string; name: string; onBack: () => void }) {
   const router = useRouter();
+  const clientId = clientOfKey(ckey);
   const { toast, setClientId, refreshAgency } = useData();
-  const { campaign, reload } = useCampaign(clientId);
+  const { campaign, reload } = useCampaign(ckey);
   const [list, setList] = useState<EmailListId>('prereg');
   const [emailId, setEmailId] = useState('prereg-1');
   const [device, setDevice] = useState<Device>('desktop');
@@ -144,6 +158,9 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
   useEffect(() => {
     if (campaign) setSettings({ launchDate: campaign.launchDate, websiteUrl: campaign.websiteUrl, discountCode: campaign.discountCode });
   }, [campaign]);
+  // Start on the campaign's first email (a follow-up flow has no pre-reg list).
+  const firstId = campaign ? latestEmailVersion(campaign)?.emails[0]?.id : undefined;
+  useEffect(() => { if (firstId) { setEmailId(firstId); setList(listIdOf(firstId)); } }, [firstId]);
 
   const pending = pendingEmailVersion(campaign);
   const latest = latestEmailVersion(campaign);
@@ -164,7 +181,8 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
   }, [pending]);
 
   if (campaign === undefined) return <div className="loading">Loading emails…</div>;
-  if (!campaign || !base || !email) return <div className="view"><button type="button" className="ob-link" onClick={onBack}>← All clients</button><p>No launch emails for {name}.</p></div>;
+  if (!campaign || !base || !email) return <div className="view"><button type="button" className="ob-link" onClick={onBack}>← All clients</button><p>No emails found for {name}.</p></div>;
+  const flow = isFlow(campaign);
 
   const comments = base.comments;
   const commentFor = (id?: string) => comments.find((c) => c.id === id);
@@ -185,14 +203,14 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
 
       <div className="ap-head">
         <div>
-          <div className="ap-eyebrow">{name} · launch emails</div>
-          <h2>{campaign.launchDate ? `Launching ${fmtLaunch(campaign.launchDate)}` : 'Launch date not set'}</h2>
+          <div className="ap-eyebrow">{name} · {flow ? 'follow-up flow' : 'launch emails'}</div>
+          <h2>{flow ? campaign.flow?.name ?? 'Follow-up flow' : campaign.launchDate ? `Launching ${fmtLaunch(campaign.launchDate)}` : 'Launch date not set'}</h2>
           <p className="sub"><span className={`stbadge sm ${st.cls}`}>{st.label}</span> {campaign.statusNote}</p>
         </div>
         <div className="actions">
           <button type="button" className="btn" onClick={() => { setClientId(clientId); router.push('/emails'); }}>See client view</button>
           {campaign.status === 'draft' && !editing && (
-            <button type="button" className="btn gold" disabled={busy} onClick={() => run(() => backend.sendEmailsToClient(clientId), `Sent to ${campaign.contact || name} to review.`)}>Send to client</button>
+            <button type="button" className="btn gold" disabled={busy} onClick={() => run(() => backend.sendEmailsToClient(ckey), `Sent to ${campaign.contact || name} to review.`)}>Send to client</button>
           )}
         </div>
       </div>
@@ -206,7 +224,7 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
           </div>
           <div className="actions">
             <button type="button" className="btn" disabled={busy} onClick={() => setRejecting(!rejecting)}>Reject</button>
-            <button type="button" className="btn gold" disabled={busy} onClick={() => run(() => backend.approveEmailVersion(clientId, pending.id), `${pending.version} sent to ${campaign.contact || name} to review.`)}>Approve and send to client</button>
+            <button type="button" className="btn gold" disabled={busy} onClick={() => run(() => backend.approveEmailVersion(ckey, pending.id), `${pending.version} sent to ${campaign.contact || name} to review.`)}>Approve and send to client</button>
           </div>
           {rejecting && (
             <div className="ap-reject ae-reject">
@@ -214,7 +232,7 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
               <textarea id="ae-reject-note" rows={2} placeholder="e.g. We're rewriting these by hand and will send them tomorrow." value={note} onChange={(e) => setNote(e.target.value)} />
               <div className="cp-a">
                 <button type="button" className="btn" onClick={() => setRejecting(false)}>Cancel</button>
-                <button type="button" className="btn gold" disabled={busy} onClick={() => run(async () => { await backend.rejectEmailVersion(clientId, pending.id, note.trim()); setRejecting(false); }, `${pending.version} discarded. The comments stay open.`)}>Discard this version</button>
+                <button type="button" className="btn gold" disabled={busy} onClick={() => run(async () => { await backend.rejectEmailVersion(ckey, pending.id, note.trim()); setRejecting(false); }, `${pending.version} discarded. The comments stay open.`)}>Discard this version</button>
               </div>
             </div>
           )}
@@ -245,7 +263,7 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
                 <>
                   <button type="button" className="btn" disabled={busy} onClick={() => setEditing(null)}>Cancel</button>
                   <button type="button" className="btn gold" disabled={busy || !dirty} onClick={() => run(async () => {
-                    await backend.saveEmailEdits(clientId, editing.map((e) => ({ ...e, body: e.body.map((p) => p.trim()).filter(Boolean) })));
+                    await backend.saveEmailEdits(ckey, editing.map((e) => ({ ...e, body: e.body.map((p) => p.trim()).filter(Boolean) })));
                     setEditing(null);
                     setShowing('new');
                   }, campaign.status === 'draft' ? 'Draft updated.' : 'Saved. Approve it to send it to the client.')}>Save changes</button>
@@ -255,7 +273,7 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
               )}
             </div>
           </div>
-          {editing && <p className="ap-hint ae-hint">Editing {editTarget}. Changes are saved across all 12 emails when you press Save changes.</p>}
+          {editing && <p className="ap-hint ae-hint">Editing {editTarget}. Changes are saved across all {emails.length} emails when you press Save changes.</p>}
           <div className="sv-stage em-stage">
             <EmailPreview campaign={campaign} email={email} device={device} mode={editing ? 'edit' : 'view'}
               comments={comments.filter((c) => c.emailId === email.id)} number={new Map(comments.filter((c) => c.emailId === email.id).map((c, i) => [c.id, i + 1]))}
@@ -272,7 +290,7 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
               {(pending.changes ?? []).map((ch, i) => {
                 const cm = commentFor(ch.commentId);
                 return (
-                  <button key={i} type="button" className="chg-item ae-chg" onClick={() => { const id = ch.path.split('.')[0]; setList(id.startsWith('prereg') ? 'prereg' : 'public'); setEmailId(id); setShowing('new'); }}>
+                  <button key={i} type="button" className="chg-item ae-chg" onClick={() => { const id = ch.path.split('.')[0]; setList(listIdOf(id)); setEmailId(id); setShowing('new'); }}>
                     <div className="chg-label">{ch.label}</div>
                     <div className="chg-before">{ch.before}</div>
                     <div className="chg-after">{ch.after}</div>
@@ -287,7 +305,7 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
                     const cm = commentFor(u.commentId);
                     return (
                       <div key={u.commentId} className="chg-item chg-need">
-                        {cm && <div className="chg-label">{cm.emailId.startsWith('prereg') ? 'Pre-reg list' : 'General list'} · Email {cm.emailId.split('-')[1]} {fieldLabel(cm.field)}</div>}
+                        {cm && <div className="chg-label">{listOf(cm.emailId)} · Email {cm.emailId.split('-')[1]} {fieldLabel(cm.field)}</div>}
                         <div className="chg-why"><b>{cm?.author ?? 'Client'}:</b> {u.text}</div>
                         <div className="chg-reason">{u.reason} Use <b>Edit emails</b> to make it, then approve.</div>
                       </div>
@@ -302,8 +320,8 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
             <div className="detail ae-card">
               <div className="lbl" style={{ marginTop: 0 }}>OPEN COMMENTS ({comments.filter((c) => !c.resolved).length})</div>
               {comments.filter((c) => !c.resolved).map((c) => (
-                <button key={c.id} type="button" className="chg-item ae-chg" onClick={() => { setList(c.emailId.startsWith('prereg') ? 'prereg' : 'public'); setEmailId(c.emailId); }}>
-                  <div className="chg-label">{c.emailId.startsWith('prereg') ? 'Pre-reg list' : 'General list'} · Email {c.emailId.split('-')[1]} {fieldLabel(c.field)}</div>
+                <button key={c.id} type="button" className="chg-item ae-chg" onClick={() => { setList(listIdOf(c.emailId)); setEmailId(c.emailId); }}>
+                  <div className="chg-label">{listOf(c.emailId)} · Email {c.emailId.split('-')[1]} {fieldLabel(c.field)}</div>
                   {c.quote && <div className="chg-before chg-ctx">{c.quote}</div>}
                   <div className="chg-why"><b>{c.author}:</b> {c.text}</div>
                 </button>
@@ -312,9 +330,9 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
           )}
 
           <VoiceCard clientId={clientId} name={campaign.contact || name} compact rewriteBusy={busy}
-            onRewrite={campaign.status === 'approved' ? undefined : () => run(() => backend.rewriteEmails(clientId), 'Rewritten in their voice. Check the new version, then approve it.')} />
+            onRewrite={campaign.status === 'approved' || flow ? undefined : () => run(() => backend.rewriteEmails(clientId), 'Rewritten in their voice. Check the new version, then approve it.')} />
 
-          {settings && (
+          {settings && !flow && (
             <form className="detail ae-card" onSubmit={(e) => { e.preventDefault(); run(() => backend.saveLaunchSettings(clientId, settings), 'Launch settings saved. Send dates moved with the launch date.'); }}>
               <div className="lbl" style={{ marginTop: 0 }}>LAUNCH SETTINGS</div>
               <label className="ae-f"><span>Launch date</span><input className="ob-input" type="date" required value={settings.launchDate} onChange={(e) => setSettings({ ...settings, launchDate: e.target.value })} /></label>
@@ -326,6 +344,23 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
             </form>
           )}
 
+          {flow ? (
+            <div className="detail ae-card">
+              <div className="lbl" style={{ marginTop: 0 }}>MAILERLITE AUTOMATION</div>
+              <div className="ae-ml"><span className={`stbadge sm ${ml.state === 'scheduled' ? 'st-approved' : 'st-build'}`}>{ml.state === 'scheduled' ? 'Live' : 'Not live yet'}</span><span>{ml.note || 'Set up once the client approves.'}</span></div>
+              <p className="ap-hint">
+                Once {campaign.contact || 'the client'} approves, build an automation in their MailerLite: trigger when a subscriber joins the group for {campaign.flow?.form ? `“${campaign.flow.form}”` : 'this form'} sign-ups,
+                then add each email with a delay matching the days shown ({emails.map((e) => e.offset).join(', ')} days after sign-up).
+              </p>
+              {campaign.status === 'approved' && (
+                <button type="button" className={`btn${ml.state === 'scheduled' ? '' : ' gold'}`} disabled={busy}
+                  onClick={() => run(() => backend.markFlowLive(ckey, ml.state !== 'scheduled'), ml.state === 'scheduled' ? 'Marked as not live.' : 'Marked as live.')}>
+                  {ml.state === 'scheduled' ? 'Mark as not live' : 'Mark as live in MailerLite'}
+                </button>
+              )}
+              <MailerLiteForm clientId={clientId} />
+            </div>
+          ) : (
           <div className="detail ae-card">
             <div className="lbl" style={{ marginTop: 0 }}>MAILERLITE</div>
             <div className="ae-ml"><span className={`stbadge sm ${(ML_BADGE[ml.state] ?? ML_BADGE.not_scheduled).cls}`}>{(ML_BADGE[ml.state] ?? ML_BADGE.not_scheduled).label}</span><span>{ml.note || 'Scheduled once the client approves.'}</span></div>
@@ -335,6 +370,7 @@ function CampaignDetail({ clientId, name, onBack }: { clientId: string; name: st
             <p className="ap-hint">On approval, each email becomes a MailerLite campaign scheduled for its send time: the pre-reg emails to the pre-registration group, the others to the general list.</p>
             <MailerLiteForm clientId={clientId} />
           </div>
+          )}
         </aside>
       </div>
     </div>

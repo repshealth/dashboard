@@ -4,7 +4,7 @@ import { launchOf, type OnboardingAnswers } from '../site/onboarding';
 import { PREREG_SCHEMA, PREREG_SYSTEM, fallbackPreRegCopy, type PreRegCopy } from '../site/prereg';
 import { EMAILS_SCHEMA, EMAILS_SYSTEM, emailsPrompt, fallbackEmails, toEmails, type EmailCopy } from '../emails/copy';
 import { fmtLaunch, sequenceSlots } from '../emails/schedule';
-import type { EmailListId, LaunchEmail } from '../emails/types';
+import type { LaunchListId, LaunchEmail } from '../emails/types';
 
 /** Pre-registration page copy, written by Claude, with the fallback filling any gaps. */
 export async function writePreRegCopy(a: OnboardingAnswers): Promise<{ copy: PreRegCopy; by: 'claude' | 'template' }> {
@@ -36,7 +36,7 @@ export async function writeLaunchEmails(a: OnboardingAnswers, voice = ''): Promi
   const fallback = fallbackEmails(a);
   const slots = sequenceSlots(launchOf(a).offerDays);
   try {
-    const out = await claudeJson<Record<EmailListId, EmailCopy[]>>(EMAILS_SYSTEM, emailsPrompt(a, voice), EMAILS_SCHEMA, 12000);
+    const out = await claudeJson<Record<LaunchListId, EmailCopy[]>>(EMAILS_SYSTEM, emailsPrompt(a, voice), EMAILS_SCHEMA, 12000);
     if (!out) return { emails: toEmails(fallback, slots, fallback), by: 'template' };
     return { emails: toEmails(out, slots, fallback), by: 'claude' };
   } catch (e) {

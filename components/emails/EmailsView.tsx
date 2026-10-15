@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../DataProvider';
 import { EmailPreview, SequenceNav } from './parts';
-import { useCampaign } from './useCampaign';
+import { useCampaigns } from './useCampaign';
 import { backend } from '@/lib/backend';
 import { SITE_STATUS } from '@/lib/constants';
 import { fmtWhen } from '@/lib/format';
 import { fmtLaunch } from '@/lib/emails/schedule';
 import { siteHref } from '@/lib/emails/html';
-import { fieldLabel, pendingEmailVersion, publishedEmailVersions, type EmailComment, type EmailField, type EmailListId } from '@/lib/emails/types';
+import { campaignKey, campaignTitle, fieldLabel, isFlow, pendingEmailVersion, publishedEmailVersions, type EmailComment, type EmailField, type EmailListId } from '@/lib/emails/types';
 import type { Device } from '@/lib/types';
 
 const STATUS = {
@@ -18,10 +18,10 @@ const STATUS = {
   approved: { label: 'Approved', cls: 'st-approved' },
 };
 
-/** The client's launch emails: read them, comment on any line, request changes or approve. */
+/** The client's emails (launch emails and follow-up flows): read them, comment on any line, request changes or approve. */
 export default function EmailsView() {
   const { client, viewer, toast, refreshAgency } = useData();
-  const { campaign, reload } = useCampaign(client?.id);
+  const { all, campaign, key, setKey, reload } = useCampaigns(client?.id);
   const [vi, setVi] = useState(0);
   const [list, setList] = useState<EmailListId>('prereg');
   const [emailId, setEmailId] = useState('prereg-1');
@@ -33,7 +33,11 @@ export default function EmailsView() {
   const [busy, setBusy] = useState(false);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => { setVi(0); setList('prereg'); setEmailId('prereg-1'); setCmode(false); setDraft(null); setPick(null); }, [client?.id]);
+  // Start each campaign on its first email.
+  useEffect(() => {
+    const first = campaign ? publishedEmailVersions(campaign)[0]?.emails[0] : undefined;
+    setVi(0); setList(first?.list ?? 'prereg'); setEmailId(first?.id ?? 'prereg-1'); setCmode(false); setDraft(null); setPick(null);
+  }, [client?.id, key]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (draft) textRef.current?.focus(); }, [draft]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setCmode(false); setDraft(null); setModal(false); } };
@@ -53,18 +57,24 @@ export default function EmailsView() {
   const admin = Boolean(viewer?.isAdmin);
   const isDraft = campaign?.status === 'draft';
   const actor = admin ? 'REPS team' : viewer?.name || 'You';
+  const flow = isFlow(campaign);
+  const ck = campaign ? campaignKey(campaign) : client.id;
+  const total = version?.emails.length ?? 0;
+  const what = flow ? `your ${campaign?.flow?.name?.toLowerCase() ?? 'follow-up'} emails` : 'your launch emails';
 
   const head = (actions: 'send' | 'review' | null) => (
     <header>
       <div>
         <h1>Emails</h1>
-        <p className="sub">Your launch emails: 6 for people who pre-registered and 6 for your email list</p>
+        <p className="sub">{flow
+          ? `${campaign?.flow?.name ?? 'Follow-up emails'}: ${total} emails that go out automatically after someone signs up`
+          : 'Your launch emails: 6 for people who pre-registered and 6 for your email list'}</p>
       </div>
       {actions === 'send' && (
         <div className="actions">
           <button type="button" className="btn gold" disabled={busy} onClick={async () => {
             setBusy(true);
-            try { await backend.sendEmailsToClient(client.id); await reload(); refreshAgency().catch(() => {}); toast(`Sent to ${campaign?.contact || client.name} to review.`); }
+            try { await backend.sendEmailsToClient(ck); await reload(); refreshAgency().catch(() => {}); toast(`Sent to ${campaign?.contact || client.name} to review.`); }
             catch (e) { toast(e instanceof Error ? e.message : 'Could not send. Please try again.'); }
             finally { setBusy(false); }
           }}>Send to client</button>
@@ -78,7 +88,7 @@ export default function EmailsView() {
             if (!open) { toast('Add a comment first so we know what to change.'); return; }
             setBusy(true);
             try {
-              await backend.requestEmailChanges(client.id, version.id, actor);
+              await backend.requestEmailChanges(ck, version.id, actor);
               await reload();
               if (admin) refreshAgency().catch(() => {});
               toast(`Sent ${open} comment${open === 1 ? '' : 's'}. Your updated emails will be ready to review soon.`);
@@ -91,16 +101,27 @@ export default function EmailsView() {
     </header>
   );
 
+  const picker = (all?.length ?? 0) > 1 ? (
+    <div className="sv-tabs em-campaigns" role="tablist" aria-label="Email campaigns">
+      {all!.map((c) => (
+        <button key={campaignKey(c)} type="button" role="tab" aria-selected={campaignKey(c) === key} className={`pill${campaignKey(c) === key ? ' on' : ''}`} onClick={() => setKey(campaignKey(c))}>
+          {campaignTitle(c)}{c.status === 'draft' && admin ? <span className="em-draft-tag">Draft</span> : null}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
   if (!campaign || !version || !email || (isDraft && !admin)) {
     return (
       <div className="view">
         {head(null)}
+        {picker}
         <div className="sv-empty">
           <span className={`stbadge ${SITE_STATUS.building.cls}`}>{SITE_STATUS.building.label}</span>
-          <div className="sv-et">{campaign ? 'Your launch emails are being written' : `No launch emails for ${client.name} yet`}</div>
+          <div className="sv-et">{campaign ? `${flow ? campaignTitle(campaign) : 'Your launch emails'} ${flow ? 'is' : 'are'} being written` : `No emails for ${client.name} yet`}</div>
           <p>{campaign
             ? "The REPS team is checking them over. You'll get an email as soon as they're ready to review here."
-            : admin ? 'Launch emails are written when a client submits the onboarding form.' : 'The REPS team will add them here as soon as they are ready.'}</p>
+            : admin ? 'Launch emails are written when a client submits the onboarding form. Follow-up flows are added by the REPS team.' : 'The REPS team will add them here as soon as they are ready.'}</p>
         </div>
       </div>
     );
@@ -122,7 +143,7 @@ export default function EmailsView() {
     setBusy(true);
     try {
       const saved = await backend.addEmailComment({
-        clientId: client.id, versionId: version.id, emailId: email.id, field: draft.field, quote: draft.quote,
+        clientId: client.id, campaign: ck, versionId: version.id, emailId: email.id, field: draft.field, quote: draft.quote,
         author: actor, role: admin ? 'agency' : 'client', text, resolved: false,
       });
       await reload();
@@ -134,25 +155,33 @@ export default function EmailsView() {
   };
 
   const toggle = async (c: EmailComment) => {
-    await backend.setEmailCommentResolved(client.id, c.id, !c.resolved);
+    await backend.setEmailCommentResolved(ck, c.id, !c.resolved);
     await reload();
   };
 
   return (
     <div className="view">
       {head(isDraft ? 'send' : !locked && !waiting ? 'review' : null)}
+      {picker}
 
       <SequenceNav campaign={campaign} emails={version.emails} list={list} setList={setList} emailId={email.id}
         setEmailId={(id) => { setEmailId(id); setDraft(null); setPick(null); }}
         openCount={(id) => version.comments.filter((c) => c.emailId === id && !c.resolved).length} />
 
       <div className="sv-bar">
+        {flow ? (
+          <div className="em-info">
+            <span><b>Starts</b> {campaign.flow?.trigger ?? 'When someone signs up'}</span>
+            <span><b>Offer</b> {campaign.offer || 'None'}</span>
+          </div>
+        ) : (
         <div className="em-info">
           <span><b>Launch</b> {campaign.launchDate ? fmtLaunch(campaign.launchDate) : 'date to be set'}</span>
           <span><b>Website</b> {campaign.websiteUrl ? siteHref(campaign.websiteUrl).replace(/^https?:\/\//, '') : 'to be added'}</span>
           {list === 'prereg' && campaign.offer && <span><b>Offer</b> {campaign.offer}{campaign.discountCode ? ` · ${campaign.discountCode}` : ''}</span>}
           {list === 'public' && <span><b>Offer</b> Full price</span>}
         </div>
+        )}
         <div className="sv-tools">
           {versions.length > 1 && (
             <label className="vsel">
@@ -187,7 +216,7 @@ export default function EmailsView() {
           <span className={`stbadge ${st.cls}`}>{st.label}</span>
           <div className="sv-ver">Version {version.version} · {old ? version.sentNote : campaign.statusNote || version.sentNote}</div>
           {isDraft && !old && (
-            <div className="sv-lock sv-draft">Written from {campaign.contact || client.name}&apos;s onboarding form. Only the REPS team can see these. Check them over, edit them in <Link href="/agency/emails" className="sv-inline-link">Agency · Emails</Link>, then press <b>Send to client</b>.</div>
+            <div className="sv-lock sv-draft">{flow ? 'Written by the REPS team' : <>Written from {campaign.contact || client.name}&apos;s onboarding form</>}. Only the REPS team can see these. Check them over, edit them in <Link href="/agency/emails" className="sv-inline-link">Agency · Emails</Link>, then press <b>Send to client</b>.</div>
           )}
           {waiting && !old && (admin ? (
             <div className="sv-lock sv-draft">
@@ -200,14 +229,14 @@ export default function EmailsView() {
           {approved && !old && (
             <div className={`sv-lock${ml.state === 'scheduled' ? '' : ' sv-draft'}`}>
               {ml.state === 'scheduled'
-                ? <>Approved. All 12 emails are scheduled in MailerLite and will send on the dates shown.</>
-                : admin ? <>Approved by the client. {ml.note}</> : <>Approved. The REPS team is scheduling your emails now.</>}
+                ? (flow ? <>Approved and live. These go out automatically to everyone who signs up.</> : <>Approved. All 12 emails are scheduled in MailerLite and will send on the dates shown.</>)
+                : admin ? <>Approved by the client. {ml.note}</> : flow ? <>Approved. The REPS team is setting these up to send automatically.</> : <>Approved. The REPS team is scheduling your emails now.</>}
             </div>
           )}
           {old && <div className="sv-lock old">You&apos;re viewing an earlier version. Switch to the latest version to comment or approve.</div>}
 
           <div className="lbl">COMMENTS ON THIS EMAIL</div>
-          <div className="sv-open">{openAll} open across all 12 emails</div>
+          <div className="sv-open">{openAll} open across all {total} emails</div>
 
           {draft && (
             <div className="composer">
@@ -249,25 +278,29 @@ export default function EmailsView() {
       {modal && (
         <div className="modal-bg" onClick={(e) => { if (e.target === e.currentTarget) setModal(false); }}>
           <div className="modal" role="dialog" aria-modal="true" aria-labelledby="approve-emails-title">
-            <div id="approve-emails-title" className="m-t">Approve all 12 emails?</div>
+            <div id="approve-emails-title" className="m-t">Approve all {total} emails?</div>
             <p>
-              You&apos;re signing off version {version.version} of your launch emails: 6 to your pre-registration list and 6 to your email list.
+              {flow
+                ? <>You&apos;re signing off version {version.version} of {what}: {total} emails sent automatically {(campaign.flow?.trigger ?? 'when someone signs up').replace(/^W/, 'w')}.</>
+                : <>You&apos;re signing off version {version.version} of your launch emails: 6 to your pre-registration list and 6 to your email list.</>}
               {openAll ? ` There ${openAll === 1 ? 'is' : 'are'} still ${openAll} open comment${openAll === 1 ? '' : 's'}, these will be closed.` : ''}
-              {' '}They&apos;ll be scheduled in MailerLite to send from {campaign.launchDate ? fmtLaunch(campaign.launchDate) : 'your launch date'} onwards (the warm-ups go out the week before).
+              {flow
+                ? <>{' '}The REPS team will then set them up to send on their own.</>
+                : <>{' '}They&apos;ll be scheduled in MailerLite to send from {campaign.launchDate ? fmtLaunch(campaign.launchDate) : 'your launch date'} onwards (the warm-ups go out the week before).</>}
             </p>
             <div className="cp-a">
               <button type="button" className="btn" onClick={() => setModal(false)}>Cancel</button>
               <button type="button" className="btn gold" disabled={busy} onClick={async () => {
                 setBusy(true);
                 try {
-                  const r = await backend.approveEmails(client.id, version.id, actor);
+                  const r = await backend.approveEmails(ck, version.id, actor);
                   await reload();
                   if (admin) refreshAgency().catch(() => {});
                   setModal(false);
-                  toast(r.state === 'scheduled' ? 'Approved and scheduled. Nice one!' : 'Approved. The REPS team will finish scheduling them.');
+                  toast(r.state === 'scheduled' ? 'Approved and scheduled. Nice one!' : flow ? 'Approved. The REPS team will set them live.' : 'Approved. The REPS team will finish scheduling them.');
                 } catch (e) { toast(e instanceof Error ? e.message : 'Could not save the approval. Please try again.'); }
                 finally { setBusy(false); }
-              }}>Approve and schedule</button>
+              }}>{flow ? 'Approve emails' : 'Approve and schedule'}</button>
             </div>
           </div>
         </div>

@@ -66,3 +66,11 @@ export function offsetLabel(offset: number) {
   const n = Math.abs(offset);
   return `${n} day${n === 1 ? '' : 's'} ${offset < 0 ? 'before' : 'after'} launch`;
 }
+
+/** "Straight away", "Day 3, 9am": when a follow-up email goes, counted from sign-up. */
+export function flowWhen(offset: number, time: string) {
+  if (offset === 0 && (!time || time === 'now')) return 'Straight away';
+  const m = time.match(/^(\d{2}):(\d{2})$/);
+  const t = m ? `${+m[1] % 12 || 12}${m[2] === '00' ? '' : `:${m[2]}`}${+m[1] < 12 ? 'am' : 'pm'}` : '';
+  return `Day ${offset}${t ? `, ${t}` : ''}`;
+}

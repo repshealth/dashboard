@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { Device } from '@/lib/types';
-import { EMAIL_LISTS, type EmailCampaign, type EmailComment, type EmailField, type EmailListId, type LaunchEmail } from '@/lib/emails/types';
-import { fmtSend, offsetLabel, sendAt } from '@/lib/emails/schedule';
+import { EMAIL_LISTS, isFlow, type EmailCampaign, type EmailComment, type EmailField, type EmailListId, type LaunchEmail } from '@/lib/emails/types';
+import { flowWhen, fmtSend, offsetLabel, sendAt } from '@/lib/emails/schedule';
 import { showsCode, siteHref } from '@/lib/emails/html';
 
 const FONT: Record<string, string> = {
@@ -13,6 +13,11 @@ const FONT: Record<string, string> = {
 };
 
 export type EmailMode = 'view' | 'comment' | 'edit';
+
+/** When an email goes: a date for launch emails, days after sign-up for a follow-up flow. */
+export const emailWhen = (c: EmailCampaign, e: LaunchEmail) => (isFlow(c)
+  ? flowWhen(e.offset, e.time)
+  : c.launchDate ? fmtSend(sendAt(c.launchDate, e.offset, e.time)) : offsetLabel(e.offset));
 
 /** List tabs plus the six emails of the chosen list, in send order. */
 export function SequenceNav({ campaign, emails, list, setList, emailId, setEmailId, openCount, changed }: {
@@ -27,6 +32,32 @@ export function SequenceNav({ campaign, emails, list, setList, emailId, setEmail
   /** Email ids that changed in a revised version. */
   changed?: Set<string>;
 }) {
+  if (isFlow(campaign)) {
+    return (
+      <div className="em-nav">
+        <p className="em-about">{campaign.flow?.about ?? EMAIL_LISTS.flow.about}</p>
+        <ol className="em-seq em-seq-flow">
+          {emails.map((e) => {
+            const n = openCount?.(e.id) ?? 0;
+            return (
+              <li key={e.id}>
+                <button type="button" className={`em-step flow${e.id === emailId ? ' on' : ''}`} onClick={() => setEmailId(e.id)} aria-current={e.id === emailId ? 'true' : undefined}>
+                  <span className="em-step-h">
+                    <span className="em-step-n">{e.n}</span>
+                    <span className="em-step-k">{emailWhen(campaign, e)}</span>
+                    {n ? <span className="cnt">{n}</span> : null}
+                    {changed?.has(e.id) && <span className="em-chg-dot" title="Changed in this version">Changed</span>}
+                  </span>
+                  <span className="em-step-s">{e.subject}</span>
+                  <span className="em-step-d">{e.button && e.link !== siteHref(campaign.websiteUrl) && /join|pricing|checkout/i.test(e.link ?? campaign.websiteUrl) ? 'Offer' : 'Tips and advice'}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    );
+  }
   return (
     <div className="em-nav">
       <div className="sv-tabs" role="tablist" aria-label="Email list">
@@ -97,8 +128,9 @@ export function EmailPreview({ campaign, email, device, mode = 'view', comments 
 }) {
   const b = campaign.brand;
   const vars = { '--ep': b.primary, '--es': b.secondary, '--eink': b.ink, '--efd': FONT[b.font] ?? FONT.bold } as CSSProperties;
-  const when = campaign.launchDate ? fmtSend(sendAt(campaign.launchDate, email.offset, email.time)) : 'Date to be set';
-  const href = siteHref(campaign.websiteUrl);
+  const flow = isFlow(campaign);
+  const when = flow ? emailWhen(campaign, email) : campaign.launchDate ? fmtSend(sendAt(campaign.launchDate, email.offset, email.time)) : 'Date to be set';
+  const href = siteHref(email.link || campaign.websiteUrl);
   const set = (patch: Partial<LaunchEmail>) => onChange?.({ ...email, ...patch });
 
   /** A part of the email: clickable to comment on, editable, outlined if changed, with its comment pins. */
@@ -133,7 +165,7 @@ export function EmailPreview({ campaign, email, device, mode = 'view', comments 
   return (
     <div className={`em-frame ${device}`} style={vars}>
       <div className="em-inbox">
-        <div className="em-from"><span className="em-av" aria-hidden="true">{b.name.charAt(0)}</span><b>{b.name}</b><span>&lt;{b.replyTo}&gt;</span></div>
+        <div className="em-from"><span className="em-av" aria-hidden="true">{b.name.charAt(0)}</span><b>{b.name}</b>{b.replyTo ? <span>&lt;{b.replyTo}&gt;</span> : null}</div>
         <div className="em-meta">
           {edit ? (
             <>
@@ -147,7 +179,7 @@ export function EmailPreview({ campaign, email, device, mode = 'view', comments 
             </>
           )}
         </div>
-        <div className="em-when">{EMAIL_LISTS[email.list].short} · Email {email.n} · {when}</div>
+        <div className="em-when">{flow ? `${campaign.flow?.name ?? 'Follow-up'} · Email ${email.n} · ${when}${email.n === 1 ? '' : ' after they sign up'}` : `${EMAIL_LISTS[email.list].short} · Email ${email.n} · ${when}`}</div>
       </div>
 
       <div className="em-body">

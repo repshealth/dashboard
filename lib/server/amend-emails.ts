@@ -1,7 +1,7 @@
 import { claudeJson } from './claude';
 import { amendEmailsWithRules, emailPathLabel, flattenEmails, type EmailAmendFn } from '../emails/amend';
 
-const SYSTEM = `You update a fitness coach's launch emails from their review comments, in British English.
+const SYSTEM = `You update a fitness coach's launch or follow-up emails from their review comments, in British English.
 You get every editable piece of text as "path: current text", then a numbered list of comments.
 Each comment says which email and which part of it the client left it on, and the words there.
 For each comment, make the smallest set of edits that does what it asks, in the coach's own tone of voice.

@@ -755,3 +755,13 @@ textarea.em-subj{font-size:15px}
 .sp-ok{font-style:normal;font-size:11px;font-weight:700;color:#1F6B41;background:#EAF6EF;padding:1px 6px;border-radius:99px;margin-left:6px}
 .sp-status{font-size:12.5px;color:var(--muted);margin:0}
 .sp-disc{margin-right:auto;color:#9A3412}
+
+/* Follow-up flows in Emails */
+.em-campaigns{margin:0 0 12px}
+.em-draft-tag{margin-left:6px;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:2px 6px;border-radius:999px;background:var(--tint);color:var(--dim)}
+.em-seq.em-seq-flow{grid-template-columns:repeat(7,minmax(0,1fr))}
+.em-step.flow{border-top-color:var(--accent)}
+.em-step.flow .em-step-n{background:var(--accent)}
+.ae-kind{display:block;font-size:11.5px;color:var(--dim);margin-top:2px}
+@media (max-width: 1100px){ .em-seq.em-seq-flow{grid-template-columns:repeat(4,minmax(0,1fr))} }
+@media (max-width: 560px){ .em-seq.em-seq-flow{grid-template-columns:repeat(2,minmax(0,1fr))} }

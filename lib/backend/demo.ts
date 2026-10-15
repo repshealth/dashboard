@@ -14,7 +14,7 @@ import { tasksFromNotes } from '../tasks/extract';
 import { fetchSiteFromGitHub, type FetchedSite } from '../site/github';
 import { STARTER_CLIENTS } from '../starter';
 import { MemoryStore } from './store';
-import { checkLogin, createBackend, meta, starterNote, syncSiteFromGitHub, type ClientRec, type Services, type UserRec, type ViewerRec } from './core';
+import { checkLogin, createBackend, meta, seedFlows, starterNote, syncSiteFromGitHub, type ClientRec, type Services, type UserRec, type ViewerRec } from './core';
 import type { Backend } from './types';
 
 /**
@@ -81,6 +81,7 @@ async function seedExample() {
     await starterNote(store, c.id);
   }
   for (const c of STARTER_CLIENTS) await store.put('setting', `starter:${c.slug}`, { at: new Date().toISOString() }, {});
+  await seedFlows(store, services);
   const admin: UserRec = { id: agency.id, email: agency.email!, name: agency.name, isAdmin: true, createdAt: new Date().toISOString() };
   await store.put('user', admin.id, admin, meta.user(admin));
 }

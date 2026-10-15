@@ -15,7 +15,8 @@ export interface Submission {
 }
 
 export type NewComment = Omit<SiteComment, 'id' | 'createdAt'> & { clientId: string };
-export type NewEmailComment = Omit<EmailComment, 'id' | 'createdAt'> & { clientId: string; versionId: string };
+/** campaign = the campaign key when it isn't the client's launch emails (a follow-up flow). */
+export type NewEmailComment = Omit<EmailComment, 'id' | 'createdAt'> & { clientId: string; versionId: string; campaign?: string };
 export type LaunchSettings = Pick<EmailCampaign, 'launchDate' | 'websiteUrl' | 'discountCode'>;
 
 /**
@@ -100,8 +101,12 @@ export interface Backend {
   /** Every onboarding form submitted, newest first. */
   listSubmissions(): Promise<Submission[]>;
 
-  /* Launch emails */
-  getEmails(clientId: string): Promise<EmailCampaign | null>;
+  /* Launch emails and follow-up flows. Methods that take a key accept the client id (launch emails) or a flow key. */
+  getEmails(key: string): Promise<EmailCampaign | null>;
+  /** All of a client's email campaigns: launch emails first, then follow-up flows. */
+  listEmails(clientId: string): Promise<EmailCampaign[]>;
+  /** REPS marks a follow-up flow as live (or not) once the MailerLite automation is built. */
+  markFlowLive(key: string, live: boolean): Promise<void>;
   /** Every client's launch emails, including revised versions waiting for approval (REPS). */
   listEmailCampaigns(): Promise<EmailCampaign[]>;
   addEmailComment(c: NewEmailComment): Promise<EmailComment>;

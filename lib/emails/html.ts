@@ -19,7 +19,7 @@ export function emailHtml(c: EmailCampaign, e: LaunchEmail) {
     ? `<img src="${esc(b.logoUrl)}" alt="${esc(b.name)}" height="36" style="display:block;height:36px;width:auto;border:0">`
     : `<span style="font:700 22px ${font};color:${b.ink};text-transform:${b.font === 'elegant' ? 'none' : 'uppercase'}">${esc(b.name)}</span>`;
   const p = (t: string) => `<p style="margin:0 0 16px;font:16px/1.6 'Helvetica Neue',Arial,sans-serif;color:${b.ink}">${esc(t)}</p>`;
-  const href = siteHref(c.websiteUrl);
+  const href = siteHref(e.link || c.websiteUrl);
   return `<!doctype html><html><body style="margin:0;background:#f4f4f5">
 <div style="display:none;max-height:0;overflow:hidden">${esc(e.preview)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5"><tr><td align="center" style="padding:24px 12px">

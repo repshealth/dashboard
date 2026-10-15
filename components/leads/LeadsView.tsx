@@ -58,7 +58,7 @@ export default function LeadsView() {
         </div>
       </header>
 
-      <Kpis leads={bySource} growthNote={client.growthNote} revenueNote={client.revenueNote} />
+      <Kpis leads={bySource} />
 
       <section className="rules" aria-label="How leads move">
         <div className="t">AUTO-MOVES</div>

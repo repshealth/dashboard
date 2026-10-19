@@ -49,7 +49,7 @@ export const PHYSIQUE_X_CALCULATOR_EMAILS: LaunchEmail[] = [
     heading: 'The scales will lie to you this week',
     body: [
       'Quick heads up, because this is where a lot of people quit.',
-      'Your weight can swing by a kilo or two from one day to the next, and it’s rarely fat. A salty meal, more carbs than usual, a hard session, a bad night’s sleep or where you are in your cycle can all push it up for a day or two.',
+      'Your weight can swing by a kilo or two from one day to the next, and it’s rarely fat. A salty meal, more carbs than usual, a hard session or a bad night’s sleep can all push it up for a day or two.',
       'So don’t judge your numbers on one weigh-in. Weigh a few mornings a week, take the average, and compare week to week. That’s the trend that matters.',
       'And use more than the scales. Progress photos, how your clothes fit, and whether your lifts are going up all count. Sometimes the scales sit still while everything else is moving in the right direction.',
       'This is exactly why my members do a weekly check-in in the app. Their stats, photos and notes go in once a week, I look at the whole picture, and the plan changes based on real data rather than one bad morning.',

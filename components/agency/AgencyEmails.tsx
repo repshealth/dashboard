@@ -62,6 +62,7 @@ export default function AgencyEmails() {
   const router = useRouter();
   const { viewer, clients, allCampaigns, allLeads, refreshAgency, setClientId } = useData();
   const [sel, setSel] = useState<string | null>(null);
+  const [mlFor, setMlFor] = useState<string | null>(null);
 
   useEffect(() => { if (viewer && !viewer.isAdmin) router.replace('/leads'); }, [viewer, router]);
   if (!viewer?.isAdmin) return null;
@@ -127,12 +128,25 @@ export default function AgencyEmails() {
                 <tr key={c.id} className="row ae-none">
                   <td>{c.name}</td>
                   <td colSpan={5}><span className="ae-dim">No emails yet. Launch emails are written when the onboarding form is submitted.</span></td>
-                  <td><button type="button" className="ob-link" onClick={() => { setClientId(c.id); router.push('/leads'); }}>Leads</button></td>
+                  <td>
+                    <button type="button" className="ob-link" onClick={() => setMlFor(c.id)}>MailerLite</button>
+                    {' · '}
+                    <button type="button" className="ob-link" onClick={() => { setClientId(c.id); router.push('/leads'); }}>Leads</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </section>
+      )}
+      {mlFor && (
+        <div className="modal-bg" onClick={(e) => { if (e.target === e.currentTarget) setMlFor(null); }}>
+          <div className="modal ae-ml-modal" role="dialog" aria-modal="true" aria-labelledby="ae-ml-t">
+            <div id="ae-ml-t" className="m-t">{name(mlFor)}&apos;s MailerLite</div>
+            <p className="sub">Pre-registration sign ups from their website are added to the pre-registration group as they come in.</p>
+            <MailerLiteForm clientId={mlFor} startOpen onDone={() => setMlFor(null)} />
+          </div>
+        </div>
       )}
       {!rows.length && allCampaigns !== null && <p className="ap-hint">Submit the onboarding form to see a client&apos;s launch emails appear here.</p>}
     </div>
@@ -378,9 +392,10 @@ function CampaignDetail({ ckey, name, onBack }: { ckey: string; name: string; on
 }
 
 /** The client's MailerLite account: key, sender and groups. The saved key is never shown again. */
-function MailerLiteForm({ clientId }: { clientId: string }) {
+function MailerLiteForm({ clientId, startOpen = false, onDone }: { clientId: string; startOpen?: boolean; onDone?: () => void }) {
   const { toast } = useData();
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(startOpen);
+  const setOpen = (v: boolean) => { setOpenState(v); if (!v) onDone?.(); };
   const [hasKey, setHasKey] = useState(false);
   const [f, setF] = useState<MailerLiteSettings>({ apiKey: '', fromEmail: '', fromName: '', preregGroupId: '', publicGroupId: '', publicSegmentId: '', useHtml: false });
   const [busy, setBusy] = useState(false);

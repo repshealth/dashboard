@@ -24,4 +24,5 @@ export const STARTER_FLOWS: { clientId: string; flowId: string; make: (clientId:
 export const STARTER_CLIENTS: StarterClient[] = [
   { id: 'physique-x', slug: 'physique-x', name: 'Physique X', contactName: 'Kieran', repo: 'repshealth/physique-x', branch: 'main' },
   { id: 'dailey-demolition', slug: 'dailey-demolition', name: 'Dailey Demolition', contactName: 'Kate Dailey', repo: 'repshealth/dailey', branch: 'main' },
+  { id: 'shape-up-with-gabby', slug: 'shape-up-with-gabby', name: 'Shape Up with Gabby', contactName: 'Gabby Allen', repo: 'repshealth/shapeupwithgabby', branch: 'main' },
 ];

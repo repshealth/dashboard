@@ -1,5 +1,5 @@
 import type { Client, DesignFile, FormSubmission, Lead, LeadEvent, Site, SiteComment, SitePage, SiteSource, SiteVersion, SourceId, Viewer } from '../types';
-import { pageName, type FetchedSite } from '../site/github';
+import { absoluteAssets, pageName, type FetchedSite } from '../site/github';
 import { STAGE_NAME } from '../constants';
 import type { SiteCopy } from '../site/copy';
 import { buildSpec, slugify } from '../site/compose';
@@ -328,7 +328,7 @@ export async function syncSiteFromGitHub(store: DocStore, services: Services, cl
   }
   const pages: SitePage[] = [];
   for (const f of fetched.files) {
-    const htmlUrl = await services.storeHtml(clientId, fetched.sha, f.path, f.html);
+    const htmlUrl = await services.storeHtml(clientId, fetched.sha, f.path, absoluteAssets(f.html, src.repo, fetched.sha, f.path));
     const name = pageName(f.path, f.html);
     pages.push({ id: services.newId(), key: f.path, name, path: ` · ${name}`, kind: 'html', htmlUrl });
   }

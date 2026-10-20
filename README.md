@@ -38,7 +38,7 @@ In the Worker's **Settings**:
    - `APP_URL` (optional): your dashboard's address, used in emailed links. Set it once you add a custom domain.
 2. Redeploy (push to GitHub, or **Deployments > Retry**).
 
-The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds the starting clients in `lib/starter.ts` (Physique X and Dailey Demolition), connects each website to its GitHub repo and pulls the latest commit. Open the dashboard and sign in with the agency email and password. Then give clients their own logins in **Agency > Logins**.
+The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds the starting clients in `lib/starter.ts` (Physique X, Dailey Demolition and Shape Up with Gabby), connects each website to its GitHub repo and pulls the latest commit. Open the dashboard and sign in with the agency email and password. Then give clients their own logins in **Agency > Logins**.
 
 If emails aren't set up yet, sign-in links are written to the Worker's logs instead (**Workers > your worker > Logs**), so you can still get in while testing.
 
@@ -258,7 +258,7 @@ app/
 components/                    Screens, sidebar, top bar, shared state
 lib/backend/                   core.ts (every action and its access rules), demo.ts (example data), live.ts (browser to /api/rpc)
 lib/server/                    Cloudflare: D1 store, sign-in, Claude, MailerLite, emails
-lib/starter.ts                 The clients the dashboard starts with (Physique X, Dailey Demolition)
+lib/starter.ts                 The clients the dashboard starts with (Physique X, Dailey Demolition, Shape Up with Gabby)
 lib/demo/*.json                Their latest website commits, for the preview
 lib/site/                      Website and pre-registration page: specs, copy, amends
 lib/emails/                    Launch emails: schedule, copy, amends, HTML for MailerLite

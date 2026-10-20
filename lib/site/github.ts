@@ -47,3 +47,30 @@ export function pageName(path: string, html: string) {
   const base = path.split('/').pop()!.replace(/\.html?$/i, '').replace(/[-_]+/g, ' ');
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
+
+/**
+ * Points a page's relative images, styles and scripts (e.g. "images/hero.webp") at that exact
+ * commit on jsDelivr, so the page shows properly in the dashboard preview. Links to other pages
+ * are left alone. Only works for public repos; private ones keep their paths as they are.
+ */
+export function absoluteAssets(html: string, repo: string, sha: string, path: string) {
+  const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
+  const base = `https://cdn.jsdelivr.net/gh/${repo}@${sha}/`;
+  const rel = (u: string) => !/^([a-z][a-z0-9+.-]*:|\/\/|#|\/|\{|\$)/i.test(u) && !/\.html?([?#]|$)/i.test(u) && u.trim() !== '';
+  const abs = (u: string) => {
+    const parts = (dir + u.replace(/^\.\//, '')).split('/');
+    const out: string[] = [];
+    for (const p of parts) { if (p === '..') out.pop(); else if (p !== '.') out.push(p); }
+    return base + out.join('/');
+  };
+  return html
+    .replace(/(\s(?:src|poster|data-src)=)(["'])([^"']+)\2/gi, (m, a, q, u) => (rel(u) ? `${a}${q}${abs(u)}${q}` : m))
+    .replace(/(\shref=)(["'])([^"']+\.(?:css|ico|png|jpe?g|webp|svg|gif|woff2?|pdf|mp4|webm))(["'])/gi, (m, a, q, u, q2) => (rel(u) ? `${a}${q}${abs(u)}${q2}` : m))
+    .replace(/(\ssrcset=)(["'])([^"']+)\2/gi, (m, a, q, list: string) => `${a}${q}${list.split(',').map((part) => {
+      const [u, ...rest] = part.trim().split(/\s+/);
+      return [rel(u) ? abs(u) : u, ...rest].join(' ');
+    }).join(', ')}${q}`)
+    .replace(/url\((["']?)([^"')]+)\1\)/gi, (m, q, u) => (rel(u) ? `url(${q}${abs(u)}${q})` : m))
+    // Image and video paths written as plain strings, e.g. a script's list of screenshots.
+    .replace(/(['"`])((?:\.{1,2}\/)?[\w-]+(?:\/[\w.-]+)*\.(?:webp|png|jpe?g|gif|svg|avif|mp4|webm))\1/gi, (m, q, u) => `${q}${abs(u)}${q}`);
+}

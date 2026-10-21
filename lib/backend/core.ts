@@ -19,7 +19,7 @@ import type { Backend, LoginInfo, Submission } from './types';
 import type { StripePublic, StripeSettings } from '../stripe/types';
 import { importStripeHistory, type StripeCtx } from '../stripe/apply';
 import { hashPassword, passwordProblem, verifyPassword } from './password';
-import { STARTER_CLIENTS, STARTER_FLOWS } from '../starter';
+import { SITE_REPOS, STARTER_CLIENTS, STARTER_FLOWS } from '../starter';
 
 /* Records ------------------------------------------------------------------------ */
 
@@ -390,6 +390,27 @@ export async function seedStarter(store: DocStore, services: Services) {
     await starterNote(store, c.id);
   }
   await seedFlows(store, services);
+  await linkSiteRepos(store, services);
+}
+
+/** Connects clients' websites to the repos listed in SITE_REPOS (once each) and pulls the latest commit. */
+export async function linkSiteRepos(store: DocStore, services: Services) {
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  let clients: ClientRec[] | null = null;
+  for (const r of SITE_REPOS) {
+    const mark = `site-repo:${norm(r.name)}:${r.repo}`;
+    if (await store.get('setting', mark)) continue;
+    clients ??= await store.list<ClientRec>('client');
+    const c = clients.find((x) => norm(x.name) === norm(r.name));
+    if (!c) continue; // Not signed up yet: try again next time.
+    const s = await store.get<Site>('site', c.id);
+    if (!s) continue;
+    await store.put('setting', mark, { at: new Date().toISOString() }, {});
+    if (s.github?.repo !== r.repo) {
+      await store.mutate<Site>('site', c.id, (x) => { x.github = { repo: r.repo, branch: r.branch, autoPublish: x.github?.autoPublish ?? false }; }, meta.site);
+    }
+    await syncSiteFromGitHub(store, services, c.id).catch((e) => console.error('Site repo link failed', r.repo, e));
+  }
 }
 
 /** Adds the starting follow-up flows, once each, to clients that exist. */

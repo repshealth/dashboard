@@ -27,3 +27,13 @@ export const STARTER_CLIENTS: StarterClient[] = [
   { id: 'shape-up-with-gabby', slug: 'shape-up-with-gabby', name: 'Shape Up with Gabby', contactName: 'Gabby Allen', repo: 'repshealth/shapeupwithgabby', branch: 'main' },
   { id: 'berri', slug: 'berri', name: 'Berri', contactName: 'Bela Fernandez', repo: 'repshealth/bella', branch: 'main' },
 ];
+
+/**
+ * Clients who signed up through the intake form, whose website lives in a repo with a different
+ * name from the one the dashboard expects. The first time the REPS team opens the dashboard after
+ * one is added here, that client's Website section is connected to the repo and the latest commit
+ * pulled in. Matched by the business name they gave.
+ */
+export const SITE_REPOS: { name: string; repo: string; branch: string }[] = [
+  { name: 'Ellena Fit Ltd', repo: 'repshealth/els', branch: 'main' },
+];

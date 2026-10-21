@@ -21,6 +21,8 @@ export default function LoginsPage() {
   const [error, setError] = useState('');
   const [made, setMade] = useState<{ name: string; email: string; password: string } | null>(null);
   const [removing, setRemoving] = useState<LoginInfo | null>(null);
+  const [appUrl, setAppUrl] = useState<string | null>(null);
+  useEffect(() => { backend.getAppUrl().then(setAppUrl).catch(() => {}); }, []);
 
   useEffect(() => { if (viewer && !viewer.isAdmin) router.replace('/leads'); }, [viewer, router]);
   const load = useCallback(() => backend.listLogins().then(setLogins).catch((e) => toast(e.message)), [toast]);
@@ -28,7 +30,9 @@ export default function LoginsPage() {
 
   if (!viewer?.isAdmin) return null;
   const name = (id: string) => clients.find((c) => c.id === id)?.name ?? 'Removed account';
-  const url = typeof window !== 'undefined' && window.location.protocol.startsWith('http') ? window.location.origin : 'the dashboard link';
+  // The dashboard's own address (APP_URL in Cloudflare) when set, so clients get the proper domain
+  // even if you're working on the workers.dev address.
+  const url = appUrl || (typeof window !== 'undefined' && window.location.protocol.startsWith('http') ? window.location.origin : 'the dashboard link');
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -140,6 +144,9 @@ export default function LoginsPage() {
             <div id="lg-made" className="m-t">Login ready for {made.name}</div>
             <p className="sub">Send them these details. The password isn&apos;t shown again, but you can always set a new one.</p>
             <textarea className="ob-input lg-details" readOnly rows={6} value={details} onFocus={(e) => e.target.select()} />
+            {!appUrl && /workers\.dev$/.test(typeof window !== 'undefined' ? window.location.hostname : '') && (
+              <p className="ap-hint">This uses the workers.dev address. To send your own domain instead, set APP_URL in Cloudflare (Settings, Variables and Secrets) to it, e.g. https://crm.yourdomain.com.</p>
+            )}
             <div className="cp-a">
               <button type="button" className="btn" onClick={() => setMade(null)}>Done</button>
               <button type="button" className="btn gold" onClick={async () => {

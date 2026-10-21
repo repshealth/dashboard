@@ -44,6 +44,8 @@ export interface Backend {
   signIn(email: string, password: string): Promise<Viewer>;
   signOut(): Promise<void>;
   /** Admin: everyone who can sign in, and which client accounts they can open. */
+  /** The dashboard's public address (APP_URL in Cloudflare), or null when it isn't set (REPS only). */
+  getAppUrl(): Promise<string | null>;
   listLogins(): Promise<LoginInfo[]>;
   /** Admin: adds or updates a login. A password is needed for a new login; for an existing one it resets it. */
   saveLogin(x: LoginInput): Promise<LoginInfo>;

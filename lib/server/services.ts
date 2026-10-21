@@ -22,6 +22,7 @@ export function liveServices(store: DocStore, origin: string): Services {
   return {
     newId: () => crypto.randomUUID(),
     claude: Boolean(setting('ANTHROPIC_API_KEY')),
+    appUrl: setting('APP_URL') || undefined,
     writeSiteCopy: async (a) => {
       const r = await writeCopy(a);
       return { copy: r.copy, by: r.by };

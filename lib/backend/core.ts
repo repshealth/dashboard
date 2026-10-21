@@ -67,6 +67,8 @@ export interface Services {
   pause?(ms: number): Promise<void>;
   /** Whether Claude is connected (needed to rewrite emails in a client's voice). */
   claude: boolean;
+  /** The dashboard's public address (APP_URL), when it's set. Used in login details sent to clients. */
+  appUrl?: string;
   writeSiteCopy(a: OnboardingAnswers): Promise<{ copy: SiteCopy; by: 'claude' | 'template' }>;
   writePreRegCopy(a: OnboardingAnswers): Promise<{ copy: PreRegCopy; by: 'claude' | 'template' }>;
   writeLaunchEmails(a: OnboardingAnswers, voice: string): Promise<{ emails: LaunchEmail[]; by: 'claude' | 'template' }>;
@@ -583,6 +585,10 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
     async signOut() {},
 
     /* Logins (agency only) */
+    async getAppUrl() {
+      await admin();
+      return services.appUrl ? services.appUrl.replace(/\/$/, '') : null;
+    },
     async listLogins() {
       await admin();
       const [users, clients] = await Promise.all([store.list<UserRec>('user'), store.list<ClientRec>('client')]);

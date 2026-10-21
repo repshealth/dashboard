@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { FEATURE_OPTIONS, TIMEZONES, type OnboardingAnswers } from '@/lib/site/onboarding';
+import { FEATURE_OPTIONS, TIMEZONES, inspirationOf, type OnboardingAnswers } from '@/lib/site/onboarding';
 import { LOOKS, type FontStyle } from '@/lib/site/spec';
 import { Area, Chips, Choice, Colour, Photo, Photos, Text } from './fields';
 
@@ -59,6 +59,7 @@ const ALL_STEPS: Step[] = [
   {
     title: 'Your brand',
     intro: 'Your colours, logo and the style of your headlines.',
+    check: (a) => (!inspirationOf(a).length ? 'Please add at least one website you like the look of.' : null),
     body: (a, set) => (
       <div className="ob-grid">
         <Colour label="Main brand colour" value={a.brand.primary} onChange={(v) => set((d) => { d.brand.primary = v; })} />
@@ -73,6 +74,25 @@ const ALL_STEPS: Step[] = [
           ...LOOKS.map((l) => ({ value: l.id as Look, title: l.name, desc: l.desc, preview: <LookPreview look={l.id} p={a.brand.primary} s={a.brand.secondary} /> })),
           { value: 'auto' as Look, title: 'Not sure', desc: 'We will pick the one that suits your brand', preview: <LookPreview look="auto" p={a.brand.primary} s={a.brand.secondary} /> },
         ]} />
+        <div className="ob-field ob-wide ob-insp">
+          <span className="ob-label">Three websites you like the look of<span className="ob-req"> *</span></span>
+          <span className="ob-hint">Any sites at all, fitness or not. Tell us what you like about each one so we can bring that into your design.</span>
+          {[0, 1, 2].map((i) => {
+            const x = a.brand.inspiration?.[i] ?? { url: '', note: '' };
+            const put = (patch: Partial<typeof x>) => set((d) => {
+              const list = [0, 1, 2].map((j) => d.brand.inspiration?.[j] ?? { url: '', note: '' });
+              list[i] = { ...list[i], ...patch };
+              d.brand.inspiration = list;
+            });
+            return (
+              <div key={i} className="ob-insp-row">
+                <span className="ob-insp-n" aria-hidden="true">{i + 1}</span>
+                <input className="ob-input" type="text" inputMode="url" autoCapitalize="none" spellCheck={false} aria-label={`Website ${i + 1}`} placeholder="e.g. www.example.com" value={x.url} onChange={(e) => put({ url: e.target.value })} />
+                <input className="ob-input" aria-label={`What you like about website ${i + 1}`} placeholder="What do you like about it?" value={x.note} onChange={(e) => put({ note: e.target.value })} />
+              </div>
+            );
+          })}
+        </div>
         <Text wide label="Three words for how you talk to clients" placeholder="e.g. Warm, direct, no-nonsense" value={a.brand.tone} onChange={(v) => set((d) => { d.brand.tone = v; })} />
         <Photo square label="Logo" hint="PNG with a transparent background works best" value={a.brand.logo} onChange={(v) => set((d) => { d.brand.logo = v; })} />
       </div>

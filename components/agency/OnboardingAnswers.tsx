@@ -7,7 +7,7 @@ import { useData } from '../DataProvider';
 import { backend, type Submission } from '@/lib/backend';
 import { SITE_STATUS } from '@/lib/constants';
 import { fmtWhen } from '@/lib/format';
-import type { OnboardingAnswers as Answers } from '@/lib/site/onboarding';
+import { inspirationOf, type OnboardingAnswers as Answers } from '@/lib/site/onboarding';
 
 const FONT = { bold: 'Bold (tall, condensed capitals)', modern: 'Modern (clean and sporty)', elegant: 'Elegant (serif)' } as const;
 
@@ -75,6 +75,15 @@ function AnswerSheet({ a }: { a: Answers }) {
           </span>
         </Row>
         <Row q="Headline style">{FONT[a.brand.font]}</Row>
+        <Row q="Website look">{a.brand.look ? (a.brand.look === 'auto' ? 'Not sure, REPS to pick' : a.brand.look.charAt(0).toUpperCase() + a.brand.look.slice(1)) : null}</Row>
+        <Row q="Websites they like">{inspirationOf(a).length ? (
+          <ol className="oa-insp">
+            {inspirationOf(a).map((x, i) => {
+              const href = /^https?:\/\//i.test(x.url.trim()) ? x.url.trim() : `https://${x.url.trim()}`;
+              return <li key={i}><a href={href} target="_blank" rel="noopener noreferrer">{x.url.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '')}</a>{x.note.trim() ? <span> · {x.note.trim()}</span> : null}</li>;
+            })}
+          </ol>
+        ) : null}</Row>
         <Row q="How they talk to clients">{a.brand.tone}</Row>
         <Row q="Logo"><Pics srcs={[a.brand.logo]} label="Logo" fit /></Row>
       </Section>

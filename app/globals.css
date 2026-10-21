@@ -765,3 +765,11 @@ textarea.em-subj{font-size:15px}
 .ae-kind{display:block;font-size:11.5px;color:var(--dim);margin-top:2px}
 @media (max-width: 1100px){ .em-seq.em-seq-flow{grid-template-columns:repeat(4,minmax(0,1fr))} }
 @media (max-width: 560px){ .em-seq.em-seq-flow{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+/* Intake form: websites they like */
+.ob-insp{display:flex;flex-direction:column;gap:8px}
+.ob-insp-row{display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1.3fr);gap:8px;align-items:center}
+.ob-insp-n{width:24px;height:24px;border-radius:50%;background:var(--tint);color:var(--accent);font-size:12px;font-weight:700;display:grid;place-items:center}
+@media (max-width: 640px){ .ob-insp-row{grid-template-columns:24px minmax(0,1fr)} .ob-insp-row .ob-input:last-child{grid-column:2} }
+.oa-insp{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.oa-insp a{color:var(--accent);font-weight:600}

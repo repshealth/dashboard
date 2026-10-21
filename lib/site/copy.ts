@@ -1,4 +1,4 @@
-import type { OnboardingAnswers } from './onboarding';
+import { inspirationOf, type OnboardingAnswers } from './onboarding';
 
 /** The words Claude writes for a client's site. Facts, prices and quotes come from the answers instead. */
 export interface SiteCopy {
@@ -117,6 +117,7 @@ export function answersForPrompt(a: OnboardingAnswers) {
   return [
     `Brand: ${a.business.brandName}. Coach: ${a.business.coachName}. Instagram: ${a.business.instagram || 'n/a'}.`,
     `Tone of voice: ${a.brand.tone || 'friendly and direct'}.`,
+    ...(inspirationOf(a).length ? [`Websites they like the look of: ${inspirationOf(a).map((x) => `${x.url.trim()}${x.note.trim() ? ` (${x.note.trim()})` : ''}`).join('; ')}.`] : []),
     `Audience: ${a.audience.who}`,
     `Their struggles: ${a.audience.struggles}`,
     `Their goals: ${a.audience.goals}`,

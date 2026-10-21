@@ -65,6 +65,7 @@ async function seedExample() {
     'repshealth/physique-x': async () => (await import('../demo/physique-x.json')).default as FetchedSite,
     'repshealth/dailey': async () => (await import('../demo/dailey.json')).default as FetchedSite,
     'repshealth/shapeupwithgabby': async () => (await import('../demo/shapeupwithgabby.json')).default as FetchedSite,
+    'repshealth/bella': async () => (await import('../demo/bella.json')).default as FetchedSite,
   };
   for (const c of STARTER_CLIENTS) {
     const rec: ClientRec = {

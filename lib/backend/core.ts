@@ -411,6 +411,35 @@ export async function linkSiteRepos(store: DocStore, services: Services) {
     }
     await syncSiteFromGitHub(store, services, c.id).catch((e) => console.error('Site repo link failed', r.repo, e));
   }
+  for (const r of SITE_REPOS) {
+    if (!r.publish) continue;
+    const mark = `site-publish:${norm(r.name)}:${r.publish}`;
+    if (await store.get('setting', mark)) continue;
+    clients ??= await store.list<ClientRec>('client');
+    const c = clients.find((x) => norm(x.name) === norm(r.name));
+    if (!c || (await store.get<Site>('site', c.id))?.github?.repo !== r.repo) continue;
+    try {
+      await syncSiteFromGitHub(store, services, c.id);
+    } catch (e) {
+      console.error('Publish sync failed, will try again', r.repo, e);
+      continue; // e.g. GitHub limiting checks: try again next time
+    }
+    await publishPendingCommit(store, c.id);
+    await store.put('setting', mark, { at: new Date().toISOString() }, {});
+  }
+}
+
+/** Makes the newest version from GitHub waiting in Approvals the one shown in the Website section. */
+export async function publishPendingCommit(store: DocStore, clientId: string) {
+  await store.mutate<Site>('site', clientId, (x) => {
+    const ver = x.versions.find((v) => v.state === 'pending' && v.commit);
+    if (!ver) return;
+    ver.state = 'published';
+    ver.sentNote = 'Latest from GitHub, added by the REPS team';
+    x.versions.filter((y) => y.id === ver.basedOn).forEach((b) => b.comments.forEach((cm) => { if (!cm.resolved) Object.assign(cm, { resolved: true, outcome: 'done', closedAt: new Date().toISOString() }); }));
+    x.versions = [ver, ...x.versions.filter((y) => y.id !== ver.id)];
+    if (x.status !== 'draft') { x.status = 'review'; x.statusNote = `${ver.version} ready to review: your changes have been made`; }
+  }, meta.site);
 }
 
 /** Adds the starting follow-up flows, once each, to clients that exist. */

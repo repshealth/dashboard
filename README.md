@@ -6,7 +6,7 @@ Built with Next.js (React) and runs entirely on Cloudflare: Workers for hosting,
 
 ## Two modes
 
-- **Example mode** (the default): the dashboard runs in the browser with the starting clients only (Physique X, Dailey Demolition, Shape Up with Gabby and Berri, with their websites at the latest commit when the preview was built). Nothing is saved and anything you change resets when the page reloads. Good for a preview link.
+- **Example mode** (the default): the dashboard runs in the browser with the starting clients only (Physique X, Dailey Demolition, Shape Up with Gabby, Berri and Lean Body Academy, with their websites at the latest commit when the preview was built). Nothing is saved and anything you change resets when the page reloads. Good for a preview link.
 - **Live mode**: real logins and data saved in Cloudflare D1. The deployed dashboard is always live; only the single-file preview uses example data.
 
 ## View it on GitHub Pages (no Cloudflare needed)
@@ -38,7 +38,7 @@ In the Worker's **Settings**:
    - `APP_URL` (optional): your dashboard's address, used in emailed links. Set it once you add a custom domain.
 2. Redeploy (push to GitHub, or **Deployments > Retry**).
 
-The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds the starting clients in `lib/starter.ts` (Physique X, Dailey Demolition, Shape Up with Gabby and Berri), connects each website to its GitHub repo and pulls the latest commit. Open the dashboard and sign in with the agency email and password. Then give clients their own logins in **Agency > Logins**.
+The app creates its own database table the first time it runs, so there's no SQL to run. The first time an admin signs in, it adds the starting clients in `lib/starter.ts` (Physique X, Dailey Demolition, Shape Up with Gabby, Berri and Lean Body Academy), connects each website to its GitHub repo and pulls the latest commit. Open the dashboard and sign in with the agency email and password. Then give clients their own logins in **Agency > Logins**.
 
 If emails aren't set up yet, sign-in links are written to the Worker's logs instead (**Workers > your worker > Logs**), so you can still get in while testing.
 
@@ -258,7 +258,7 @@ app/
 components/                    Screens, sidebar, top bar, shared state
 lib/backend/                   core.ts (every action and its access rules), demo.ts (example data), live.ts (browser to /api/rpc)
 lib/server/                    Cloudflare: D1 store, sign-in, Claude, MailerLite, emails
-lib/starter.ts                 The clients the dashboard starts with (Physique X, Dailey Demolition, Shape Up with Gabby, Berri)
+lib/starter.ts                 The clients the dashboard starts with (Physique X, Dailey Demolition, Shape Up with Gabby, Berri, Lean Body Academy)
 lib/demo/*.json                Their latest website commits, for the preview
 lib/site/                      Website and pre-registration page: specs, copy, amends
 lib/emails/                    Launch emails: schedule, copy, amends, HTML for MailerLite

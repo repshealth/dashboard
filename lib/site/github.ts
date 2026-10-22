@@ -19,6 +19,11 @@ export async function fetchSiteFromGitHub(repo: string, branch: string, token?: 
   const api = async (path: string) => {
     const res = await fetch(`https://api.github.com/repos/${repo}${path}`, { headers });
     if (res.status === 404) throw new Error(`Couldn't find ${repo} on GitHub. If the repo is private, add a GitHub token (see README).`);
+    if ((res.status === 403 || res.status === 429) && !token) {
+      throw new Error('GitHub is limiting checks from the dashboard. Add a GITHUB_TOKEN in Cloudflare (Settings, Variables and Secrets) and try again.');
+    }
+    if (res.status === 403 || res.status === 429) throw new Error('GitHub is limiting checks right now, or the GITHUB_TOKEN can’t read this repo. Try again in a few minutes.');
+    if (res.status === 401) throw new Error('The GITHUB_TOKEN in Cloudflare isn’t valid any more. Make a new one and replace it.');
     if (!res.ok) throw new Error(`GitHub returned ${res.status}.`);
     return res.json();
   };

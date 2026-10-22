@@ -226,6 +226,11 @@ export interface SiteSource {
   branch: string; // "main"
   /** true = each update goes straight to the client; false = it waits in Approvals first. */
   autoPublish: boolean;
+  /**
+   * Where the site is live, e.g. "https://leanbodyacademy.co.uk". Used by "View website in
+   * browser". Left empty, the repo's GitHub Pages address is used (https://<owner>.github.io/<repo>/).
+   */
+  liveUrl?: string;
   lastSha?: string;
   lastSync?: string;
   lastNote?: string;

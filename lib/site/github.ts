@@ -44,6 +44,27 @@ export async function fetchSiteFromGitHub(repo: string, branch: string, token?: 
   return { sha, message: String(commit.commit?.message || '').split('\n')[0], url: commit.html_url, files };
 }
 
+/** The repo's GitHub Pages address, e.g. repshealth/joshbell -> https://repshealth.github.io/joshbell/ */
+export function githubPagesUrl(repo: string) {
+  const [owner, name] = repo.split('/');
+  if (!owner || !name) return '';
+  const host = `${owner.toLowerCase()}.github.io`;
+  return name.toLowerCase() === host ? `https://${host}/` : `https://${host}/${name}/`;
+}
+
+/**
+ * Where a page of a GitHub site can be seen online: the live address set for the site, or its
+ * GitHub Pages address, plus the page's file ("index.html" is the address itself).
+ */
+export function livePageUrl(src: { repo: string; liveUrl?: string }, pageKey: string) {
+  const set = src.liveUrl?.trim();
+  let base = set ? (/^https?:\/\//i.test(set) ? set : `https://${set}`) : githubPagesUrl(src.repo);
+  if (!base) return '';
+  if (!base.endsWith('/')) base += '/';
+  const path = pageKey.replace(/^\/+/, '').replace(/(^|\/)index\.html?$/i, '$1');
+  return base + path.split('/').map(encodeURIComponent).join('/');
+}
+
 /** "index.html" -> "Homepage"; otherwise the page's <title>, or a name made from the file. */
 export function pageName(path: string, html: string) {
   if (/^index\.html?$/i.test(path)) return 'Homepage';

@@ -81,7 +81,7 @@ export interface Backend {
    */
   requestChanges(clientId: string, versionId: string, by: string): Promise<{ open: number; pending: SiteVersion | null }>;
   /** REPS connects the website to the GitHub repo it's saved to from Claude. Empty repo disconnects. */
-  saveSiteSource(clientId: string, src: Pick<SiteSource, 'repo' | 'branch' | 'autoPublish'>): Promise<void>;
+  saveSiteSource(clientId: string, src: Pick<SiteSource, 'repo' | 'branch' | 'autoPublish' | 'liveUrl'>): Promise<void>;
   /** REPS checks GitHub for a newer version now (pushes also arrive on their own). */
   syncSite(clientId: string): Promise<{ added: boolean; note: string }>;
   /** Admin: redraw a generated site in another design. Drafts change in place; otherwise a pending version. */

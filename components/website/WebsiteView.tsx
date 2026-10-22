@@ -12,6 +12,7 @@ import { SITE_STATUS } from '@/lib/constants';
 import { backend } from '@/lib/backend';
 import { fmtWhen } from '@/lib/format';
 import { pendingVersion, publishedVersions } from '@/lib/site/versions';
+import { livePageUrl } from '@/lib/site/github';
 import type { CommentTarget, Device, PinAnchor, SiteComment } from '@/lib/types';
 
 const SECTION_NAMES: Record<string, string> = {
@@ -243,6 +244,8 @@ export default function WebsiteView() {
   const sentLine = old ? version.sentNote : site.statusNote || version.sentNote;
   const openAll = version.comments.filter((c) => !c.resolved).length;
   const number = new Map(comments.map((c, i) => [c.id, i + 1]));
+  // GitHub sites: open the page as it looks online (GitHub Pages, or the live address set for the site).
+  const liveUrl = site.github?.repo && page.kind === 'html' ? livePageUrl(site.github, page.key) : '';
 
   const placePin = (e: MouseEvent<HTMLDivElement>) => {
     if (!cmode || (e.target as HTMLElement).closest('.pin')) return;
@@ -304,6 +307,12 @@ export default function WebsiteView() {
           })}
         </div>
         <div className="sv-tools">
+          {liveUrl && (
+            <a className="btn sv-live" href={liveUrl} target="_blank" rel="noreferrer" title={liveUrl}>
+              View website in browser
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" /></svg>
+            </a>
+          )}
           {versions.length > 1 && (
             <label className="vsel">
               <span className="sr">Version</span>

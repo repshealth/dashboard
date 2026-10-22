@@ -5,13 +5,14 @@ import { useData } from '../DataProvider';
 import { backend } from '@/lib/backend';
 import { fmtWhen } from '@/lib/format';
 import type { Site } from '@/lib/types';
+import { githubPagesUrl } from '@/lib/site/github';
 
 /** REPS only: connect the website to the GitHub repo it's saved to from Claude, and pull updates. */
 export default function SiteSource({ site }: { site: Site }) {
   const { toast, refreshSite, refreshAgency } = useData();
   const src = site.github;
   const [open, setOpen] = useState(false);
-  const [f, setF] = useState({ repo: src?.repo ?? '', branch: src?.branch ?? 'main', autoPublish: src?.autoPublish ?? false });
+  const [f, setF] = useState({ repo: src?.repo ?? '', branch: src?.branch ?? 'main', autoPublish: src?.autoPublish ?? false, liveUrl: src?.liveUrl ?? '' });
   const [busy, setBusy] = useState(false);
 
   const run = async (fn: () => Promise<unknown>) => {
@@ -38,6 +39,7 @@ export default function SiteSource({ site }: { site: Site }) {
           <form className="mt-vedit" onSubmit={(e) => { e.preventDefault(); run(async () => { await backend.saveSiteSource(site.clientId, f); setOpen(false); toast(f.repo ? 'Connected. Checking for the latest version…' : 'Disconnected.'); if (f.repo) { const r = await backend.syncSite(site.clientId); toast(r.note); } }); }}>
             <label className="ae-f"><span>GitHub repo</span><input className="ob-input" placeholder="e.g. repshealth/physique-x-site" value={f.repo} onChange={(e) => setF({ ...f, repo: e.target.value })} /></label>
             <label className="ae-f"><span>Branch</span><input className="ob-input" value={f.branch} onChange={(e) => setF({ ...f, branch: e.target.value })} /></label>
+            <label className="ae-f"><span>Live address (optional)</span><input className="ob-input" placeholder={f.repo.includes('/') ? githubPagesUrl(f.repo.replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/$/, '')) : 'e.g. https://theirsite.co.uk'} value={f.liveUrl} onChange={(e) => setF({ ...f, liveUrl: e.target.value })} /><span className="ae-dim">Where &ldquo;View website in browser&rdquo; opens. Leave empty to use the repo&rsquo;s GitHub Pages address.</span></label>
             <label className="ae-check"><input type="checkbox" checked={f.autoPublish} onChange={(e) => setF({ ...f, autoPublish: e.target.checked })} /> Send updates straight to the client (skip Approvals)</label>
             <div className="cp-a"><button type="button" className="btn" onClick={() => setOpen(false)}>Cancel</button><button type="submit" className="btn gold" disabled={busy}>Save</button></div>
           </form>

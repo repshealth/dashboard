@@ -878,7 +878,9 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       await admin();
       const repo = src.repo.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/$/, '');
       const ok = await site(clientId, (x) => {
-        x.github = repo ? { ...(x.github ?? {}), repo, branch: src.branch?.trim() || 'main', autoPublish: Boolean(src.autoPublish) } as SiteSource : undefined;
+        const live = (src.liveUrl ?? x.github?.liveUrl ?? '').trim().slice(0, 300);
+        const liveUrl = live ? (/^https?:\/\//i.test(live) ? live : `https://${live}`) : undefined;
+        x.github = repo ? { ...(x.github ?? {}), repo, branch: src.branch?.trim() || 'main', autoPublish: Boolean(src.autoPublish), liveUrl } as SiteSource : undefined;
       });
       if (!ok) throw new AccessError('This client has no website yet.', 404);
     },

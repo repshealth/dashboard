@@ -173,6 +173,8 @@ A client's website can live in its own GitHub repo, e.g. `repshealth/physique-x-
 
 **Connect it:** open the client's **Website** as REPS, and under **Updates from Claude** press **Connect GitHub repo**. Enter the repo and branch, and choose whether updates wait for you in **Approvals** (the default) or go straight to the client. **Check for updates** pulls the latest version on demand.
 
+**View website in browser:** a button above the preview opens the page being previewed as it looks online, for the REPS team and the client. It uses the repo's GitHub Pages address (`https://<owner>.github.io/<repo>/`), so switch Pages on in the site repo (**Settings > Pages**, deploy from `main`). Once the site has its own domain, put it in **Live address** under **Change** and the button opens that instead.
+
 **Make it automatic (live mode):** in Cloudflare add `GITHUB_WEBHOOK_SECRET` (any long random string), plus `GITHUB_TOKEN` if the site repos are private (a fine-grained token with read access to their contents). Then in the site repo on GitHub go to **Settings > Webhooks > Add webhook**:
 - Payload URL: `https://<your-dashboard>/api/github`
 - Content type: `application/json`

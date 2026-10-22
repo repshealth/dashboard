@@ -773,3 +773,8 @@ textarea.em-subj{font-size:15px}
 @media (max-width: 640px){ .ob-insp-row{grid-template-columns:24px minmax(0,1fr)} .ob-insp-row .ob-input:last-child{grid-column:2} }
 .oa-insp{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 .oa-insp a{color:var(--accent);font-weight:600}
+
+/* Website: open the site as it looks online */
+a.btn.sv-live{gap:7px;font-weight:600;color:var(--accent);border-color:var(--accent);background:#fff}
+a.btn.sv-live:hover{background:var(--tint)}
+.ae-f .ae-dim{font-weight:400}

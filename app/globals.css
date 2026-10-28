@@ -778,3 +778,6 @@ textarea.em-subj{font-size:15px}
 a.btn.sv-live{gap:7px;font-weight:600;color:var(--accent);border-color:var(--accent);background:#fff}
 a.btn.sv-live:hover{background:var(--tint)}
 .ae-f .ae-dim{font-weight:400}
+
+/* Emails: links inside plain-style paragraphs */
+.em-a{color:var(--ep);font-weight:700;text-decoration:underline;text-underline-offset:2px}

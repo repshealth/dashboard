@@ -30,6 +30,11 @@ export interface LaunchEmail {
   /** Where the button goes, when it isn't the website (e.g. a checkout page). */
   link?: string;
   ps: string;
+  /**
+   * Plain style, like a personal email: no heading, greeting or sign-off added by the template
+   * (the body has its own). Paragraphs and the P.S. can hold links written as [link text](https://...).
+   */
+  plain?: boolean;
 }
 
 /** The parts of an email a comment can be left on. */

@@ -161,6 +161,19 @@ export function EmailPreview({ campaign, email, device, mode = 'view', comments 
   };
 
   const edit = mode === 'edit';
+  const plain = Boolean(email.plain);
+  /** Shows [link text](https://...) as a link in the brand colour. */
+  const rich = (t: string): ReactNode => {
+    const out: ReactNode[] = [];
+    let last = 0;
+    for (const m of t.matchAll(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g)) {
+      if (m.index! > last) out.push(t.slice(last, m.index));
+      out.push(<a key={m.index} className="em-a" href={m[2]} target="_blank" rel="noreferrer" title={m[2]} onClick={(ev) => { if (mode === 'comment') ev.preventDefault(); }}>{m[1]}</a>);
+      last = m.index! + m[0].length;
+    }
+    if (last < t.length) out.push(t.slice(last));
+    return out.length ? out : t;
+  };
 
   return (
     <div className={`em-frame ${device}`} style={vars}>
@@ -191,17 +204,17 @@ export function EmailPreview({ campaign, email, device, mode = 'view', comments 
               : <span>{b.name}</span>}
           </div>
           <div className="em-in">
-            {edit
+            {plain && !email.heading ? null : edit
               ? <Grow className="em-h" label="Heading" value={email.heading} onChange={(v) => set({ heading: v })} />
               : part({ field: 'heading', as: 'h1', text: email.heading, className: 'em-h' })}
-            <p className="em-p">Hi Sarah,</p>
+            {!plain && <p className="em-p">Hi Sarah,</p>}
             {email.body.map((para, i) => edit ? (
               <div key={i} className="em-edit-row">
                 <Grow className="em-p" label={`Paragraph ${i + 1}`} value={para} onChange={(v) => set({ body: email.body.map((x, j) => (j === i ? v : x)) })} />
                 <button type="button" className="em-x" aria-label={`Remove paragraph ${i + 1}`} onClick={() => set({ body: email.body.filter((_, j) => j !== i) })}>×</button>
               </div>
             ) : (
-              part({ key: i, field: `body.${i}`, as: 'p', text: para, className: 'em-p' })
+              part({ key: i, field: `body.${i}`, as: 'p', text: para, className: 'em-p', children: rich(para) })
             ))}
             {edit && <button type="button" className="ob-link em-add" onClick={() => set({ body: [...email.body, ''] })}>+ Add a paragraph</button>}
             {showsCode(campaign, email) && (
@@ -215,11 +228,11 @@ export function EmailPreview({ campaign, email, device, mode = 'view', comments 
                 <span className="em-link">{href ? `Links to ${href.replace(/^https?:\/\//, '')}` : 'Links to your website (add the address in settings)'}</span>
               </div>
             ) : null)}
-            <p className="em-p em-sign">{b.coach}</p>
+            {!plain && <p className="em-p em-sign">{b.coach}</p>}
             {edit ? (
               <label className="em-l">P.S. (optional)<Grow className="em-ps" label="P.S." value={email.ps} onChange={(v) => set({ ps: v })} /></label>
             ) : email.ps ? (
-              part({ field: 'ps', as: 'p', text: email.ps, className: 'em-ps', children: <>P.S. {email.ps}</> })
+              part({ field: 'ps', as: 'p', text: email.ps, className: 'em-ps', children: <>P.S. {rich(email.ps)}</> })
             ) : null}
           </div>
           <div className="em-foot">{b.name} · Unsubscribe</div>

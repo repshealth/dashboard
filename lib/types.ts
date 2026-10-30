@@ -1,8 +1,9 @@
 import type { AnySpec, PreRegSpec } from './site/prereg';
 import type { SiteSpec } from './site/spec';
 import type { LeadPayments } from './stripe/types';
+import type { LeadBooking } from './calendly/types';
 
-export type SourceId = 'quiz' | 'magnet' | 'survey' | 'ads' | 'news' | 'prereg' | 'stripe';
+export type SourceId = 'quiz' | 'magnet' | 'survey' | 'ads' | 'news' | 'prereg' | 'stripe' | 'calendly';
 export type StageId = 'new' | 'nurture' | 'call' | 'showed' | 'purchased' | 'lost';
 export type Device = 'desktop' | 'mobile';
 /** draft = generated from onboarding and only visible to the REPS team. */
@@ -58,6 +59,8 @@ export interface Lead {
   detail?: string;
   mailerlite?: string;
   calendly?: string;
+  /** Their latest Calendly booking. */
+  booking?: LeadBooking;
   stripe?: string;
   /** Money and subscription details from the client's Stripe. */
   payments?: LeadPayments;

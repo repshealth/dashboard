@@ -270,9 +270,17 @@ migrations/                    The D1 table (also created automatically)
 wrangler.jsonc                 Cloudflare settings: database and bucket
 ```
 
+## Calendly
+
+Each client's Calendly connects from their **Leads** page (agency only): press **Calendly: connect** and paste a personal access token from their Calendly (Integrations & apps, API and webhooks, Personal access tokens). The dashboard then registers `/api/calendly/<client>` with Calendly itself and checks every update's signature.
+
+- A booking moves the lead (matched by email) to **Call booked**, with the call type and time on the card, and the booking questions saved as answers. Someone who books without filling in a form becomes a new lead with Calendly as the source.
+- A cancellation moves them back to **Nurturing** (reschedules just update the booking). Marking a no-show in Calendly moves them to **Showed / No-show**.
+- Tick which call types count; **Import recent bookings** pulls in the last 60 days and anything coming up.
+- Calendly only sends booking updates on paid plans (Standard or above).
+
 ## Next steps
 
-- **Calendly webhook** at `/api/calendly`: booked and cancelled calls move leads to Call booked. Webhooks need a paid Calendly plan on the client's account.
 - **Stripe webhook** at `/api/stripe`: payments move leads to Purchased and fill in revenue.
 - **MailerLite webhook**: opens and clicks move leads to Nurturing.
 - Host each approved site at its own address from the same spec (e.g. `/s/<client>`), with its starter-guide form already posting to `/api/forms`.

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useData } from '../DataProvider';
 import LeadDetail from './LeadDetail';
 import StripeConnect from './StripeConnect';
+import CalendlyConnect from './CalendlyConnect';
 import { Kpis, LeadBoard, LeadTable, SourcePills } from './parts';
 import { leadForms, sourceLabel } from './SourceTag';
 import { AUTO_MOVES, STAGE_NAME } from '@/lib/constants';
@@ -54,6 +55,7 @@ export default function LeadsView() {
         </div>
         <div className="actions">
           <button className="btn" type="button" title="Date filtering arrives with live data">Last 30 days ▾</button>
+          <CalendlyConnect client={client} onImported={() => { refreshLeads().catch(() => {}); }} />
           <StripeConnect client={client} onImported={() => { refreshLeads().catch(() => {}); }} />
           <button className="btn" type="button" onClick={exportCsv}>Export CSV</button>
           <button className="btn gold" type="button" title="Manual lead entry is coming next">+ Add lead</button>

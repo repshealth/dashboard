@@ -6,7 +6,7 @@ export const maxDuration = 300;
 
 /** Every dashboard action the browser can call. Each one checks who is asking (lib/backend/core.ts). */
 const METHODS = new Set<keyof Backend>([
-  'getViewer', 'getAppUrl', 'listLogins', 'saveLogin', 'removeLogin', 'getStripe', 'saveStripe', 'importStripe', 'listClients', 'listLeads', 'moveLead', 'saveNotes',
+  'getViewer', 'getAppUrl', 'listLogins', 'saveLogin', 'removeLogin', 'getStripe', 'saveStripe', 'importStripe', 'getCalendly', 'saveCalendly', 'importCalendly', 'listClients', 'listLeads', 'moveLead', 'saveNotes',
   'getSite', 'addComment', 'setCommentResolved', 'approveSite', 'submitOnboarding', 'sendSiteToClient',
   'listAllLeads', 'listSites', 'requestChanges', 'approveVersion', 'rejectVersion', 'listSubmissions',
   'getEmails', 'listEmails', 'markFlowLive', 'listEmailCampaigns', 'addEmailComment', 'setEmailCommentResolved', 'sendEmailsToClient',

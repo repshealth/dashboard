@@ -7,7 +7,7 @@ import { writeLaunchEmails, writePreRegCopy } from './write-launch';
 import { amendWithClaude } from './amend';
 import { amendEmailsWithClaude } from './amend-emails';
 import { addSubscriber, scheduleLaunch } from './mailerlite';
-import { linkEmail, sendEmail, signInLink } from './auth';
+import { appUrl, linkEmail, sendEmail, signInLink } from './auth';
 import { cf, setting } from './env';
 import { fetchSiteFromGitHub } from '../site/github';
 import { renderPage } from '../site/render/renderer.gen';
@@ -22,7 +22,7 @@ export function liveServices(store: DocStore, origin: string): Services {
   return {
     newId: () => crypto.randomUUID(),
     claude: Boolean(setting('ANTHROPIC_API_KEY')),
-    appUrl: setting('APP_URL') || undefined,
+    appUrl: setting('APP_URL') ? appUrl(origin) : undefined,
     writeSiteCopy: async (a) => {
       const r = await writeCopy(a);
       return { copy: r.copy, by: r.by };
@@ -52,11 +52,24 @@ export function liveServices(store: DocStore, origin: string): Services {
     },
     fetchSite: (repo, branch) => fetchSiteFromGitHub(repo, branch, setting('GITHUB_TOKEN') || undefined),
     renderPage: (spec, title) => {
-      const base = (setting('APP_URL') || origin).replace(/\/$/, '');
+      const base = appUrl(origin);
       return renderPage(spec, { title, formEndpoint: `${base}/api/forms`, origin: base });
     },
     saveDesign,
     siteRepoFor,
+    publicUrl: appUrl(origin),
+    async calendly(token, method, url, body) {
+      const res = await fetch(url.startsWith('https://') ? url : `https://api.calendly.com${url}`, {
+        method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      if (res.status === 204) return {};
+      const out = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok) {
+        const details = Array.isArray(out.details) ? (out.details as { message?: string }[]).map((d) => d.message).filter(Boolean).join(' ') : '';
+        throw new Error(`${String(out.message || out.title || `Calendly returned ${res.status}`)}${details ? ` ${details}` : ''} (${res.status})`);
+      }
+      return out;
+    },
     async stripeGet(apiKey, path) {
       const res = await fetch(`https://api.stripe.com${path}`, { headers: { Authorization: `Bearer ${apiKey}`, 'Stripe-Version': '2024-06-20' } });
       const out = (await res.json().catch(() => ({}))) as Record<string, unknown>;

@@ -84,7 +84,14 @@ export async function findOrCreateAdmin(store: DocStore, email: string): Promise
 }
 
 /** The dashboard's address, for links in emails. */
-export const appUrl = (origin: string) => (setting('APP_URL') || origin).replace(/\/$/, '');
+/**
+ * The dashboard's public address: APP_URL when set, otherwise the address in use. Only the
+ * domain part counts, so "https://crm.example.com/login" still gives "https://crm.example.com".
+ */
+export const appUrl = (origin: string) => {
+  const raw = (setting('APP_URL') || origin || '').trim();
+  try { return new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).origin; } catch { return raw.replace(/\/+$/, ''); }
+};
 
 /**
  * Sends an email through Resend (resend.com). Returns false if email isn't set up,

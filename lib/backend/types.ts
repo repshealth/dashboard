@@ -1,3 +1,4 @@
+import type { CalendlyPublic } from '../calendly/types';
 import type { StripePublic } from '../stripe/types';
 import type { SiteDesign } from '../site/spec';
 import type { LaunchDoc, LaunchSetup, OnboardingAnswers } from '../site/onboarding';
@@ -56,6 +57,12 @@ export interface Backend {
   saveStripe(clientId: string, x: { signingSecret?: string; apiKey?: string; disconnect?: boolean }): Promise<StripePublic | null>;
   /** Admin: imports past payments with the read-only key. */
   importStripe(clientId: string): Promise<{ charges: number; customers: number; note: string }>;
+  /** A client's Calendly connection (REPS only). The token itself is never returned. */
+  getCalendly(clientId: string): Promise<CalendlyPublic | null>;
+  /** Connects with a token (and sets up booking updates), changes which call types count, or disconnects. */
+  saveCalendly(clientId: string, x: { token?: string; only?: string[]; disconnect?: boolean }): Promise<CalendlyPublic | null>;
+  /** Pulls in bookings from the last 60 days and coming up. */
+  importCalendly(clientId: string): Promise<{ booked: number; note: string }>;
   listClients(): Promise<Client[]>;
   listLeads(clientId: string): Promise<Lead[]>;
   moveLead(lead: Lead, stage: StageId, by: string): Promise<LeadEvent>;

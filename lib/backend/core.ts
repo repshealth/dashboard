@@ -18,6 +18,8 @@ import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, LoginInfo, Submission } from './types';
 import type { StripePublic, StripeSettings } from '../stripe/types';
 import { importStripeHistory, type StripeCtx } from '../stripe/apply';
+import { importCalendlyBookings, type CalendlyCtx } from '../calendly/apply';
+import type { CalendlyPublic, CalendlySettings } from '../calendly/types';
 import { hashPassword, passwordProblem, verifyPassword } from './password';
 import { SITE_REPOS, STARTER_CLIENTS, STARTER_FLOWS } from '../starter';
 
@@ -96,6 +98,10 @@ export interface Services {
   siteRepoFor(slug: string): string | null;
   /** GET from the Stripe API with a client's restricted key. */
   stripeGet?(apiKey: string, path: string): Promise<Record<string, unknown>>;
+  /** Calls the Calendly API with a client's token. Throws with Calendly's own message. */
+  calendly?(token: string, method: string, url: string, body?: unknown): Promise<Record<string, unknown>>;
+  /** The dashboard's public address, for webhook links (APP_URL, or the address in use). */
+  publicUrl?: string;
   /** Emails a client a sign-in link, e.g. when their website or emails are ready. */
   sendInvite(u: UserRec, clientName: string, what: 'website' | 'emails'): Promise<void>;
 }
@@ -144,7 +150,7 @@ export async function checkLogin(store: DocStore, email: string, password: strin
   return found.doc;
 }
 
-const SOURCE_FORM: Record<string, string> = { quiz: 'Quiz', magnet: 'Lead magnet', survey: 'Survey', ads: 'Ad form', news: 'Newsletter', prereg: 'Pre-registration', stripe: 'Stripe checkout' };
+const SOURCE_FORM: Record<string, string> = { quiz: 'Quiz', magnet: 'Lead magnet', survey: 'Survey', ads: 'Ad form', news: 'Newsletter', prereg: 'Pre-registration', stripe: 'Stripe checkout', calendly: 'Calendly booking' };
 
 /**
  * The lead forms on a site's pages, by the name each one sends with its leads: a `form: '…'`
@@ -173,6 +179,19 @@ export function formsInPages(files: { path: string; html: string }[]) {
 const stripePublic = (clientId: string, s: StripeSettings | null): StripePublic | null => (s ? {
   clientId, connected: Boolean(s.signingSecret), hasKey: Boolean(s.apiKey), connectedAt: s.connectedAt, lastEventAt: s.lastEventAt, lastNote: s.lastNote,
 } : null);
+
+const calendlyPublic = (clientId: string, s: CalendlySettings | null): CalendlyPublic | null => (s ? {
+  clientId, connected: Boolean(s.token), webhook: Boolean(s.webhookUri), userName: s.userName, userEmail: s.userEmail,
+  eventTypes: s.eventTypes, only: s.only, connectedAt: s.connectedAt, lastEventAt: s.lastEventAt, lastNote: s.lastNote,
+} : null);
+
+/** What the Calendly code needs to read and update a client's leads. */
+export function calendlyCtx(store: DocStore, services: Services, clientId: string, s: CalendlySettings): CalendlyCtx {
+  return {
+    store, clientId, settings: s, newId: () => services.newId(), meta,
+    api: services.calendly ? (method, url, body) => services.calendly!(s.token, method, url, body) : undefined,
+  };
+}
 
 /** What the Stripe code needs to read and update a client's leads. */
 export function stripeCtx(store: DocStore, services: Services, clientId: string, s: StripeSettings | null): StripeCtx {
@@ -721,6 +740,77 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       if (!s?.apiKey || !services.stripeGet) throw new AccessError('Add a read-only Stripe key first.', 400);
       const r = await importStripeHistory(stripeCtx(store, services, clientId, s));
       await store.mutate<StripeSettings>('stripe', clientId, (x) => { x.lastNote = r.note; x.lastEventAt = new Date().toISOString(); }, () => ({ clientId }));
+      return wait(r, 300);
+    },
+    /* Calendly (agency only) */
+    async getCalendly(clientId) {
+      await admin();
+      return wait(calendlyPublic(clientId, await store.get<CalendlySettings>('calendly', clientId)));
+    },
+    async saveCalendly(clientId, x) {
+      await admin();
+      const client = await store.get<ClientRec>('client', clientId);
+      if (!client) throw new AccessError('Client not found.', 404);
+      const old = await store.get<CalendlySettings>('calendly', clientId);
+      const api = services.calendly;
+      if (x.disconnect) {
+        if (old?.webhookUri && api) await api(old.token, 'DELETE', old.webhookUri).catch(() => null);
+        await store.del('calendly', clientId);
+        return null;
+      }
+      const token = String(x.token ?? '').trim();
+      if (!token) {
+        // Only changing which call types count.
+        if (!old) throw new AccessError('Paste the Calendly token first.', 400);
+        const known = new Set(old.eventTypes.map((e) => e.uri));
+        const only = (x.only ?? []).filter((u) => known.has(u));
+        await store.mutate<CalendlySettings>('calendly', clientId, (s) => { s.only = only.length === old.eventTypes.length ? [] : only; }, () => ({ clientId }));
+        return calendlyPublic(clientId, await store.get<CalendlySettings>('calendly', clientId));
+      }
+      if (!api) throw new AccessError('Calendly connects on the live dashboard, not in the preview.', 400);
+      if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(token)) throw new AccessError('That doesn’t look like a Calendly token. Copy the whole personal access token again.', 400);
+      const me = (await api(token, 'GET', '/users/me').catch((e) => { throw new AccessError(`Calendly didn’t accept that token: ${e instanceof Error ? e.message : e}`, 400); })).resource as Record<string, string>;
+      const userUri = me.uri, orgUri = me.current_organization;
+      const types = await api(token, 'GET', `/event_types?user=${encodeURIComponent(userUri)}&count=100`).catch(() => ({ collection: [] }));
+      const eventTypes = ((types.collection as Record<string, unknown>[]) ?? []).map((e) => ({ uri: String(e.uri), name: String(e.name), active: Boolean(e.active) }));
+      // Calendly sends each booking change to this client's own address, signed with a key only we know.
+      if (old?.webhookUri) await api(old.token, 'DELETE', old.webhookUri).catch(() => null);
+      const base = (services.publicUrl || '').replace(/\/$/, '');
+      const url = `${base}/api/calendly/${client.slug}`;
+      const signingKey = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
+      const events = ['invitee.created', 'invitee.canceled', 'invitee_no_show.created', 'invitee_no_show.deleted'];
+      let webhookUri: string | undefined;
+      let note = 'Connected. Waiting for the first booking.';
+      const create = () => api(token, 'POST', '/webhook_subscriptions', { url, events, organization: orgUri, user: userUri, scope: 'user', signing_key: signingKey });
+      try {
+        webhookUri = String((((await create()).resource) as Record<string, unknown>).uri);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (/already exists/i.test(msg)) {
+          // Left over from an earlier connection: replace it so it uses the new signing key.
+          const subs = await api(token, 'GET', `/webhook_subscriptions?organization=${encodeURIComponent(orgUri)}&user=${encodeURIComponent(userUri)}&scope=user&count=100`).catch(() => ({ collection: [] }));
+          for (const w of (subs.collection as Record<string, unknown>[]) ?? []) if (w.callback_url === url) await api(token, 'DELETE', String(w.uri)).catch(() => null);
+          webhookUri = String((((await create()).resource) as Record<string, unknown>).uri);
+        } else if (/upgrade|premium|plan|permission|403/i.test(msg)) {
+          throw new AccessError('Calendly only sends booking updates on paid plans (Standard or above). Josh’s token works, but his plan needs upgrading before bookings can come through.', 400);
+        } else {
+          throw new AccessError(`Calendly wouldn’t set up booking updates: ${msg}`, 400);
+        }
+      }
+      if (!base.startsWith('https://')) note = 'Connected, but the dashboard address isn’t https, so Calendly may not be able to reach it.';
+      const s: CalendlySettings = {
+        clientId, token, signingKey, webhookUri, userUri, orgUri, userName: me.name, userEmail: me.email, timezone: me.timezone || 'Europe/London',
+        eventTypes, only: old?.only ?? [], connectedAt: old?.connectedAt ?? new Date().toISOString(), lastNote: note,
+      };
+      await store.put('calendly', clientId, s, { clientId });
+      return calendlyPublic(clientId, s);
+    },
+    async importCalendly(clientId) {
+      await admin();
+      const s = await store.get<CalendlySettings>('calendly', clientId);
+      if (!s?.token || !services.calendly) throw new AccessError('Connect Calendly first.', 400);
+      const r = await importCalendlyBookings(calendlyCtx(store, services, clientId, s));
+      await store.mutate<CalendlySettings>('calendly', clientId, (x) => { x.lastNote = r.note; x.lastEventAt = new Date().toISOString(); }, () => ({ clientId }));
       return wait(r, 300);
     },
     async removeLogin(id) {

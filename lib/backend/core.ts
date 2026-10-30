@@ -454,6 +454,25 @@ export async function seedFlows(store: DocStore, services: Pick<Services, 'newId
     const c = f.make(f.clientId, services.newId());
     await store.put('campaign', key, c, meta.campaign(c));
   }
+  // One-off: open a flow for the client's comments again.
+  for (const f of STARTER_FLOWS) {
+    if (!f.reopen) continue;
+    const key = `${f.clientId}~${f.flowId}`;
+    const mark = `starter-flow-reopen:${key}:${f.reopen}`;
+    if (await store.get('setting', mark)) continue;
+    const c = await store.get<EmailCampaign>('campaign', key);
+    if (!c) continue;
+    const ver = pendingEmailVersion(c);
+    if (ver) {
+      ver.state = 'published';
+      c.versions.filter((x) => x.id === ver.basedOn).forEach((b) => b.comments.forEach((x) => (x.resolved = true)));
+      c.versions = [ver, ...c.versions.filter((x) => x.id !== ver.id)];
+    }
+    c.status = 'review';
+    c.statusNote = ver ? `${ver.version} ready to review: your changes have been made` : 'Ready for your comments';
+    await store.put('campaign', key, c, meta.campaign(c));
+    await store.put('setting', mark, { at: new Date().toISOString() }, {});
+  }
 }
 
 /** One Google Meet notes doc or transcript. Notes and transcript of the same call merge into one meeting. */
@@ -984,7 +1003,7 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
     },
     async listEmails(clientId) {
       const v = await access(clientId);
-      if (v.isAdmin) await seedFlows(store, services).catch((e) => console.error('Starter flows failed', e));
+      await seedFlows(store, services).catch((e) => console.error('Starter flows failed', e));
       const all = await store.list<EmailCampaign>('campaign', { clientId });
       return wait(all.map((c) => (v.isAdmin ? c : campaignForClient(c))).sort((a, b) => Number(isFlow(a)) - Number(isFlow(b))));
     },

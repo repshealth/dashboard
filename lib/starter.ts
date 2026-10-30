@@ -18,9 +18,13 @@ import { physiqueXCalculatorFlow } from './emails/flows/physique-x-calculator';
 import { leanBodyVslNoCallFlow } from './emails/flows/lean-body-vsl-no-call';
 
 /** Follow-up email flows written for starting clients. Each is added once, as a draft for the REPS team. */
-export const STARTER_FLOWS: { clientId: string; flowId: string; make: (clientId: string, versionId: string) => EmailCampaign }[] = [
+/**
+ * reopen: a one-off instruction (any new text runs it once) to put the flow back in front of the client
+ * for comments: status "Ready to review", commenting unlocked. If a revised version is waiting, it becomes the latest.
+ */
+export const STARTER_FLOWS: { clientId: string; flowId: string; make: (clientId: string, versionId: string) => EmailCampaign; reopen?: string }[] = [
   { clientId: 'physique-x', flowId: 'calculator', make: physiqueXCalculatorFlow },
-  { clientId: 'lean-body-academy', flowId: 'vsl-no-call', make: leanBodyVslNoCallFlow },
+  { clientId: 'lean-body-academy', flowId: 'vsl-no-call', make: leanBodyVslNoCallFlow, reopen: '2026-10-30 open for Josh to comment again (asked by James)' },
 ];
 
 export const STARTER_CLIENTS: StarterClient[] = [

@@ -7,6 +7,7 @@ import { emptyAnswers, emptyLaunch, launchOf, withLaunch, type LaunchDoc, type O
 import { buildPreReg, isPreReg, type AnySpec, type PreRegCopy, type PreRegSpec } from '../site/prereg';
 import { LOOKS, type SiteDesign, type SiteSpec } from '../site/spec';
 import { makeAmendedVersion, type AmendFn } from '../site/make-amend';
+import { carryOpenComments, latestPublished } from '../site/versions';
 import { buildCampaign } from '../emails/copy';
 import { applyRepsEdits, makeAmendedEmails, type EmailAmendFn } from '../emails/amend';
 import { clientOfKey, isFlow, latestEmailVersion, pendingEmailVersion, type EmailCampaign, type EmailComment, type LaunchEmail, type MailerLiteSettings, type MailerLiteState } from '../emails/types';
@@ -369,6 +370,8 @@ export async function syncSiteFromGitHub(store: DocStore, services: Services, cl
     };
     // Only the newest update waits for approval.
     x.versions.forEach((v) => { if (v.state === 'pending' && v.commit) v.state = 'rejected'; });
+    // Published straight away: the client's open comments move onto it rather than disappearing.
+    if (auto && base) carryOpenComments(base, added as SiteVersion);
     x.versions.unshift(added);
     if (auto && x.status !== 'draft') { x.status = 'review'; x.statusNote = `${n} sent for review just now`; }
     if (!base && x.status === 'draft') x.statusNote = 'Committed from Claude. Check it over, then send it to the client.';
@@ -410,6 +413,27 @@ export async function seedStarter(store: DocStore, services: Services) {
   }
   await seedFlows(store, services);
   await linkSiteRepos(store, services);
+  await recoverStrandedComments(store);
+}
+
+/**
+ * One-off: open comments left on an older version (because a newer one arrived) move onto the
+ * version the client now sees, so they show in Approvals.
+ */
+export async function recoverStrandedComments(store: DocStore) {
+  const mark = 'recover-comments:2026-11-02';
+  if (await store.get('setting', mark)) return;
+  for (const s of await store.list<Site>('site')) {
+    const latest = latestPublished(s);
+    if (!latest) continue;
+    const older = s.versions.filter((v) => v.id !== latest.id && (v.state ?? 'published') === 'published' && v.comments.some((c) => !c.resolved));
+    if (!older.length) continue;
+    await store.mutate<Site>('site', s.clientId, (x) => {
+      const top = latestPublished(x)!;
+      for (const v of x.versions) if (v.id !== top.id && (v.state ?? 'published') === 'published') carryOpenComments(v, top);
+    }, meta.site);
+  }
+  await store.put('setting', mark, { at: new Date().toISOString() }, {});
 }
 
 /** Connects clients' websites to the repos listed in SITE_REPOS (once each) and pulls the latest commit. */
@@ -862,11 +886,25 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
         ...rest, author: actor(v), role: v.isAdmin ? 'agency' : 'client', resolved: false,
         text: rest.text.slice(0, 4000), id: services.newId(), createdAt: new Date().toISOString(),
       };
+      let placed = false;
       const ok = await site(clientId, (x) => {
         const ver = x.versions.find((y) => y.pages.some((p) => p.id === c.pageId) && (v.isAdmin || (y.state ?? 'published') === 'published'));
-        ver?.comments.push(saved);
+        if (!ver) return;
+        // A client looking at an older version (a newer one arrived while the page was open):
+        // put the comment on the version they now see, on the same page, so it isn't lost.
+        const latest = latestPublished(x);
+        if (!v.isAdmin && latest && latest.id !== ver.id) {
+          const key = ver.pages.find((p) => p.id === c.pageId);
+          const same = latest.pages.find((p) => (p.key ?? p.name) === (key?.key ?? key?.name)) ?? latest.pages[0];
+          saved.pageId = same?.id ?? saved.pageId;
+          latest.comments.push(saved);
+        } else {
+          ver.comments.push(saved);
+        }
+        placed = true;
       });
       if (!ok) throw new AccessError('Website not found.', 404);
+      if (!placed) throw new AccessError('That page has changed. Refresh to see the latest version, then add your comment again.', 409);
       return saved;
     },
     async setCommentResolved(clientId, commentId, resolved) {
@@ -1039,9 +1077,17 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       await site(clientId, (x) => {
         const ver = x.versions.find((y) => y.id === versionId);
         if (!ver) return;
+        const shown = latestPublished(x); // what the client has been commenting on
         ver.state = 'published';
         ver.sentNote = `${ver.sentNote}, sent for review just now`;
-        x.versions.filter((y) => y.id === ver.basedOn).forEach((b) => b.comments.forEach((c) => (c.resolved = true)));
+        if (ver.commit) {
+          // An update from GitHub doesn't answer the client's comments by itself: keep them open
+          // on the new version, so they stay in Approvals until someone completes or rejects them.
+          carryOpenComments(shown, ver);
+        } else {
+          // A revised version made from the comments: those comments are dealt with.
+          x.versions.filter((y) => y.id === ver.basedOn).forEach((b) => b.comments.forEach((c) => (c.resolved = true)));
+        }
         x.versions = [ver, ...x.versions.filter((y) => y.id !== ver.id)];
         x.status = 'review';
         x.statusNote = `${ver.version} sent for review just now by REPS team`;

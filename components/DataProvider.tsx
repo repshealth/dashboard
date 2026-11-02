@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { backend } from '@/lib/backend';
-import { latestPublished, pendingVersion } from '@/lib/site/versions';
+import { latestPublished, needsComments, pendingVersion } from '@/lib/site/versions';
 import { emailsNeedingReps, type EmailCampaign } from '@/lib/emails/types';
 import type { Meeting } from '@/lib/meetings/types';
 import type { Task } from '@/lib/tasks/types';
@@ -89,7 +89,8 @@ export const rememberClient = remember;
 /** Sites with something for REPS to do: an amend to approve, or a change request to handle by hand. */
 export function countApprovals(sites: Site[] | null) {
   if (!sites) return 0;
-  return sites.filter((s) => pendingVersion(s) || (s.status === 'changes' && (latestPublished(s)?.comments.some((c) => !c.resolved) ?? false))).length;
+  // One for each waiting update, plus one for each site with client comments to look at.
+  return sites.reduce((n, s) => n + (pendingVersion(s) ? 1 : 0) + (needsComments(s) ? 1 : 0), 0);
 }
 
 export function DataProvider({ children }: { children: ReactNode }) {

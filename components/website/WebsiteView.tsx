@@ -192,6 +192,8 @@ export default function WebsiteView() {
               toast(!r.open ? 'Add a comment first so we know what to change.'
                 : r.auto ? `Sent ${r.open} comment${r.open === 1 ? '' : 's'}. Your updated site will be ready to review soon.`
                 : `Sent ${r.open} comment${r.open === 1 ? '' : 's'} to the REPS team.`);
+            } catch (e) {
+              toast(e instanceof Error ? `Your changes didn’t send: ${e.message}` : 'Your changes didn’t send. Please try again.');
             } finally { setBusy(false); }
           }}>Request changes</button>
           <button className="btn gold" type="button" disabled={busy} onClick={() => setModal(true)}>Approve design</button>

@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useData } from '../DataProvider';
 import PreviewFrame from '../site/PreviewFrame';
 import { fmtWhen } from '@/lib/format';
-import { latestPublished, pendingVersion } from '@/lib/site/versions';
+import { latestPublished, needsComments, openComments, pendingVersion } from '@/lib/site/versions';
 import type { Client, Device, Site, SiteComment, SiteVersion } from '@/lib/types';
 
 type Item =
   | { kind: 'auto'; client: Client; site: Site; pending: SiteVersion; base: SiteVersion | undefined; at: string }
-  | { kind: 'manual'; client: Client; site: Site; base: SiteVersion; open: SiteComment[]; at: string };
+  | { kind: 'manual'; client: Client; site: Site; base: SiteVersion; open: SiteComment[]; at: string; requested: boolean; waiting: boolean };
 
 /** What needs the REPS team: amends Claude made (to approve), and change requests it couldn't make. */
 function buildQueue(sites: Site[], clients: Client[]): Item[] {
@@ -21,12 +21,13 @@ function buildQueue(sites: Site[], clients: Client[]): Item[] {
     const pending = pendingVersion(site);
     if (pending) {
       items.push({ kind: 'auto', client, site, pending, base: site.versions.find((v) => v.id === pending.basedOn), at: pending.createdAt ?? '' });
-      continue;
     }
+    // The client's comments always show, even while an update is waiting and even if they
+    // haven't pressed Request changes yet, so nothing they ask for is missed.
     const base = latestPublished(site);
-    const open = base?.comments.filter((c) => !c.resolved) ?? [];
-    if (site.status === 'changes' && base && open.length) {
-      items.push({ kind: 'manual', client, site, base, open, at: open[open.length - 1].createdAt });
+    const open = openComments(site);
+    if (base && needsComments(site)) {
+      items.push({ kind: 'manual', client, site, base, open, at: open[open.length - 1].createdAt, requested: site.status === 'changes', waiting: Boolean(pending) });
     }
   }
   return items.sort((a, b) => (a.kind === b.kind ? b.at.localeCompare(a.at) : a.kind === 'auto' ? -1 : 1));
@@ -64,7 +65,7 @@ export default function Approvals() {
     if (!item) return;
     // A site that lives on GitHub only changes when the edit is committed. Any request still
     // listed here was made after the latest commit, so check before telling the client it's done.
-    if (outcome === 'done' && item.kind === 'manual' && item.site.github && typeof window !== 'undefined'
+    if (outcome === 'done' && item.kind === 'manual' && item.site.github && !item.waiting && typeof window !== 'undefined'
       && !window.confirm(`Nothing new has been committed to ${item.site.github.repo} since ${ids.length === 1 ? 'this was' : 'these were'} requested, so ${item.site.contact || 'the client'} won't see a change yet.\n\nMark as complete anyway?`)) return;
     setBusy(true);
     try {
@@ -113,7 +114,7 @@ export default function Approvals() {
                     </>
                   ) : (
                     <>
-                      <div className="ap-item-v">{i.base.version} · changes to make by hand</div>
+                      <div className="ap-item-v">{i.base.version} · {i.requested ? 'changes requested' : 'new comments, not sent yet'}</div>
                       <div className="ap-item-tags"><span className="stbadge sm st-changes">{needs} comment{needs === 1 ? '' : 's'}</span></div>
                     </>
                   )}
@@ -248,6 +249,8 @@ export default function Approvals() {
                   <div className="ap-eyebrow">{item.client.name}</div>
                   <h2>Changes to make by hand</h2>
                   <p className="sub">This site is made in Claude, so make these changes there and commit them. Here&apos;s what {item.site.contact || 'the client'} asked for on {item.base.version}.</p>
+                  {!item.requested && <p className="ap-hint">{item.site.contact || 'The client'} has left these comments but hasn&apos;t pressed Request changes yet, so they may still be adding more.</p>}
+                  {item.waiting && <p className="ap-hint">A newer version from GitHub is also waiting in Approvals. Approving it keeps these comments open until you complete or reject them.</p>}
                 </div>
                 <div className="actions">
                   <button type="button" className="btn" onClick={() => openWebsite(item.site.clientId)}>Open their website</button>

@@ -153,6 +153,17 @@ When a call comes in for a client, Claude pulls out the actions agreed on it (fa
 
 The team names live in `lib/tasks/types.ts`.
 
+### Adding tasks from Claude (Tasks connector)
+
+A Claude Project can add, list and update tasks straight on the dashboard through a small connector at `/api/mcp/<key>` (`app/api/mcp/[key]/route.ts`, tools in `lib/server/tasks-mcp.ts`). Tools: **list_clients**, **add_task**, **list_tasks** and **update_task**. Claude acts as the REPS team, so the usual task rules apply (due date not before the assigned date, no assignee means To review, client tasks show on the client's Tasks page). Client names match a dashboard client, including a unique partial name like "Gabby"; a name that isn't on the dashboard is only saved when Claude confirms it's someone new. Files are still attached in the dashboard.
+
+1. In Cloudflare, add the secret `TASKS_CONNECTOR_KEY`: a long random string, at least 24 characters (e.g. from `openssl rand -hex 24`). Without it the connector is off.
+2. Deploy.
+3. In claude.ai go to **Settings, Connectors, Add custom connector**, name it **REPS Tasks** and use `https://crm.repshealth.com/api/mcp/<TASKS_CONNECTOR_KEY>`.
+4. Turn it on in the task assignment Project.
+
+The key is part of the address because claude.ai connectors can't send custom headers, so treat the whole URL like a password. To revoke it, change `TASKS_CONNECTOR_KEY` and update the connector.
+
 ### Setting up the sync
 
 1. In Cloudflare, add `MEETINGS_SECRET` (any long random string) and `REPS_EMAIL_DOMAINS` (e.g. `fitpreneuragency.com`, so your own team never matches as a client).

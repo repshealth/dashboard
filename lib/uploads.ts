@@ -45,3 +45,22 @@ export async function uploadImage(file: File, opts: { maxSide?: number } = {}): 
   if (!res.ok) throw new Error(body.error || 'Upload failed. Please try again.');
   return body.url as string;
 }
+
+/**
+ * Attaches a file to a task (agency only). Live: stored in R2. Preview: kept in memory as a
+ * data URL (small files only).
+ */
+export async function uploadTaskFile(file: File): Promise<{ name: string; url: string; size: number; type: string }> {
+  if (file.size > 20 * 1024 * 1024) throw new Error(`${file.name} is over 20 MB. Please share a link to it in the description instead.`);
+  if (!isLive) {
+    if (file.size > 3 * 1024 * 1024) throw new Error('In the preview, files up to 3 MB can be attached.');
+    const url = await new Promise<string>((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(String(r.result)); r.onerror = () => reject(new Error('Could not read that file.')); r.readAsDataURL(file); });
+    return { name: file.name, url, size: file.size, type: file.type };
+  }
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch('/api/task-files', { method: 'POST', body: fd });
+  const out = (await res.json().catch(() => ({}))) as { url?: string; name?: string; size?: number; type?: string; error?: string };
+  if (!res.ok || !out.url) throw new Error(out.error || 'Could not upload that file. Please try again.');
+  return { name: out.name || file.name, url: out.url, size: out.size ?? file.size, type: out.type ?? file.type };
+}

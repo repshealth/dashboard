@@ -6,6 +6,7 @@ import { Tick, fmtDay, overdue } from './parts';
 import { fmtCall } from '../meetings/parts';
 import { backend } from '@/lib/backend';
 import type { Task } from '@/lib/tasks/types';
+import { TaskFiles } from './TaskForm';
 
 /** The client's to-dos from their calls with REPS. */
 export default function TasksView() {
@@ -43,6 +44,7 @@ export default function TasksView() {
       <div className="tk-main">
         <div className="tk-title">{t.title}</div>
         {t.detail && <div className="tk-detail">{t.detail}</div>}
+        <TaskFiles files={t.files} />
         <div className="tk-meta">
           {t.meetingTitle && <span>From our call: {t.meetingTitle}{t.meetingAt ? `, ${fmtCall(t.meetingAt).replace(/, \d.*$/, '')}` : ''}</span>}
           {t.status === 'done' && t.doneAt && <span>Done {fmtDay(t.doneAt)}</span>}

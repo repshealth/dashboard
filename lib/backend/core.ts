@@ -15,6 +15,7 @@ import { meetingKey, parseMeetingText } from '../meetings/parse';
 import { matchClient } from '../meetings/match';
 import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/types';
 import type { DocMeta, DocStore } from './store';
+import { cleanDay, cleanFiles } from '../tasks/types';
 import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, LoginInfo, Submission } from './types';
 import type { StripePublic, StripeSettings } from '../stripe/types';
@@ -60,7 +61,7 @@ export const meta = {
   meeting: (m: Meeting): DocMeta => ({ clientId: m.clientId, key: meetingKey(m.title, m.startedAt), sort: m.startedAt }),
   voice: (v: VoiceProfile): DocMeta => ({ clientId: v.clientId }),
   user: (u: UserRec): DocMeta => ({ key: u.email.toLowerCase(), sort: u.createdAt }),
-  task: (t: Task): DocMeta => ({ clientId: t.clientId, sort: t.createdAt }),
+  task: (t: Task): DocMeta => ({ clientId: t.clientId || null, sort: t.createdAt }),
 };
 
 /** The things that differ between example mode and production: Claude, MailerLite, emails. */
@@ -1377,11 +1378,16 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
     async addTask(clientId, x) {
       await admin();
       if (!x.title?.trim()) throw new AccessError('Add a task first.', 400);
+      const clientName = String(x.clientName ?? '').trim().slice(0, 120);
+      if (clientId && !(await store.get<ClientRec>('client', clientId))) throw new AccessError('Client not found.', 404);
+      if (!clientId && !clientName) throw new AccessError('Pick a client or type their name.', 400);
       const now = new Date().toISOString();
       const t: Task = {
-        id: services.newId(), clientId, title: x.title.trim().slice(0, 300), detail: x.detail?.trim() || undefined,
+        id: services.newId(), clientId: clientId || '', clientName: clientId ? undefined : clientName,
+        title: x.title.trim().slice(0, 300), detail: x.detail?.trim().slice(0, 8000) || undefined,
         status: x.assignee ? 'open' : 'suggested', assignee: x.assignee, assignedAt: x.assignee ? now : undefined,
-        due: x.due || undefined, createdAt: now, source: 'manual',
+        assignedOn: cleanDay(x.assignedOn) ?? (x.assignee ? now.slice(0, 10) : undefined),
+        due: cleanDay(x.due), files: cleanFiles(x.files), createdAt: now, source: 'manual',
       };
       await store.put('task', t.id, t, meta.task(t));
       return t;
@@ -1389,7 +1395,8 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
     async updateTask(id, patch) {
       const t = await store.get<Task>('task', id);
       if (!t) throw new AccessError('Task not found.', 404);
-      const v = await access(t.clientId);
+      // Tasks for clients not on the dashboard are only ever seen by the team.
+      const v = t.clientId ? await access(t.clientId) : await admin();
       if (!v.isAdmin) {
         const onlyStatus = Object.keys(patch).every((k) => k === 'status') && (patch.status === 'done' || patch.status === 'open');
         if (t.assignee !== 'client' || !onlyStatus) throw new AccessError('Only the REPS team can change that.');
@@ -1397,7 +1404,14 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       await store.mutate<Task>('task', id, (x) => {
         if (patch.title !== undefined) x.title = patch.title.trim().slice(0, 300) || x.title;
         if (patch.detail !== undefined) x.detail = patch.detail.trim() || undefined;
-        if (patch.due !== undefined) x.due = patch.due || undefined;
+        if (patch.due !== undefined) x.due = cleanDay(patch.due);
+        if (patch.assignedOn !== undefined) x.assignedOn = cleanDay(patch.assignedOn);
+        if (patch.files !== undefined) x.files = cleanFiles(patch.files);
+        if (patch.clientId !== undefined || patch.clientName !== undefined) {
+          const name = String(patch.clientName ?? '').trim().slice(0, 120);
+          if (patch.clientId) { x.clientId = patch.clientId; x.clientName = undefined; }
+          else if (name) { x.clientId = ''; x.clientName = name; }
+        }
         if (patch.assignee !== undefined) {
           x.assignee = patch.assignee as Assignee | null;
           if (patch.assignee) { x.assignedAt = new Date().toISOString(); if (x.status === 'suggested') x.status = 'open'; }

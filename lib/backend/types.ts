@@ -5,7 +5,7 @@ import type { LaunchDoc, LaunchSetup, OnboardingAnswers } from '../site/onboardi
 import type { Client, Lead, LeadEvent, Site, SiteComment, SiteSource, SiteVersion, StageId, Viewer } from '../types';
 import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState } from '../emails/types';
 import type { Meeting, VoiceProfile } from '../meetings/types';
-import type { Assignee, Task, TaskPatch } from '../tasks/types';
+import type { Assignee, NewTask, Task, TaskPatch } from '../tasks/types';
 
 /** One onboarding form as submitted. */
 export interface Submission {
@@ -157,7 +157,8 @@ export interface Backend {
   /* Tasks from calls */
   /** Every task (REPS), or one client's. Clients only get the tasks assigned to them. */
   listTasks(clientId?: string): Promise<Task[]>;
-  addTask(clientId: string, t: { title: string; detail?: string; assignee: Assignee | null; due?: string }): Promise<Task>;
+  /** clientId may be empty for a client not on the dashboard yet, with their name in t.clientName. */
+  addTask(clientId: string, t: NewTask): Promise<Task>;
   /** REPS can change anything; a client can only tick their own tasks done or not done. */
   updateTask(id: string, patch: TaskPatch): Promise<void>;
   /** Pulls tasks from a call again (e.g. one added before tasks existed). Returns how many were found. */

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useData } from '../DataProvider';
 import { AssignButtons, Tick, Who, fmtDay, overdue } from '../tasks/parts';
 import { fmtCall } from '../meetings/parts';
+import TaskForm, { TaskFiles } from '../tasks/TaskForm';
 import { backend } from '@/lib/backend';
 import { ASSIGNEES, ASSIGNEE_NAME, type Assignee, type Task, type TaskPatch } from '@/lib/tasks/types';
 
@@ -19,13 +20,16 @@ export default function AgencyTasks() {
   const [who, setWho] = useState<Assignee | 'all'>('all');
   const [busy, setBusy] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState<{ clientId: string; title: string; detail: string; assignee: Assignee | null; due: string }>({ clientId: '', title: '', detail: '', assignee: null, due: '' });
+  const [editing, setEditing] = useState<Task | null>(null);
 
   useEffect(() => { if (viewer && !viewer.isAdmin) router.replace('/leads'); }, [viewer, router]);
   useEffect(() => { refreshTasks().catch(() => {}); }, [refreshTasks]);
 
+  // A task's client: one on the dashboard, or a name typed in for someone not on it yet.
+  const nameOf = (t: Pick<Task, 'clientId' | 'clientName'>) => (t.clientId ? clients.find((c) => c.id === t.clientId)?.name ?? 'Client' : t.clientName || 'No client');
   const name = (id: string) => clients.find((c) => c.id === id)?.name ?? 'Client';
-  const all = useMemo(() => (allTasks ?? []).filter((t) => client === 'all' || t.clientId === client), [allTasks, client]);
+  const others = useMemo(() => [...new Set((allTasks ?? []).filter((t) => !t.clientId && t.clientName).map((t) => t.clientName!))].sort(), [allTasks]);
+  const all = useMemo(() => (allTasks ?? []).filter((t) => client === 'all' || (client.startsWith('n:') ? !t.clientId && t.clientName === client.slice(2) : t.clientId === client)), [allTasks, client]);
   const review = all.filter((t) => t.status === 'suggested');
   const open = all.filter((t) => t.status === 'open');
   const done = all.filter((t) => t.status === 'done');
@@ -40,12 +44,12 @@ export default function AgencyTasks() {
     finally { setBusy(null); }
   };
   const assign = (t: Task, a: Assignee) => update(t, { assignee: a },
-    a === 'client' ? `Added to ${name(t.clientId)}'s task list.` : `Assigned to ${ASSIGNEE_NAME[a]}.`);
+    a === 'client' ? (t.clientId ? `Added to ${name(t.clientId)}'s task list.` : `Assigned to ${nameOf(t)}. They’ll see it once they’re on the dashboard.`) : `Assigned to ${ASSIGNEE_NAME[a]}.`);
 
   // To review, grouped by the call each task came from.
   const groups = new Map<string, Task[]>();
   for (const t of review.slice().sort((a, b) => ((a.meetingAt ?? a.createdAt) < (b.meetingAt ?? b.createdAt) ? 1 : -1))) {
-    const k = t.meetingId ?? `manual-${t.clientId}`;
+    const k = t.meetingId ?? `manual-${t.clientId || `n:${t.clientName ?? ''}`}`;
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k)!.push(t);
   }
@@ -60,7 +64,7 @@ export default function AgencyTasks() {
           <p className="sub">Actions from every client call. Review each one, assign it, and anything for the client goes onto their own task list.</p>
         </div>
         <div className="actions">
-          <button type="button" className="btn gold" onClick={() => { setForm({ clientId: client !== 'all' ? client : clients[0]?.id ?? '', title: '', detail: '', assignee: null, due: '' }); setAdding(true); }}>+ Add task</button>
+          <button type="button" className="btn gold" onClick={() => setAdding(true)}>+ Add task</button>
         </div>
       </header>
 
@@ -75,6 +79,7 @@ export default function AgencyTasks() {
           <select value={client} onChange={(e) => setClient(e.target.value)}>
             <option value="all">All clients</option>
             {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {others.length > 0 && <optgroup label="Not on the dashboard yet">{others.map((n) => <option key={n} value={`n:${n}`}>{n}</option>)}</optgroup>}
           </select>
         </label>
       </div>
@@ -94,7 +99,7 @@ export default function AgencyTasks() {
                 <section key={k} className="tk-group" aria-label={first.meetingTitle ?? 'Added by hand'}>
                   <div className="tk-gh">
                     <div>
-                      <div className="ap-eyebrow">{name(first.clientId)}</div>
+                      <div className="ap-eyebrow">{nameOf(first)}</div>
                       <h2>{first.meetingTitle ?? 'Added by hand'}</h2>
                       {first.meetingAt && <p className="sub">{fmtCall(first.meetingAt)} · {list.length} task{list.length === 1 ? '' : 's'} found</p>}
                     </div>
@@ -111,9 +116,11 @@ export default function AgencyTasks() {
                           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }} />
                         {t.detail && <p className="tk-detail">{t.detail}</p>}
                         {t.quote && <p className="tk-quote">&ldquo;{t.quote}&rdquo;</p>}
+                        <TaskFiles files={t.files} />
                       </div>
                       <div className="tk-act">
                         <AssignButtons value={t.assignee} hint={t.suggested} disabled={busy === t.id} onPick={(a) => assign(t, a)} />
+                        <button type="button" className="ob-link tk-dismiss" onClick={() => setEditing(t)}>Edit</button>
                         <button type="button" className="ob-link tk-dismiss" disabled={busy === t.id} onClick={() => update(t, { status: 'dismissed' }, 'Dismissed.')}>Dismiss</button>
                       </div>
                     </div>
@@ -141,13 +148,15 @@ export default function AgencyTasks() {
                 <Tick done={t.status === 'done'} label={`Mark "${t.title}" ${t.status === 'done' ? 'not done' : 'done'}`} disabled={busy === t.id}
                   onToggle={() => update(t, { status: t.status === 'done' ? 'open' : 'done' }, t.status === 'done' ? 'Moved back to open.' : 'Done.')} />
                 <div className="tk-main">
-                  <div className="tk-title">{t.title}</div>
+                  <button type="button" className="tk-title tk-title-btn" onClick={() => setEditing(t)} title="Edit task">{t.title}</button>
                   <div className="tk-meta">
-                    <span>{name(t.clientId)}</span>
+                    <span>{nameOf(t)}{!t.clientId && t.clientName ? ' (not on the dashboard)' : ''}</span>
+                    {t.assignedOn && <span>Assigned {fmtDay(t.assignedOn)}</span>}
                     {t.meetingTitle && <span>From: {t.meetingTitle}</span>}
                     {t.status === 'done' && t.doneAt && <span>Done {fmtDay(t.doneAt)}{t.doneBy ? ` by ${t.doneBy}` : ''}</span>}
                   </div>
                   {t.detail && <div className="tk-detail">{t.detail}</div>}
+                  <TaskFiles files={t.files} />
                 </div>
                 {t.status === 'open' ? (
                   <>
@@ -170,35 +179,8 @@ export default function AgencyTasks() {
         </>
       )}
 
-      {adding && (
-        <div className="modal-bg" onClick={(e) => { if (e.target === e.currentTarget) setAdding(false); }}>
-          <form className="modal mt-add" role="dialog" aria-modal="true" aria-labelledby="add-task-t" onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              await backend.addTask(form.clientId, { title: form.title, detail: form.detail, assignee: form.assignee, due: form.due });
-              await refreshTasks(); setAdding(false);
-              toast(form.assignee ? `Task added for ${ASSIGNEE_NAME[form.assignee]}.` : 'Task added to To review.');
-            } catch (x) { toast(x instanceof Error ? x.message : 'Could not add it.'); }
-          }}>
-            <div id="add-task-t" className="m-t">Add a task</div>
-            <div className="mt-add-row">
-              <label className="ae-f"><span>Client</span>
-                <select className="ob-input" required value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })}>
-                  {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </label>
-              <label className="ae-f"><span>Due (optional)</span><input className="ob-input" type="date" value={form.due} onChange={(e) => setForm({ ...form, due: e.target.value })} /></label>
-            </div>
-            <label className="ae-f"><span>Task</span><input className="ob-input" required placeholder="e.g. Send the beach shoot photos" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-            <label className="ae-f"><span>Details (optional)</span><textarea className="ob-input" rows={2} value={form.detail} onChange={(e) => setForm({ ...form, detail: e.target.value })} /></label>
-            <div className="ae-f"><span>Assign to</span><AssignButtons value={form.assignee} onPick={(a) => setForm({ ...form, assignee: form.assignee === a ? null : a })} /></div>
-            <div className="cp-a">
-              <button type="button" className="btn" onClick={() => setAdding(false)}>Cancel</button>
-              <button type="submit" className="btn gold">Add task</button>
-            </div>
-          </form>
-        </div>
-      )}
+      {adding && <TaskForm clientId={client !== 'all' && !client.startsWith('n:') ? client : undefined} onClose={() => setAdding(false)} />}
+      {editing && <TaskForm task={editing} onClose={() => setEditing(null)} />}
     </div>
   );
 }

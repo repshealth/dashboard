@@ -17,7 +17,7 @@ import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/typ
 import type { DocMeta, DocStore } from './store';
 import { cleanDay, cleanFiles } from '../tasks/types';
 import { funnelStats, signedUpAt } from '../funnels/stats';
-import type { Funnel, FunnelHit, FunnelInput } from '../funnels/types';
+import type { Funnel, FunnelHit, FunnelInput, FunnelCheck } from '../funnels/types';
 import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, LoginInfo, Submission } from './types';
 import type { StripePublic, StripeSettings } from '../stripe/types';
@@ -1456,6 +1456,39 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       const f: Funnel = { id: services.newId(), clientId, createdAt: new Date().toISOString(), ...fields };
       await store.put('funnel', f.id, f, meta.funnel(f));
       return f;
+    },
+    async checkFunnel(id) {
+      await admin();
+      const f = await store.get<Funnel>('funnel', id);
+      if (!f) throw new AccessError('Funnel not found.', 404);
+      const hourAgo = new Date(Date.now() - 3600e3).toISOString();
+      const hits = await store.list<FunnelHit>('fhit', { clientId: f.id, limit: 500 });
+      const recentViews = hits.filter((h) => h.t >= hourAgo).length;
+      let code: FunnelCheck['code'] = 'skipped';
+      let pageNote = '';
+      let oldCode = false;
+      if (f.url) {
+        try {
+          const u = new URL(f.url); u.searchParams.set('reps_check', String(Date.now()));
+          const res = await fetch(u.toString(), { headers: { 'cache-control': 'no-cache', 'user-agent': 'REPS tracking check' }, redirect: 'follow', signal: AbortSignal.timeout(10000) });
+          if (!res.ok) { code = 'unreachable'; pageNote = `the page answered with an error (${res.status})`; }
+          else {
+            const html = (await res.text()).slice(0, 3_000_000);
+            const ours = html.includes(`f:"${f.id}"`) || html.includes(`f:'${f.id}'`);
+            oldCode = ours && html.includes('/api/track');
+            code = ours ? 'found' : /REPS funnel tracking|\/api\/(track|fv)\b/.test(html) ? 'other' : 'missing';
+          }
+        } catch { code = 'unreachable'; pageNote = 'the page could not be opened from the dashboard'; }
+      }
+      const live = f.status === 'draft' ? ' The funnel is set to Draft, so views aren’t counted. Set it to Live.' : '';
+      const views = recentViews ? ` ${recentViews} view${recentViews === 1 ? '' : 's'} in the last hour.` : '';
+      const message =
+        code === 'found' ? (recentViews || f.lastViewAt ? `Tracking code found on the page and working.${views}${live}` : (oldCode ? `Tracking code found on the page, but no views yet. It's the first version of the code, which some ad blockers stop. Copy the code again and replace it on the page, then open the page and check again.${live}` : `Tracking code found on the page. No views yet: open the page once in a normal browser window, then check again.${live}`))
+        : code === 'other' ? `The page has tracking code, but it's for a different funnel. Copy this funnel's code and replace it.${live}`
+        : code === 'missing' ? `No tracking code on the live page yet. If you've just committed it, give GitHub Pages or Cloudflare a minute to publish, then check again.${live}`
+        : code === 'unreachable' ? `Couldn't check the page: ${pageNote}.${views || ' No views have come in yet.'}${live}`
+        : `Add the page address to check it.${views}${live}`;
+      return wait({ funnel: f, code, recentViews, message }, 300);
     },
     async removeFunnel(id) {
       await admin();

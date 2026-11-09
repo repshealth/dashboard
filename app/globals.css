@@ -859,3 +859,6 @@ a.btn.sv-live:hover{background:var(--tint)}
 .fn-detail>.ob-link{align-self:flex-start;margin-top:0}
 .fn-head .ob-link,.fn-ph .ob-link,.fn-warn .ob-link{margin-top:0}
 .fn-tip{top:4px;transform:translate(-50%,0)}
+.fn-ok{background:#ECF7F1;border:1px solid #A9D8BF;color:#0F5C3A;border-radius:10px;padding:10px 14px;font-size:13px}
+.fn-warn-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.fn-warn-row .btn{background:#fff}

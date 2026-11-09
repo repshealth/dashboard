@@ -71,3 +71,13 @@ export function funnelState(f: Pick<Funnel, 'status' | 'endsOn'>, today = new Da
   if (f.status === 'live' && f.endsOn && f.endsOn < today) return 'ended';
   return f.status;
 }
+
+/** What "Check tracking" found when it opened the funnel page. */
+export interface FunnelCheck {
+  funnel: Funnel;
+  /** found: the code for this funnel is on the page. other: tracking code for a different funnel. missing: none. unreachable: the page didn't load. */
+  code: 'found' | 'other' | 'missing' | 'unreachable' | 'skipped';
+  /** Views counted in the last hour. */
+  recentViews: number;
+  message: string;
+}

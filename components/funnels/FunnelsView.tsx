@@ -6,7 +6,7 @@ import { backend } from '@/lib/backend';
 import { fmtWhen } from '@/lib/format';
 import { money } from '@/lib/stripe/types';
 import { leadForms } from '../leads/SourceTag';
-import { FUNNEL_KINDS, FUNNEL_KIND_NAME, funnelState, type Funnel, type FunnelInput, type FunnelStats } from '@/lib/funnels/types';
+import { FUNNEL_KINDS, FUNNEL_KIND_NAME, funnelState, type Funnel, type FunnelCheck, type FunnelInput, type FunnelStats } from '@/lib/funnels/types';
 import { trackingSnippet } from '@/lib/funnels/snippet';
 
 type Range = '7' | '30' | 'campaign' | 'all';
@@ -65,6 +65,7 @@ export default function FunnelsView() {
 
       {funnels === null ? <div className="loading">Loading funnels…</div> : open ? (
         <FunnelDetail f={open} admin={admin} onBack={() => setSel(null)} onEdit={() => setForm({ ...open })} onCode={() => setCode(open)}
+          onChecked={(nf) => setFunnels((list) => list?.map((x) => (x.id === nf.id ? nf : x)) ?? list)}
           onDelete={async () => {
             if (!window.confirm(`Delete the ${open.name} funnel? Its stats are removed from the dashboard. The page itself stays live.`)) return;
             try { await backend.removeFunnel(open.id); setSel(null); await load(); toast('Funnel deleted.'); } catch (e) { toast(e instanceof Error ? e.message : 'Could not delete it.'); }
@@ -115,16 +116,27 @@ function FunnelCard({ f, onOpen }: { f: Funnel; onOpen: () => void }) {
   );
 }
 
-function FunnelDetail({ f, admin, onBack, onEdit, onCode, onDelete }: { f: Funnel; admin: boolean; onBack: () => void; onEdit: () => void; onCode: () => void; onDelete: () => void }) {
+function FunnelDetail({ f, admin, onBack, onEdit, onCode, onDelete, onChecked }: { f: Funnel; admin: boolean; onBack: () => void; onEdit: () => void; onCode: () => void; onDelete: () => void; onChecked: (f: Funnel) => void }) {
   const [range, setRange] = useState<Range>(f.startsOn ? 'campaign' : '30');
   const [s, setS] = useState<FunnelStats | null>(null);
   const [err, setErr] = useState('');
   const [table, setTable] = useState(false);
+  const [tick, setTick] = useState(0);
+  const [checking, setChecking] = useState(false);
+  const [check, setCheck] = useState<FunnelCheck | null>(null);
   const [from, to] = rangeDates(range, f);
   useEffect(() => {
-    setS(null); setErr('');
+    setErr('');
     backend.getFunnelStats(f.id, from, to).then(setS).catch((e) => setErr(e instanceof Error ? e.message : 'Could not load the stats.'));
-  }, [f.id, from, to]);
+  }, [f.id, from, to, tick]);
+  useEffect(() => { setS(null); setCheck(null); }, [f.id, from]);
+  const runCheck = async () => {
+    setChecking(true);
+    try { const c = await backend.checkFunnel(f.id); setCheck(c); onChecked(c.funnel); setTick((n) => n + 1); }
+    catch (e) { setCheck({ funnel: f, code: 'unreachable', recentViews: 0, message: e instanceof Error ? e.message : 'Could not check it.' }); }
+    finally { setChecking(false); }
+  };
+  const checkBtn = <button type="button" className="btn" onClick={runCheck} disabled={checking}>{checking ? 'Checking…' : 'Check tracking'}</button>;
   const st = STATE[funnelState(f)];
 
   return (
@@ -143,15 +155,23 @@ function FunnelDetail({ f, admin, onBack, onEdit, onCode, onDelete }: { f: Funne
         <div className="actions">
           {f.url && <a className="btn" href={f.url} target="_blank" rel="noreferrer">Open page</a>}
           {admin && <button type="button" className="btn" onClick={onCode}>Tracking code</button>}
+          {admin && checkBtn}
           {admin && <button type="button" className="btn" onClick={onEdit}>Edit</button>}
           {admin && <button type="button" className="ob-link fn-del" onClick={onDelete}>Delete</button>}
         </div>
       </div>
 
-      {admin && (
-        !f.lastViewAt ? (
-          <div className="fn-warn">No views have come in yet. Put the <button type="button" className="ob-link" onClick={onCode}>tracking code</button> on the page so visitors are counted.</div>
-        ) : null
+      {admin && check && (
+        <div className={check.code === 'found' && (check.recentViews || check.funnel.lastViewAt) ? 'fn-ok' : 'fn-warn'} role="status">
+          {check.message}
+          {check.code !== 'found' && check.code !== 'skipped' && <> <button type="button" className="ob-link" onClick={onCode}>Get the tracking code</button></>}
+        </div>
+      )}
+      {admin && !check && !f.lastViewAt && (
+        <div className="fn-warn fn-warn-row">
+          <span>No views have come in yet. Put the <button type="button" className="ob-link" onClick={onCode}>tracking code</button> on the page, then check it here.</span>
+          {checkBtn}
+        </div>
       )}
       {!f.forms.length && admin && <div className="fn-warn">No forms are linked, so sign-ups can&apos;t be counted. <button type="button" className="ob-link" onClick={onEdit}>Choose the page&apos;s form</button>.</div>}
 

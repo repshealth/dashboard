@@ -6,7 +6,7 @@ import type { Client, Lead, LeadEvent, Site, SiteComment, SiteSource, SiteVersio
 import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState } from '../emails/types';
 import type { Meeting, VoiceProfile } from '../meetings/types';
 import type { Assignee, NewTask, Task, TaskPatch } from '../tasks/types';
-import type { Funnel, FunnelInput, FunnelStats } from '../funnels/types';
+import type { Funnel, FunnelInput, FunnelStats, FunnelCheck } from '../funnels/types';
 
 /** One onboarding form as submitted. */
 export interface Submission {
@@ -164,6 +164,7 @@ export interface Backend {
   removeFunnel(id: string): Promise<void>;
   /** Views, visitors, sign-ups, calls booked and purchases for a date range (YYYY-MM-DD, default the last 30 days). */
   getFunnelStats(id: string, from?: string, to?: string): Promise<FunnelStats>;
+  checkFunnel(id: string): Promise<FunnelCheck>;
   listTasks(clientId?: string): Promise<Task[]>;
   /** clientId may be empty for a client not on the dashboard yet, with their name in t.clientName. */
   addTask(clientId: string, t: NewTask): Promise<Task>;

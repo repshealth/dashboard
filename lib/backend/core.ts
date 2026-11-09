@@ -16,7 +16,7 @@ import { matchClient } from '../meetings/match';
 import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/types';
 import type { DocMeta, DocStore } from './store';
 import { cleanDay, cleanFiles } from '../tasks/types';
-import { funnelStats } from '../funnels/stats';
+import { funnelStats, signedUpAt } from '../funnels/stats';
 import type { Funnel, FunnelHit, FunnelInput } from '../funnels/types';
 import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, LoginInfo, Submission } from './types';
@@ -1467,12 +1467,17 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       await access(f.clientId);
       const today = new Date().toISOString().slice(0, 10);
       const end = cleanDay(to) ?? today;
-      const start = cleanDay(from) ?? new Date(Date.parse(`${end}T12:00:00Z`) - 29 * 864e5).toISOString().slice(0, 10);
-      if (start > end) throw new AccessError('The start date is after the end date.', 400);
       const [hits, leads] = await Promise.all([
         store.list<FunnelHit>('fhit', { clientId: f.id, limit: 100000 }),
         store.list<Lead>('lead', { clientId: f.clientId }),
       ]);
+      // "all" runs from the funnel's first visit or sign-up (whichever came first), even before it was added here.
+      let start = cleanDay(from) ?? new Date(Date.parse(`${end}T12:00:00Z`) - 29 * 864e5).toISOString().slice(0, 10);
+      if (from === 'all') {
+        const firsts = [f.createdAt, f.startsOn, ...hits.map((h) => h.t), ...leads.map((l) => signedUpAt(f, l))].filter((x): x is string => Boolean(x)).map((x) => x.slice(0, 10));
+        start = firsts.reduce((a, b) => (b < a ? b : a), end);
+      }
+      if (start > end) throw new AccessError('The start date is after the end date.', 400);
       return wait(funnelStats(f, hits, leads, start, end), 300);
     },
     async findTasks(meetingId) {

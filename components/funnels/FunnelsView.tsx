@@ -24,7 +24,8 @@ function rangeDates(r: Range, f: Funnel): [string, string] {
   if (r === '7') return [daysAgo(6), today()];
   if (r === '30') return [daysAgo(29), today()];
   if (r === 'campaign') return [f.startsOn ?? f.createdAt.slice(0, 10), f.endsOn && f.endsOn < today() ? f.endsOn : today()];
-  return [f.createdAt.slice(0, 10) < (f.startsOn ?? '9999') ? f.createdAt.slice(0, 10) : f.startsOn!, today()];
+  // The dashboard works out where "all time" starts: the first visit or sign-up.
+  return ['all', today()];
 }
 
 /**
@@ -160,7 +161,7 @@ function FunnelDetail({ f, admin, onBack, onEdit, onCode, onDelete }: { f: Funne
             <button key={k} type="button" role="tab" aria-selected={range === k} className={range === k ? 'on' : ''} onClick={() => setRange(k)}>{l}</button>
           ))}
         </div>
-        <span className="fn-range">{fmtDay(from)} to {fmtDay(to)}{f.lastViewAt ? ` · last view ${fmtWhen(f.lastViewAt)}` : ''}</span>
+        <span className="fn-range">{fmtDay(s?.from ?? (from === 'all' ? undefined : from)) || '…'} to {fmtDay(to)}{f.lastViewAt ? ` · last view ${fmtWhen(f.lastViewAt)}` : ''}</span>
       </div>
 
       {err ? <div className="form-msg err">{err}</div> : !s ? <div className="loading">Loading stats…</div> : (

@@ -45,6 +45,6 @@ export const STARTER_CLIENTS: StarterClient[] = [
 export const SITE_REPOS: { name: string; repo: string; branch: string; publish?: string }[] = [
   // publish: a one-off instruction to pull the latest commit and show it in the Website preview
   // straight away (skipping Approvals). Change the tag to do it again.
-  { name: 'Ellena Fit Ltd', repo: 'repshealth/els', branch: 'main', publish: '2026-10-22 v5 results, reviews and coach photo' },
+  { name: 'Ellena Fit Ltd', repo: 'repshealth/els', branch: 'main', publish: '2026-11-09 approved: quiz per Josh comments (contact second, multiple choice, occupation last)' },
   { name: 'Lean Body Academy', repo: 'repshealth/joshbell', branch: 'main', publish: '2026-11-05 approved: Josh amends round 2 (headline, buttons, You could be next)' },
 ];

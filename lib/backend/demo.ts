@@ -1,4 +1,4 @@
-import type { Site } from '../types';
+import type { Lead, Site } from '../types';
 import { uid } from '../format';
 import { fallbackCopy } from '../site/copy';
 import type { OnboardingAnswers } from '../site/onboarding';
@@ -16,6 +16,7 @@ import { STARTER_CLIENTS } from '../starter';
 import { MemoryStore } from './store';
 import { checkLogin, createBackend, meta, seedFlows, starterNote, syncSiteFromGitHub, type ClientRec, type Services, type UserRec, type ViewerRec } from './core';
 import type { Backend } from './types';
+import type { Funnel } from '../funnels/types';
 
 /**
  * Example mode: the same backend as production (core.ts), running on example data held
@@ -85,8 +86,46 @@ async function seedExample() {
   }
   for (const c of STARTER_CLIENTS) await store.put('setting', `starter:${c.slug}`, { at: new Date().toISOString() }, {});
   await seedFlows(store, services);
+  await seedExampleFunnel();
   const admin: UserRec = { id: agency.id, email: agency.email!, name: agency.name, isAdmin: true, createdAt: new Date().toISOString() };
   await store.put('user', admin.id, admin, meta.user(admin));
+}
+
+/** One example funnel with made-up visits, so the Funnels screen has something to show in the preview. */
+async function seedExampleFunnel() {
+  const c = STARTER_CLIENTS.find((x) => x.slug === 'dailey-demolition') ?? STARTER_CLIENTS[0];
+  if (!c) return;
+  const now = Date.now();
+  const start = new Date(now - 20 * 864e5).toISOString().slice(0, 10);
+  const f: Funnel = {
+    id: 'example-funnel', clientId: c.id, name: 'Bring It Home waitlist', kind: 'waitlist', url: 'https://repshealth.github.io/katedaileyprereg/',
+    forms: ['Pre-registration'], startsOn: start, status: 'live', createdAt: new Date(now - 21 * 864e5).toISOString(),
+    lastViewAt: new Date(now - 6 * 60e3).toISOString(), notes: 'Example data in the preview only.',
+  };
+  await store.put('funnel', f.id, f, meta.funnel(f));
+  const srcs = ['instagram', 'instagram', 'instagram', 'tiktok', 'Direct', 'facebook', 'google'];
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let d = 20; d >= 0; d--) {
+    const n = Math.round(18 + 30 * Math.sin((20 - d) / 6) ** 2 + rnd() * 14);
+    for (let i = 0; i < n; i++) {
+      const t = now - d * 864e5 - rnd() * 864e5 * (d ? 1 : 0.4);
+      const v = `v${d}-${i}`;
+      const hit = { t: new Date(t).toISOString(), v, s: srcs[Math.floor(rnd() * srcs.length)], d: rnd() < 0.78 ? 'mobile' : 'desktop' } as const;
+      await store.put('fhit', `h${d}-${i}`, hit, { clientId: f.id, sort: hit.t });
+      if (rnd() < 0.3) await store.put('fhit', `h${d}-${i}b`, { ...hit, t: new Date(t + 9e4).toISOString() }, { clientId: f.id, sort: hit.t });
+      if (rnd() < 0.09) {
+        const stage = rnd() < 0.2 ? 'call' : rnd() < 0.08 ? 'purchased' : 'new';
+        const lead = {
+          id: `ex-lead-${d}-${i}`, clientId: c.id, name: ['Sophie', 'Hannah', 'Megan', 'Laura', 'Chloe', 'Emma', 'Jess'][i % 7] + ' ' + 'ABCDEFGHJKLMNPRSTW'[(d + i) % 18] + '.',
+          email: `example${d}${i}@example.com`, stage, source: 'website', form: 'Pre-registration', firstSeen: new Date(t + 6e4).toISOString(),
+          value: stage === 'purchased' ? 149 : 0, answers: [], events: [], page: f.url, detail: 'Example lead from the preview funnel',
+          submissions: [{ form: 'Pre-registration', source: 'website', page: f.url, at: new Date(t + 6e4).toISOString(), answers: [] }],
+        };
+        await store.put('lead', lead.id, lead, meta.lead(lead as unknown as Lead));
+      }
+    }
+  }
 }
 
 let seeded: Promise<void> | null = null;

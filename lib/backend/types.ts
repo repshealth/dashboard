@@ -6,6 +6,7 @@ import type { Client, Lead, LeadEvent, Site, SiteComment, SiteSource, SiteVersio
 import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState } from '../emails/types';
 import type { Meeting, VoiceProfile } from '../meetings/types';
 import type { Assignee, NewTask, Task, TaskPatch } from '../tasks/types';
+import type { Funnel, FunnelInput, FunnelStats } from '../funnels/types';
 
 /** One onboarding form as submitted. */
 export interface Submission {
@@ -156,6 +157,13 @@ export interface Backend {
 
   /* Tasks from calls */
   /** Every task (REPS), or one client's. Clients only get the tasks assigned to them. */
+  /* Funnels: single campaign pages (launches, challenges, waitlists), apart from the main website */
+  listFunnels(clientId: string): Promise<Funnel[]>;
+  /** Adds a funnel, or updates one when x.id is set (REPS only). */
+  saveFunnel(clientId: string, x: FunnelInput): Promise<Funnel>;
+  removeFunnel(id: string): Promise<void>;
+  /** Views, visitors, sign-ups, calls booked and purchases for a date range (YYYY-MM-DD, default the last 30 days). */
+  getFunnelStats(id: string, from?: string, to?: string): Promise<FunnelStats>;
   listTasks(clientId?: string): Promise<Task[]>;
   /** clientId may be empty for a client not on the dashboard yet, with their name in t.clientName. */
   addTask(clientId: string, t: NewTask): Promise<Task>;

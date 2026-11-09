@@ -25,6 +25,15 @@ const NAV = [
     ),
   },
   {
+    href: '/funnels',
+    label: 'Funnels',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" aria-hidden="true">
+        <path d="M1.5 2.5h13l-5 6v5l-3 1v-6z" />
+      </svg>
+    ),
+  },
+  {
     href: '/emails',
     label: 'Emails',
     icon: (

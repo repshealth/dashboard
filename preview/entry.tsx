@@ -13,6 +13,7 @@ import AgencyMeetings from '@/components/agency/AgencyMeetings';
 import MeetingsView from '@/components/meetings/MeetingsView';
 import AgencyTasks from '@/components/agency/AgencyTasks';
 import TasksView from '@/components/tasks/TasksView';
+import FunnelsView from '@/components/funnels/FunnelsView';
 import LaunchSetupPage from '@/components/agency/LaunchSetupPage';
 import LoginsPage from '@/components/agency/LoginsPage';
 import LoginPage from '@/app/login/page';
@@ -31,6 +32,7 @@ function Screen() {
   if (path === '/agency/launch') return <LaunchSetupPage />;
   if (path === '/agency/logins') return <LoginsPage />;
   if (path.startsWith('/tasks')) return <TasksView />;
+  if (path.startsWith('/funnels')) return <FunnelsView />;
   if (path.startsWith('/meetings')) return <MeetingsView />;
   return path.startsWith('/website') ? <WebsiteView /> : <LeadsView />;
 }

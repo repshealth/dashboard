@@ -16,6 +16,8 @@ import { matchClient } from '../meetings/match';
 import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/types';
 import type { DocMeta, DocStore } from './store';
 import { cleanDay, cleanFiles } from '../tasks/types';
+import { funnelStats } from '../funnels/stats';
+import type { Funnel, FunnelHit, FunnelInput } from '../funnels/types';
 import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, LoginInfo, Submission } from './types';
 import type { StripePublic, StripeSettings } from '../stripe/types';
@@ -62,6 +64,7 @@ export const meta = {
   voice: (v: VoiceProfile): DocMeta => ({ clientId: v.clientId }),
   user: (u: UserRec): DocMeta => ({ key: u.email.toLowerCase(), sort: u.createdAt }),
   task: (t: Task): DocMeta => ({ clientId: t.clientId || null, sort: t.createdAt }),
+  funnel: (f: Funnel): DocMeta => ({ clientId: f.clientId, sort: f.createdAt }),
 };
 
 /** The things that differ between example mode and production: Claude, MailerLite, emails. */
@@ -1422,6 +1425,55 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
           else { x.doneAt = undefined; x.doneBy = undefined; }
         }
       }, meta.task);
+    },
+    /* Funnels: single campaign pages, apart from the main website */
+    async listFunnels(clientId) {
+      await access(clientId);
+      return wait((await store.list<Funnel>('funnel', { clientId })).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)));
+    },
+    async saveFunnel(clientId, x) {
+      await admin();
+      if (!(await store.get<ClientRec>('client', clientId))) throw new AccessError('Client not found.', 404);
+      const name = String(x.name ?? '').trim().slice(0, 120);
+      if (!name) throw new AccessError('Give the funnel a name.', 400);
+      let url = String(x.url ?? '').trim();
+      if (url && !/^https?:\/\//i.test(url)) url = `https://${url}`;
+      try { if (url) new URL(url); } catch { throw new AccessError('That page address doesn’t look right.', 400); }
+      const forms = [...new Set((Array.isArray(x.forms) ? x.forms : []).map((f) => String(f).trim().slice(0, 120)).filter(Boolean))].slice(0, 12);
+      const kinds = ['launch', 'challenge', 'waitlist', 'sales', 'webinar', 'other'];
+      const fields = {
+        name, url, forms, kind: (kinds.includes(x.kind) ? x.kind : 'other') as Funnel['kind'],
+        status: (['draft', 'live', 'ended'].includes(x.status) ? x.status : 'live') as Funnel['status'],
+        startsOn: cleanDay(x.startsOn), endsOn: cleanDay(x.endsOn), notes: String(x.notes ?? '').trim().slice(0, 2000) || undefined,
+      };
+      if (fields.startsOn && fields.endsOn && fields.endsOn < fields.startsOn) throw new AccessError('The end date is before the start date.', 400);
+      if (x.id) {
+        const old = await store.get<Funnel>('funnel', x.id);
+        if (!old || old.clientId !== clientId) throw new AccessError('Funnel not found.', 404);
+        await store.mutate<Funnel>('funnel', x.id, (f) => Object.assign(f, fields), meta.funnel);
+        return (await store.get<Funnel>('funnel', x.id))!;
+      }
+      const f: Funnel = { id: services.newId(), clientId, createdAt: new Date().toISOString(), ...fields };
+      await store.put('funnel', f.id, f, meta.funnel(f));
+      return f;
+    },
+    async removeFunnel(id) {
+      await admin();
+      await store.del('funnel', id);
+    },
+    async getFunnelStats(id, from, to) {
+      const f = await store.get<Funnel>('funnel', id);
+      if (!f) throw new AccessError('Funnel not found.', 404);
+      await access(f.clientId);
+      const today = new Date().toISOString().slice(0, 10);
+      const end = cleanDay(to) ?? today;
+      const start = cleanDay(from) ?? new Date(Date.parse(`${end}T12:00:00Z`) - 29 * 864e5).toISOString().slice(0, 10);
+      if (start > end) throw new AccessError('The start date is after the end date.', 400);
+      const [hits, leads] = await Promise.all([
+        store.list<FunnelHit>('fhit', { clientId: f.id, limit: 100000 }),
+        store.list<Lead>('lead', { clientId: f.clientId }),
+      ]);
+      return wait(funnelStats(f, hits, leads, start, end), 300);
     },
     async findTasks(meetingId) {
       await admin();

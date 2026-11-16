@@ -18,6 +18,9 @@ import type { DocMeta, DocStore } from './store';
 import { cleanDay, cleanFiles } from '../tasks/types';
 import { funnelStats, signedUpAt } from '../funnels/stats';
 import type { Funnel, FunnelHit, FunnelInput, FunnelCheck } from '../funnels/types';
+import { adsReport } from '../ads/stats';
+import { shortHash } from '../ads/hash';
+import { AD_STATUS, type AdCampaign, type AdRow, type MetaAdsAccount } from '../ads/types';
 import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, LoginInfo, Submission } from './types';
 import type { StripePublic, StripeSettings } from '../stripe/types';
@@ -65,6 +68,7 @@ export const meta = {
   user: (u: UserRec): DocMeta => ({ key: u.email.toLowerCase(), sort: u.createdAt }),
   task: (t: Task): DocMeta => ({ clientId: t.clientId || null, sort: t.createdAt }),
   funnel: (f: Funnel): DocMeta => ({ clientId: f.clientId, sort: f.createdAt }),
+  adcampaign: (c: AdCampaign): DocMeta => ({ clientId: c.clientId, sort: c.createdAt }),
 };
 
 /** The things that differ between example mode and production: Claude, MailerLite, emails. */
@@ -1489,6 +1493,107 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
         : code === 'unreachable' ? `Couldn't check the page: ${pageNote}.${views || ' No views have come in yet.'}${live}`
         : `Add the page address to check it.${views}${live}`;
       return wait({ funnel: f, code, recentViews, message }, 300);
+    },
+    async getMetaAds(clientId, from, to) {
+      await access(clientId);
+      const today = new Date().toISOString().slice(0, 10);
+      const [stored, rows, settings, leads, funnels] = await Promise.all([
+        store.get<MetaAdsAccount>('metaads', clientId),
+        store.list<AdRow>('adrow', { clientId }),
+        store.list<AdCampaign>('adcampaign', { clientId }),
+        store.list<Lead>('lead', { clientId }),
+        store.list<Funnel>('funnel', { clientId }),
+      ]);
+      const account: MetaAdsAccount = stored ?? { clientId, currency: 'GBP', connected: false };
+      const end = cleanDay(to) ?? today;
+      let start = cleanDay(from) ?? new Date(Date.parse(`${end}T12:00:00Z`) - 29 * 864e5).toISOString().slice(0, 10);
+      if (from === 'all') start = rows.reduce((a, r) => (r.date < a ? r.date : a), end);
+      if (start > end) throw new AccessError('The start date is after the end date.', 400);
+      return wait(adsReport(account, rows, settings, leads, funnels.map((f) => ({ id: f.id, name: f.name })), start, end));
+    },
+    async importMetaAds(clientId, x) {
+      await admin();
+      if (!(await store.get('client', clientId))) throw new AccessError('Client not found.', 404);
+      const list = Array.isArray(x?.rows) ? x.rows.slice(0, 20000) : [];
+      if (!list.length) throw new AccessError('There are no rows to import.', 400);
+      const now = new Date().toISOString();
+      const n = (v: unknown) => { const k = Number(v); return isFinite(k) && k >= 0 ? Math.round(k * 100) / 100 : 0; };
+      const t = (v: unknown, max = 200) => String(v ?? '').trim().slice(0, max);
+      const rows: AdRow[] = [];
+      for (const r of list) {
+        const date = cleanDay(r.date); const campaign = t(r.campaign);
+        if (!date || !campaign) continue;
+        const adset = t(r.adset), ad = t(r.ad);
+        rows.push({
+          id: `${clientId}~${date}~${shortHash(`${campaign}|${adset}|${ad}`)}`, clientId, date,
+          ...(cleanDay(r.endDate) && cleanDay(r.endDate) !== date ? { endDate: cleanDay(r.endDate) } : {}),
+          campaign, adset, ad, spend: n(r.spend), impressions: n(r.impressions), reach: n(r.reach), clicks: n(r.clicks),
+          results: n(r.results), resultType: t(r.resultType, 60) || undefined, metaLeads: n(r.metaLeads), purchases: n(r.purchases), value: n(r.value),
+          delivery: t(r.delivery, 40) || undefined, importedAt: now,
+        });
+      }
+      if (!rows.length) throw new AccessError('None of the rows had a campaign name and a date.', 400);
+      // A new export replaces what was there for the same campaigns and days, so re-importing never double counts.
+      const dates = new Set(rows.map((r) => r.date)), names = new Set(rows.map((r) => r.campaign));
+      const old = await store.list<AdRow>('adrow', { clientId });
+      const keep = new Set(rows.map((r) => r.id));
+      const gone = old.filter((r) => dates.has(r.date) && names.has(r.campaign) && !keep.has(r.id));
+      for (let i = 0; i < gone.length; i += 50) await Promise.all(gone.slice(i, i + 50).map((r) => store.del('adrow', r.id)));
+      for (let i = 0; i < rows.length; i += 50) await Promise.all(rows.slice(i, i + 50).map((r) => store.put('adrow', r.id, r, { clientId, sort: r.date })));
+      const sorted = [...dates].sort();
+      const prev = await store.get<MetaAdsAccount>('metaads', clientId);
+      const account: MetaAdsAccount = {
+        ...(prev ?? { clientId, connected: false }), clientId,
+        currency: /^[A-Z]{3}$/.test(String(x.currency)) ? String(x.currency) : prev?.currency ?? 'GBP',
+        lastImportAt: now, lastImportName: t(x.fileName, 120) || undefined, lastImportRange: [sorted[0], sorted[sorted.length - 1]],
+      };
+      await store.put('metaads', clientId, account, { clientId });
+      return wait({ rows: rows.length, replaced: gone.length, campaigns: names.size, from: sorted[0], to: sorted[sorted.length - 1] });
+    },
+    async clearMetaAds(clientId) {
+      await admin();
+      const old = await store.list<AdRow>('adrow', { clientId });
+      for (let i = 0; i < old.length; i += 50) await Promise.all(old.slice(i, i + 50).map((r) => store.del('adrow', r.id)));
+      await store.mutate<MetaAdsAccount>('metaads', clientId, (a) => { delete a.lastImportAt; delete a.lastImportName; delete a.lastImportRange; }, () => ({ clientId }));
+    },
+    async saveMetaAccount(clientId, x) {
+      await admin();
+      if (!(await store.get('client', clientId))) throw new AccessError('Client not found.', 404);
+      const id = String(x?.adAccountId ?? '').trim().replace(/^act_/i, '');
+      if (id && !/^\d{5,20}$/.test(id)) throw new AccessError('The ad account ID is the number in Ads Manager, e.g. 123456789012345.', 400);
+      const prev = await store.get<MetaAdsAccount>('metaads', clientId);
+      const account: MetaAdsAccount = { ...(prev ?? { clientId, currency: 'GBP', connected: false }), clientId, adAccountId: id || undefined };
+      await store.put('metaads', clientId, account, { clientId });
+      return wait(account);
+    },
+    async saveAdCampaign(clientId, x) {
+      await admin();
+      const name = String(x?.name ?? '').trim().slice(0, 200);
+      if (!name) throw new AccessError('Give the campaign a name (as it appears in Ads Manager).', 400);
+      const status = (Object.keys(AD_STATUS) as AdCampaign['status'][]).includes(x.status) ? x.status : 'active';
+      const budget = Number(x.dailyBudget);
+      if (x.funnelId) {
+        const f = await store.get<Funnel>('funnel', x.funnelId);
+        if (!f || f.clientId !== clientId) throw new AccessError('That funnel isn’t in this account.', 400);
+      }
+      const fields = {
+        name, status, funnelId: x.funnelId || undefined, utm: String(x.utm ?? '').trim().slice(0, 120) || undefined,
+        dailyBudget: isFinite(budget) && budget > 0 ? Math.round(budget * 100) / 100 : undefined,
+        notes: String(x.notes ?? '').trim().slice(0, 2000) || undefined, updatedAt: new Date().toISOString(),
+      };
+      const all = await store.list<AdCampaign>('adcampaign', { clientId });
+      const existing = (x.id && all.find((c) => c.id === x.id)) || all.find((c) => c.name.toLowerCase() === name.toLowerCase());
+      if (existing) {
+        const saved = await store.mutate<AdCampaign>('adcampaign', existing.id, (c) => Object.assign(c, fields), meta.adcampaign);
+        return wait(saved!);
+      }
+      const c: AdCampaign = { id: services.newId(), clientId, createdAt: fields.updatedAt, ...fields };
+      await store.put('adcampaign', c.id, c, meta.adcampaign(c));
+      return wait(c);
+    },
+    async removeAdCampaign(id) {
+      await admin();
+      await store.del('adcampaign', id);
     },
     async removeFunnel(id) {
       await admin();

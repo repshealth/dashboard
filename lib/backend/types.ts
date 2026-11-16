@@ -7,6 +7,7 @@ import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, Mailer
 import type { Meeting, VoiceProfile } from '../meetings/types';
 import type { Assignee, NewTask, Task, TaskPatch } from '../tasks/types';
 import type { Funnel, FunnelInput, FunnelStats, FunnelCheck } from '../funnels/types';
+import type { AdCampaign, AdCampaignInput, AdRowInput, AdsReport, MetaAdsAccount } from '../ads/types';
 
 /** One onboarding form as submitted. */
 export interface Submission {
@@ -165,6 +166,13 @@ export interface Backend {
   /** Views, visitors, sign-ups, calls booked and purchases for a date range (YYYY-MM-DD, default the last 30 days). */
   getFunnelStats(id: string, from?: string, to?: string): Promise<FunnelStats>;
   checkFunnel(id: string): Promise<FunnelCheck>;
+  /** Meta ads: results by campaign, ad set and ad, plus the leads they brought in. from may be 'all'. */
+  getMetaAds(clientId: string, from?: string, to?: string): Promise<AdsReport>;
+  importMetaAds(clientId: string, x: { rows: AdRowInput[]; currency?: string; fileName?: string }): Promise<{ rows: number; replaced: number; campaigns: number; from: string; to: string }>;
+  clearMetaAds(clientId: string): Promise<void>;
+  saveMetaAccount(clientId: string, x: { adAccountId?: string }): Promise<MetaAdsAccount>;
+  saveAdCampaign(clientId: string, x: AdCampaignInput): Promise<AdCampaign>;
+  removeAdCampaign(id: string): Promise<void>;
   listTasks(clientId?: string): Promise<Task[]>;
   /** clientId may be empty for a client not on the dashboard yet, with their name in t.clientName. */
   addTask(clientId: string, t: NewTask): Promise<Task>;

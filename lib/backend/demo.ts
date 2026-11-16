@@ -17,6 +17,7 @@ import { MemoryStore } from './store';
 import { checkLogin, createBackend, meta, seedFlows, starterNote, syncSiteFromGitHub, type ClientRec, type Services, type UserRec, type ViewerRec } from './core';
 import type { Backend } from './types';
 import type { Funnel } from '../funnels/types';
+import type { AdCampaign, AdRow, MetaAdsAccount } from '../ads/types';
 
 /**
  * Example mode: the same backend as production (core.ts), running on example data held
@@ -87,6 +88,7 @@ async function seedExample() {
   for (const c of STARTER_CLIENTS) await store.put('setting', `starter:${c.slug}`, { at: new Date().toISOString() }, {});
   await seedFlows(store, services);
   await seedExampleFunnel();
+  await seedExampleAds();
   const admin: UserRec = { id: agency.id, email: agency.email!, name: agency.name, isAdmin: true, createdAt: new Date().toISOString() };
   await store.put('user', admin.id, admin, meta.user(admin));
 }
@@ -119,6 +121,7 @@ async function seedExampleFunnel() {
         const lead = {
           id: `ex-lead-${d}-${i}`, clientId: c.id, name: ['Sophie', 'Hannah', 'Megan', 'Laura', 'Chloe', 'Emma', 'Jess'][i % 7] + ' ' + 'ABCDEFGHJKLMNPRSTW'[(d + i) % 18] + '.',
           email: `example${d}${i}@example.com`, stage, source: 'website', form: 'Pre-registration', firstSeen: new Date(t + 6e4).toISOString(),
+          ...(['instagram', 'facebook'].includes(hit.s) ? { utm: ['Bring It Home | Leads | Waitlist', 'Bring It Home | Retargeting'][i % 3 === 0 ? 1 : 0] } : {}),
           value: stage === 'purchased' ? 149 : 0, answers: [], events: [], page: f.url, detail: 'Example lead from the preview funnel',
           submissions: [{ form: 'Pre-registration', source: 'website', page: f.url, at: new Date(t + 6e4).toISOString(), answers: [] }],
         };
@@ -126,6 +129,37 @@ async function seedExampleFunnel() {
       }
     }
   }
+}
+
+/** Example Meta ads results for the preview, matched to the example funnel's leads. */
+async function seedExampleAds() {
+  const c = STARTER_CLIENTS.find((x) => x.slug === 'dailey-demolition') ?? STARTER_CLIENTS[0];
+  if (!c) return;
+  const now = Date.now();
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const plan = [
+    { campaign: 'Bring It Home | Leads | Waitlist', sets: { 'Women 25-45 UK | Fitness interests': ['Kitchen reel', 'Before and after carousel'], 'Lookalike 1% | Past buyers': ['Kitchen reel', 'Talking head: why I made this'] }, daily: 38 },
+    { campaign: 'Bring It Home | Retargeting', sets: { 'Page visitors 30 days': ['Testimonial video', 'Last chance static'] }, daily: 12 },
+  ];
+  const at = new Date().toISOString();
+  for (const p of plan) {
+    const camp: AdCampaign = { id: `ex-${p.campaign.length}`, clientId: c.id, name: p.campaign, status: 'active', funnelId: 'example-funnel', dailyBudget: p.daily, createdAt: at, updatedAt: at, notes: 'Example data in the preview only.' };
+    await store.put('adcampaign', camp.id, camp, { clientId: c.id, sort: at });
+    for (let d = 20; d >= 0; d--) {
+      const date = new Date(now - d * 864e5).toISOString().slice(0, 10);
+      for (const [adset, ads] of Object.entries(p.sets)) for (const ad of ads) {
+        const spend = Math.round((p.daily / (Object.keys(p.sets).length * ads.length)) * (0.75 + rnd() * 0.5) * 100) / 100;
+        const impressions = Math.round(spend * (90 + rnd() * 50));
+        const clicks = Math.round(impressions * (0.009 + rnd() * 0.012));
+        const results = Math.round(clicks * (0.12 + rnd() * 0.1));
+        const row: AdRow = { id: `ex-${date}-${p.campaign.length}-${adset.length}-${ad.length}`, clientId: c.id, date, campaign: p.campaign, adset, ad, spend, impressions, reach: Math.round(impressions * 0.8), clicks, results, resultType: 'Leads', metaLeads: results, purchases: 0, value: 0, importedAt: at };
+        await store.put('adrow', row.id, row, { clientId: c.id, sort: date });
+      }
+    }
+  }
+  const range: [string, string] = [new Date(now - 20 * 864e5).toISOString().slice(0, 10), new Date(now).toISOString().slice(0, 10)];
+  await store.put('metaads', c.id, { clientId: c.id, currency: 'GBP', connected: false, lastImportAt: at, lastImportName: 'example.csv', lastImportRange: range } satisfies MetaAdsAccount, { clientId: c.id });
 }
 
 let seeded: Promise<void> | null = null;

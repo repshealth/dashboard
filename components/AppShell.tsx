@@ -34,6 +34,16 @@ const NAV = [
     ),
   },
   {
+    href: '/ads',
+    label: 'Meta ads',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M2 6.5v3h2.5L9.5 13V3L4.5 6.5z" />
+        <path d="M12 5.5c.8.7 1.2 1.6 1.2 2.5s-.4 1.8-1.2 2.5" />
+      </svg>
+    ),
+  },
+  {
     href: '/emails',
     label: 'Emails',
     icon: (

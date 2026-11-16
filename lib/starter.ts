@@ -34,6 +34,7 @@ export const STARTER_CLIENTS: StarterClient[] = [
   { id: 'berri', slug: 'berri', name: 'Berri', contactName: 'Bela Fernandez', repo: 'repshealth/bella', branch: 'main' },
   { id: 'lean-body-academy', slug: 'lean-body-academy', name: 'Lean Body Academy', contactName: 'Josh Bell', repo: 'repshealth/joshbell', branch: 'main' },
   { id: 'rebuild', slug: 'rebuild', name: 'Rebuild', contactName: 'James Haskell', repo: 'repshealth/rebuild', branch: 'main' },
+  { id: 'kim-weston', slug: 'kim-weston', name: 'Kim Weston', contactName: 'Kim Weston', repo: 'repshealth/kimwestoncalories', branch: 'main' },
 ];
 
 /**

@@ -20,10 +20,13 @@ function answerSets(lead: Lead): { form: string; at?: string; answers: [string, 
 }
 
 export default function LeadDetail({ lead, clientName, showClient }: { lead: Lead | null; clientName: string; showClient?: boolean }) {
-  const { moveLead, saveNotes } = useData();
+  const { moveLead, saveNotes, deleteLead } = useData();
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [note, setNote] = useState(lead?.notes ?? '');
   const [saving, setSaving] = useState(false);
   useEffect(() => setNote(lead?.notes ?? ''), [lead?.id, lead?.notes]);
+  useEffect(() => setConfirmDel(false), [lead?.id]);
 
   if (!lead) {
     return (
@@ -129,6 +132,23 @@ export default function LeadDetail({ lead, clientName, showClient }: { lead: Lea
           </button>
         </div>
       )}
+
+      <div className="lead-del">
+        {!confirmDel ? (
+          <button type="button" className="ob-link lead-del-btn" onClick={() => setConfirmDel(true)}>Delete lead</button>
+        ) : (
+          <div className="lead-del-q" role="alert">
+            <span>Delete {lead.name || 'this lead'} for good? This can&apos;t be undone.</span>
+            <div>
+              <button type="button" className="btn" onClick={() => setConfirmDel(false)} disabled={deleting}>Cancel</button>
+              <button type="button" className="btn lead-del-go" disabled={deleting}
+                onClick={async () => { setDeleting(true); try { await deleteLead(lead.id); } catch { setDeleting(false); } }}>
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

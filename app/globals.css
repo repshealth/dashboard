@@ -903,3 +903,10 @@ a.btn.sv-live:hover{background:var(--tint)}
 .ad-imp-sum b{color:var(--text)}
 .ad-steps li{display:list-item;list-style:decimal}
 .fn-panel>.ap-hint{margin:10px 0 0}
+/* Delete lead */
+.lead-del{margin-top:22px;padding-top:14px;border-top:1px solid var(--line)}
+.lead-del-btn{color:#B42318;margin-top:0}
+.lead-del-q{display:flex;flex-direction:column;gap:10px;background:#FEF3F2;border:1px solid #FECDCA;border-radius:10px;padding:12px;font-size:13px;color:#7A271A}
+.lead-del-q div{display:flex;gap:8px;justify-content:flex-end}
+.lead-del-go{background:#B42318;border-color:#B42318;color:#fff}
+.lead-del-go:hover{background:#912018}

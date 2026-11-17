@@ -29,6 +29,7 @@ interface DataCtx {
   site: Site | null | undefined;
   moveLead: (leadId: string, stage: StageId) => Promise<void>;
   saveNotes: (leadId: string, notes: string) => Promise<void>;
+  deleteLead: (leadId: string) => Promise<void>;
   addComment: (versionId: string, draft: DraftComment) => Promise<SiteComment>;
   toggleResolved: (versionId: string, commentId: string) => Promise<void>;
   /** Returns how many comments were sent, and whether a revised version is being made. */
@@ -218,6 +219,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     toast('Note saved.');
   }, [findLead, patchLead, toast]);
 
+  const deleteLead = useCallback(async (leadId: string) => {
+    const lead = findLead(leadId);
+    if (!lead) return;
+    await backend.deleteLead(leadId);
+    setLeadsBy((m) => (m[lead.clientId] ? { ...m, [lead.clientId]: m[lead.clientId].filter((l) => l.id !== leadId) } : m));
+    setAllLeads((all) => all && all.filter((l) => l.id !== leadId));
+    toast(`${lead.name || 'Lead'} deleted.`);
+  }, [findLead, toast]);
+
   const addComment = useCallback(async (versionId: string, d: DraftComment) => {
     if (!clientId) throw new Error('No client selected');
     const saved = await backend.addComment({
@@ -314,9 +324,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<DataCtx>(() => ({
     mode: backend.mode, ready, error, viewer, clients, client, setClientId, leads, site,
-    moveLead, saveNotes, addComment, toggleResolved, requestChanges, approve, sendToClient, refreshSite,
+    moveLead, saveNotes, deleteLead, addComment, toggleResolved, requestChanges, approve, sendToClient, refreshSite,
     allLeads, allSites, approvalsCount, allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, launchCount, refreshLaunch, refreshAgency, approveVersion, rejectVersion, closeComments, refreshLeads, toast, signOut,
-  }), [allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, launchCount, refreshLaunch, ready, error, viewer, clients, client, setClientId, leads, site, moveLead, saveNotes, addComment, toggleResolved,
+  }), [allCampaigns, emailsCount, allMeetings, meetingsCount, refreshMeetings, allTasks, tasksCount, refreshTasks, launchCount, refreshLaunch, ready, error, viewer, clients, client, setClientId, leads, site, moveLead, saveNotes, deleteLead, addComment, toggleResolved,
     requestChanges, approve, sendToClient, refreshSite, allLeads, allSites, approvalsCount, refreshAgency, approveVersion, rejectVersion, closeComments, refreshLeads, toast, signOut]);
 
   return (

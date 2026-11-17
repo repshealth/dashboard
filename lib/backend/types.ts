@@ -69,6 +69,8 @@ export interface Backend {
   listLeads(clientId: string): Promise<Lead[]>;
   moveLead(lead: Lead, stage: StageId, by: string): Promise<LeadEvent>;
   saveNotes(leadId: string, notes: string): Promise<void>;
+  /** Delete a lead for good (e.g. a test sign-up). */
+  deleteLead(leadId: string): Promise<void>;
   getSite(clientId: string): Promise<Site | null>;
   addComment(c: NewComment): Promise<SiteComment>;
   setCommentResolved(clientId: string, commentId: string, resolved: boolean): Promise<void>;

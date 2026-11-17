@@ -874,6 +874,11 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       await store.mutate<Lead>('lead', l.id, (x) => { x.stage = stage; x.events.unshift(event); }, meta.lead);
       return event;
     },
+    async deleteLead(leadId) {
+      // The client (for their own board) or the REPS team. Gone for good, for clearing out test sign-ups.
+      const l = await leadClient(leadId);
+      await store.del('lead', l.id);
+    },
     async saveNotes(leadId, notes) {
       await leadClient(leadId);
       await store.mutate<Lead>('lead', leadId, (x) => { x.notes = notes; }, meta.lead);

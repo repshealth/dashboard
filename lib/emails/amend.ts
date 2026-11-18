@@ -150,4 +150,30 @@ export function applyRepsEdits(c: EmailCampaign, emails: LaunchEmail[], newId: (
   return v;
 }
 
+/**
+ * The wording someone typed into the Emails screen, kept to the editable text only:
+ * timing, links and layout stay as they were. Null if the emails don't line up.
+ */
+export function cleanEditedWording(base: LaunchEmail[], next: LaunchEmail[]): LaunchEmail[] | null {
+  if (!Array.isArray(next) || next.length !== base.length) return null;
+  const byId = new Map(next.map((e) => [e?.id, e]));
+  const t = (v: unknown, max: number) => String(v ?? '').replace(/\r/g, '').slice(0, max);
+  const out: LaunchEmail[] = [];
+  for (const b of base) {
+    const e = byId.get(b.id);
+    if (!e) return null;
+    const body = Array.isArray(e.body) ? e.body.map((p) => t(p, 6000).trim()).filter(Boolean).slice(0, 40) : b.body;
+    out.push({
+      ...b,
+      subject: t(e.subject, 300).trim() || b.subject,
+      preview: t(e.preview, 300).trim(),
+      heading: t(e.heading, 300).trim(),
+      body: body.length ? body : b.body,
+      button: t(e.button, 80).trim(),
+      ps: t(e.ps, 2000).trim(),
+    });
+  }
+  return out;
+}
+
 export { fieldText };

@@ -64,7 +64,7 @@ export interface EmailVersion {
   state: 'published' | 'pending' | 'rejected';
   basedOn?: string;
   createdAt?: string;
-  amendedBy?: 'claude' | 'rules' | 'reps';
+  amendedBy?: 'claude' | 'rules' | 'reps' | 'client';
   summary?: string;
   changes?: SiteChange[];
   unresolved?: UnresolvedComment[];

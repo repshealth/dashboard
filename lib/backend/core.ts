@@ -9,7 +9,7 @@ import { LOOKS, type SiteDesign, type SiteSpec } from '../site/spec';
 import { makeAmendedVersion, type AmendFn } from '../site/make-amend';
 import { carryOpenComments, latestPublished } from '../site/versions';
 import { buildCampaign } from '../emails/copy';
-import { applyRepsEdits, makeAmendedEmails, type EmailAmendFn } from '../emails/amend';
+import { applyRepsEdits, cleanEditedWording, makeAmendedEmails, makeEditedEmails, type EmailAmendFn } from '../emails/amend';
 import { clientOfKey, isFlow, latestEmailVersion, pendingEmailVersion, type EmailCampaign, type EmailComment, type LaunchEmail, type MailerLiteSettings, type MailerLiteState } from '../emails/types';
 import { meetingKey, parseMeetingText } from '../meetings/parse';
 import { matchClient } from '../meetings/match';
@@ -1217,7 +1217,10 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
         x.statusNote = `Approved just now by ${actor(v)}`;
       });
       // A follow-up flow runs as an automation in MailerLite, which the REPS team builds from the approved copy.
-      const ml: MailerLiteState = isFlow(c)
+      // Already in MailerLite (approved before, then reworded): don't schedule a second copy.
+      const ml: MailerLiteState = c.mailerlite.state === 'scheduled'
+        ? { ...c.mailerlite, note: `Re-approved after edits (${ver.version}). These are already in MailerLite, so update the wording there by hand rather than scheduling again.` }
+        : isFlow(c)
         ? { state: 'not_scheduled', note: `Approved. Build it as an automation in MailerLite that starts ${(c.flow?.trigger ?? 'when someone signs up').replace(/^W/, 'w')}, then sends these ${ver.emails.length} emails on the days shown.` }
         : await services.scheduleLaunch({ ...c, status: 'approved' }, ver.emails);
       await campaign(key, (x) => { x.mailerlite = ml; });
@@ -1270,6 +1273,40 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       const count = (pendingEmailVersion(c) ?? latestEmailVersion(c) ?? c?.versions[0])?.emails.length ?? 12;
       if (!Array.isArray(emails) || emails.length !== count) throw new AccessError('Could not read the emails.', 400);
       await campaign(key, (cc) => { applyRepsEdits(cc, emails, services.newId); });
+    },
+    async saveEmailWording(key, versionId, emails) {
+      // The client (or the team, from the client's Emails screen) rewords the emails directly.
+      // It becomes a new version straight away, so the old wording stays in the version history.
+      const v = await access(clientOfKey(key));
+      const c = await store.get<EmailCampaign>('campaign', key);
+      if (!c) throw new AccessError('These emails were not found.', 404);
+      if (c.status === 'draft' && !v.isAdmin) throw new AccessError('These emails aren’t ready yet.');
+      if (c.versions.some((x) => x.state === 'pending')) {
+        throw new AccessError(v.isAdmin ? 'There’s a revised version waiting in Agency · Emails. Approve or discard it first.' : 'The REPS team is updating these emails right now. You can edit them once the new version is sent to you.', 409);
+      }
+      const latest = c.versions.find((x) => x.state === 'published');
+      if (!latest || latest.id !== versionId) throw new AccessError('A newer version of these emails has come in. Refresh the page, then make your edits again.', 409);
+      const clean = cleanEditedWording(latest.emails, emails);
+      if (!clean) throw new AccessError('Could not read the emails. Refresh and try again.', 400);
+      const who = actor(v);
+      const made = makeEditedEmails(c, latest, clean, services.newId);
+      if (!made) return { changed: 0, version: latest.version };
+      const nv = {
+        ...made, state: 'published' as const, amendedBy: v.isAdmin ? ('reps' as const) : ('client' as const),
+        label: `${made.version} · Edited by ${who}`, sentNote: `Edited by ${who}`,
+        summary: `${made.changes?.length ?? 0} edit${made.changes?.length === 1 ? '' : 's'} made by ${who}.`,
+        // Comments still open carry over, so nothing waiting to be answered is lost.
+        comments: latest.comments.filter((x) => !x.resolved).map((x) => ({ ...x })),
+      };
+      const wasApproved = c.status === 'approved';
+      const live = c.mailerlite.state === 'scheduled';
+      await campaign(key, (x) => {
+        x.versions.unshift(nv);
+        if (x.status === 'approved') x.status = 'review';
+        x.statusNote = `Wording edited just now by ${who}`;
+        if (wasApproved && live) x.mailerlite = { ...x.mailerlite, note: `${who} edited the wording after it went into MailerLite. Copy ${nv.version} into MailerLite so the new wording sends.` };
+      });
+      return wait({ changed: made.changes?.length ?? 0, version: nv.version, reopened: wasApproved }, 400);
     },
     async saveLaunchSettings(clientId, x) {
       await admin();

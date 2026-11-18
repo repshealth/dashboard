@@ -137,6 +137,8 @@ export interface Backend {
   rejectEmailVersion(clientId: string, versionId: string, note: string): Promise<void>;
   /** REPS edits the emails by hand. */
   saveEmailEdits(clientId: string, emails: LaunchEmail[]): Promise<void>;
+  /** Reword the emails from the Emails screen. Saves a new version straight away. */
+  saveEmailWording(key: string, versionId: string, emails: LaunchEmail[]): Promise<{ changed: number; version: string; reopened?: boolean }>;
   /** REPS changes the launch date, website link or code. Send times move with the launch date. */
   saveLaunchSettings(clientId: string, s: LaunchSettings): Promise<void>;
   /** A client's MailerLite details (REPS only). The API key itself is never returned. */

@@ -10,7 +10,7 @@ import { SITE_STATUS } from '@/lib/constants';
 import { fmtWhen } from '@/lib/format';
 import { fmtLaunch } from '@/lib/emails/schedule';
 import { siteHref } from '@/lib/emails/html';
-import { campaignKey, campaignTitle, fieldLabel, isFlow, pendingEmailVersion, publishedEmailVersions, type EmailComment, type EmailField, type EmailListId } from '@/lib/emails/types';
+import { campaignKey, campaignTitle, fieldLabel, isFlow, pendingEmailVersion, publishedEmailVersions, type EmailComment, type EmailField, type EmailListId, type LaunchEmail } from '@/lib/emails/types';
 import type { Device } from '@/lib/types';
 
 const STATUS = {
@@ -31,12 +31,13 @@ export default function EmailsView() {
   const [pick, setPick] = useState<string | null>(null);
   const [modal, setModal] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<LaunchEmail[] | null>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   // Start each campaign on its first email.
   useEffect(() => {
     const first = campaign ? publishedEmailVersions(campaign)[0]?.emails[0] : undefined;
-    setVi(0); setList(first?.list ?? 'prereg'); setEmailId(first?.id ?? 'prereg-1'); setCmode(false); setDraft(null); setPick(null);
+    setVi(0); setList(first?.list ?? 'prereg'); setEmailId(first?.id ?? 'prereg-1'); setCmode(false); setDraft(null); setPick(null); setEditing(null);
   }, [client?.id, key]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (draft) textRef.current?.focus(); }, [draft]);
   useEffect(() => {
@@ -47,7 +48,8 @@ export default function EmailsView() {
 
   const versions = publishedEmailVersions(campaign);
   const version = versions[Math.min(vi, Math.max(versions.length - 1, 0))];
-  const email = version?.emails.find((e) => e.id === emailId) ?? version?.emails[0];
+  const shownEmails = editing ?? version?.emails;
+  const email = shownEmails?.find((e) => e.id === emailId) ?? shownEmails?.[0];
   const comments: EmailComment[] = useMemo(() => (version && email ? version.comments.filter((c) => c.emailId === email.id) : []), [version, email]);
   const number = new Map(comments.map((c, i) => [c.id, i + 1]));
 
@@ -154,6 +156,22 @@ export default function EmailsView() {
     finally { setBusy(false); }
   };
 
+  const dirty = Boolean(editing) && JSON.stringify(editing) !== JSON.stringify(version.emails);
+  const saveWording = async () => {
+    if (!editing) return;
+    setBusy(true);
+    try {
+      const r = await backend.saveEmailWording(ck, version.id, editing);
+      if (!r.changed) { setEditing(null); toast('No changes to save.'); return; }
+      await reload();
+      setVi(0); setEditing(null);
+      if (admin) refreshAgency().catch(() => {});
+      toast(`Saved as ${r.version} (${r.changed} change${r.changed === 1 ? '' : 's'}).${r.reopened ? ' Approve them again when you’re happy.' : ''}`);
+    } catch (e) { toast(e instanceof Error ? e.message : 'Could not save your edits. Please try again.'); }
+    finally { setBusy(false); }
+  };
+  const startEdit = () => { setEditing(JSON.parse(JSON.stringify(version.emails))); setCmode(false); setDraft(null); setPick(null); };
+
   const toggle = async (c: EmailComment) => {
     await backend.setEmailCommentResolved(ck, c.id, !c.resolved);
     await reload();
@@ -161,10 +179,10 @@ export default function EmailsView() {
 
   return (
     <div className="view">
-      {head(isDraft ? 'send' : !locked && !waiting ? 'review' : null)}
+      {head(editing ? null : isDraft ? 'send' : !locked && !waiting ? 'review' : null)}
       {picker}
 
-      <SequenceNav campaign={campaign} emails={version.emails} list={list} setList={setList} emailId={email.id}
+      <SequenceNav campaign={campaign} emails={editing ?? version.emails} list={list} setList={setList} emailId={email.id}
         setEmailId={(id) => { setEmailId(id); setDraft(null); setPick(null); }}
         openCount={(id) => version.comments.filter((c) => c.emailId === id && !c.resolved).length} />
 
@@ -183,7 +201,7 @@ export default function EmailsView() {
         </div>
         )}
         <div className="sv-tools">
-          {versions.length > 1 && (
+          {versions.length > 1 && !editing && (
             <label className="vsel">
               <span className="sr">Version</span>
               <select value={vi} onChange={(e) => { setVi(+e.target.value); setDraft(null); setPick(null); setCmode(false); }}>
@@ -196,7 +214,15 @@ export default function EmailsView() {
               <button key={d} type="button" className={device === d ? 'on' : ''} onClick={() => setDevice(d)}>{d === 'desktop' ? 'Desktop' : 'Mobile'}</button>
             ))}
           </div>
-          {!locked && (
+          {editing ? (
+            <>
+              <button type="button" className="btn" disabled={busy} onClick={() => { if (!dirty || window.confirm('Discard your changes?')) setEditing(null); }}>Cancel</button>
+              <button type="button" className="btn gold" disabled={busy || !dirty} onClick={saveWording}>{busy ? 'Saving…' : 'Save changes'}</button>
+            </>
+          ) : !old && !isDraft && (
+            <button type="button" className="btn" onClick={startEdit}>Edit wording</button>
+          )}
+          {!locked && !editing && (
             <button type="button" className={`btn${cmode ? ' gold' : ''}`} onClick={() => { setCmode(!cmode); setDraft(null); }}>
               {cmode ? 'Click any line of the email' : '+ Add comment'}
             </button>
@@ -204,9 +230,17 @@ export default function EmailsView() {
         </div>
       </div>
 
+      {editing && (
+        <p className="ap-hint ae-hint em-edit-hint">
+          Click any text in the email to change it. You can move between emails and save them all together.
+          {approved ? ' These are already approved, so saving sends them back for your approval.' : ''}
+          {' '}Saving makes a new version, so the old wording is kept.
+        </p>
+      )}
       <div className="work">
         <div className="sv-stage em-stage">
-          <EmailPreview campaign={campaign} email={email} device={device} mode={cmode ? 'comment' : 'view'}
+          <EmailPreview campaign={campaign} email={email} device={device} mode={editing ? 'edit' : cmode ? 'comment' : 'view'}
+            onChange={(next) => setEditing((all) => all && all.map((e) => (e.id === next.id ? next : e)))}
             comments={comments} number={number} pick={pick} onPick={(id) => setPick(pick === id ? null : id)}
             draftField={draft?.field}
             onTarget={(field, quote) => { setDraft({ field, quote, text: '' }); setCmode(false); setPick(null); }} />

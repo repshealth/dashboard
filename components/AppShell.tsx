@@ -145,6 +145,15 @@ const AGENCY_NAV = [
       </svg>
     ),
   },
+  {
+    href: '/agency/meta',
+    label: 'Meta connection',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
+        <path d="M6.5 9.5l3-3" /><path d="M7 4.5l1.2-1.2a2.5 2.5 0 013.5 3.5L10.5 8" /><path d="M9 11.5l-1.2 1.2a2.5 2.5 0 01-3.5-3.5L5.5 8" />
+      </svg>
+    ),
+  },
 ];
 
 const Chevron = () => (
@@ -266,6 +275,7 @@ function Shell({ children }: { children: ReactNode }) {
             <NavLink {...AGENCY_NAV[5]} count={meetingsCount} />
             <NavLink {...AGENCY_NAV[7]} />
             <NavLink {...AGENCY_NAV[6]} />
+            <NavLink {...AGENCY_NAV[8]} />
             <Link href="/onboarding">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
               Client intake form

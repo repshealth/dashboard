@@ -9,6 +9,7 @@ import { amendEmailsWithClaude } from './amend-emails';
 import { addSubscriber, scheduleLaunch } from './mailerlite';
 import { appUrl, linkEmail, sendEmail, signInLink } from './auth';
 import { cf, setting } from './env';
+import { META_GRAPH } from '../meta/sync';
 import { fetchSiteFromGitHub } from '../site/github';
 import { renderPage } from '../site/render/renderer.gen';
 import { saveDesign, siteRepoFor } from './designs';
@@ -67,6 +68,18 @@ export function liveServices(store: DocStore, origin: string): Services {
       if (!res.ok) {
         const details = Array.isArray(out.details) ? (out.details as { message?: string }[]).map((d) => d.message).filter(Boolean).join(' ') : '';
         throw new Error(`${String(out.message || out.title || `Calendly returned ${res.status}`)}${details ? ` ${details}` : ''} (${res.status})`);
+      }
+      return out;
+    },
+    async metaGet(token, pathOrUrl) {
+      const url = new URL(pathOrUrl.startsWith('https://') ? pathOrUrl : `${META_GRAPH}${pathOrUrl}`);
+      if (url.hostname !== 'graph.facebook.com') throw new Error('Unexpected Meta address.');
+      url.searchParams.delete('access_token');
+      const res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${token}` } });
+      const out = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+      if (!res.ok || out.error) {
+        const e = (out.error ?? {}) as { message?: string; code?: number };
+        throw new Error(`${e.message || `Meta returned ${res.status}`}${e.code ? ` (code ${e.code})` : ''}`);
       }
       return out;
     },

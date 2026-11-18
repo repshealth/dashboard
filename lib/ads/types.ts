@@ -56,6 +56,23 @@ export interface MetaAdsAccount {
   lastImportAt?: string;
   lastImportName?: string;
   lastImportRange?: [string, string];
+  /** The ad account's name in Meta, once linked. */
+  accountName?: string;
+  lastSyncAt?: string;
+  lastSyncError?: string;
+}
+
+/** The agency's one Meta connection (a System User token) and the ad accounts it can see. */
+export interface MetaConnectionPublic {
+  connected: boolean;
+  name?: string;
+  connectedAt?: string;
+  refreshedAt?: string;
+  error?: string;
+  accounts: {
+    id: string; name: string; currency: string; status: string; business?: string;
+    clientId?: string; clientName?: string; lastSyncAt?: string; lastSyncError?: string;
+  }[];
 }
 
 export interface AdMetrics {

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useData } from '../DataProvider';
 import { backend } from '@/lib/backend';
@@ -43,6 +44,15 @@ export default function AdsView() {
     try { setR(await backend.getMetaAds(client.id, from, today())); } catch (e) { setErr(e instanceof Error ? e.message : 'Could not load the ads.'); }
   }, [client, range]);
   useEffect(() => { load(); }, [load]);
+  // Linked to Meta: freshen the numbers in the background when they're over 3 hours old.
+  const synced = useRef<string | null>(null);
+  useEffect(() => {
+    const a = r?.account;
+    if (!client || !a?.connected || synced.current === client.id) return;
+    if (a.lastSyncAt && Date.now() - Date.parse(a.lastSyncAt) < 3 * 3600e3) return;
+    synced.current = client.id;
+    backend.syncMetaAds(client.id).then((x) => { if (!x.skipped) load(); }).catch(() => load());
+  }, [r, client, load]);
   useEffect(() => { setR(null); setOpen(null); if (client) backend.listFunnels(client.id).then(setFunnels).catch(() => setFunnels([])); }, [client]);
 
   if (!client) return <div className="loading">Loading…</div>;
@@ -142,8 +152,32 @@ function Connection({ r, admin, onSaved }: { r: AdsReport; admin: boolean; onSav
   const { client, toast } = useData();
   const [editing, setEditing] = useState(false);
   const [id, setId] = useState(r.account.adAccountId ?? '');
+  const [syncing, setSyncing] = useState(false);
   const a = r.account;
-  if (a.connected) return null;
+  if (a.connected) {
+    return (
+      <div className="ad-conn">
+        <span className="ad-conn-dot on" aria-hidden="true" />
+        <div className="ad-conn-t">
+          <b>Connected to Meta{a.accountName ? ` · ${a.accountName}` : ''}</b>
+          <span>
+            {a.lastSyncError ? `The last sync failed: ${a.lastSyncError}` : a.lastSyncAt ? `Results updated ${fmtWhen(a.lastSyncAt)}.` : 'Pulling in results…'}
+            {' '}Pausing ads and changing budgets from here is coming next.
+          </span>
+        </div>
+        <span className="ad-conn-a">
+          <button type="button" className="ob-link" disabled={syncing} onClick={async () => {
+            if (!client) return;
+            setSyncing(true);
+            try { const x = await backend.syncMetaAds(client.id); toast(x.skipped ? 'Already up to date.' : 'Results updated from Meta.'); onSaved(); }
+            catch (e) { toast(e instanceof Error ? e.message : 'Could not reach Meta.'); onSaved(); }
+            finally { setSyncing(false); }
+          }}>{syncing ? 'Syncing…' : 'Sync now'}</button>
+          {admin && <Link className="ob-link" href="/agency/meta">Meta connection</Link>}
+        </span>
+      </div>
+    );
+  }
   const save = async (e: FormEvent) => {
     e.preventDefault();
     if (!client) return;
@@ -157,12 +191,12 @@ function Connection({ r, admin, onSaved }: { r: AdsReport; admin: boolean; onSav
         <span>
           {a.lastImportAt ? `Numbers come from Ads Manager exports. The last one${a.lastImportRange ? ` covered ${fmtDay(a.lastImportRange[0])} to ${fmtDay(a.lastImportRange[1])} and` : ''} was imported ${fmtWhen(a.lastImportAt)}.` : 'No numbers imported yet.'}
           {a.adAccountId ? ` Ad account ${a.adAccountId}.` : ''}
-          {' '}Live numbers, pausing ads and budget changes come once Meta is connected.
+          {' '}{admin ? 'Link this client on the Meta connection page to pull results in automatically.' : 'Live numbers come once the REPS team links your ad account.'}
         </span>
       </div>
       {admin && !editing && (
         <span className="ad-conn-a">
-          <button type="button" className="ob-link" onClick={() => setEditing(true)}>{a.adAccountId ? 'Change ad account' : 'Add ad account ID'}</button>
+          <Link className="ob-link" href="/agency/meta">Link to Meta</Link>
           {a.lastImportAt && <button type="button" className="ob-link fn-del" onClick={async () => {
             if (!client || !window.confirm('Delete all imported ad results for this client? Campaign settings stay.')) return;
             try { await backend.clearMetaAds(client.id); toast('Imported results deleted.'); onSaved(); } catch (x) { toast(x instanceof Error ? x.message : 'Could not delete them.'); }
@@ -274,8 +308,8 @@ function CampaignRows({ c, open, onToggle, money: $, admin, onEdit }: { c: AdCam
             <div className="ad-detail-h">
               <span>{c.first ? `Results from ${fmtDay(c.first)} to ${fmtDay(c.last)}` : 'No results in this range'}{c.settings?.utm ? ` · matches leads tagged ${c.settings.utm}` : ''}</span>
               <span className="ad-ctl">
-                <button type="button" className="btn sm" disabled title="Works once Meta is connected">{c.status === 'paused' ? 'Resume' : 'Pause'}</button>
-                <button type="button" className="btn sm" disabled title="Works once Meta is connected">Change budget</button>
+                <button type="button" className="btn sm" disabled title="Coming next: control from here once Meta write access is added">{c.status === 'paused' ? 'Resume' : 'Pause'}</button>
+                <button type="button" className="btn sm" disabled title="Coming next: control from here once Meta write access is added">Change budget</button>
                 {admin && <button type="button" className="btn sm" onClick={onEdit}>Settings</button>}
               </span>
             </div>

@@ -7,7 +7,7 @@ import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, Mailer
 import type { Meeting, VoiceProfile } from '../meetings/types';
 import type { Assignee, NewTask, Task, TaskPatch } from '../tasks/types';
 import type { Funnel, FunnelInput, FunnelStats, FunnelCheck } from '../funnels/types';
-import type { AdCampaign, AdCampaignInput, AdRowInput, AdsReport, MetaAdsAccount } from '../ads/types';
+import type { AdCampaign, AdCampaignInput, AdRowInput, AdsReport, MetaAdsAccount, MetaConnectionPublic } from '../ads/types';
 
 /** One onboarding form as submitted. */
 export interface Submission {
@@ -177,6 +177,15 @@ export interface Backend {
   saveMetaAccount(clientId: string, x: { adAccountId?: string }): Promise<MetaAdsAccount>;
   saveAdCampaign(clientId: string, x: AdCampaignInput): Promise<AdCampaign>;
   removeAdCampaign(id: string): Promise<void>;
+  /** The agency's Meta connection (REPS only). The token is never sent back. */
+  getMetaConnection(): Promise<MetaConnectionPublic>;
+  connectMeta(token: string): Promise<MetaConnectionPublic>;
+  refreshMetaAccounts(): Promise<MetaConnectionPublic>;
+  disconnectMeta(): Promise<void>;
+  /** Link a Meta ad account to a client (or unlink it, with clientId ''). */
+  linkMetaAccount(accountId: string, clientId: string): Promise<MetaConnectionPublic>;
+  /** Pull a linked client's latest results from Meta. */
+  syncMetaAds(clientId: string): Promise<{ rows: number; from: string; to: string; skipped?: boolean }>;
   listTasks(clientId?: string): Promise<Task[]>;
   /** clientId may be empty for a client not on the dashboard yet, with their name in t.clientName. */
   addTask(clientId: string, t: NewTask): Promise<Task>;

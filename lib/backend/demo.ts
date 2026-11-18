@@ -27,8 +27,39 @@ import type { AdCampaign, AdRow, MetaAdsAccount } from '../ads/types';
  */
 const store = new MemoryStore();
 
+/** A pretend Meta for the preview: three ad accounts with made-up results. */
+const FAKE_TOKEN_OK = (t: string) => t.length >= 60;
+async function fakeMetaGet(token: string, pathOrUrl: string): Promise<Record<string, unknown>> {
+  if (!FAKE_TOKEN_OK(token)) throw new Error('Invalid OAuth access token (code 190)');
+  const u = new URL(pathOrUrl.startsWith('http') ? pathOrUrl : `https://graph.facebook.com/v23.0${pathOrUrl}`);
+  const path = u.pathname.replace(/^\/v[\d.]+/, '');
+  if (path === '/me') return { id: '1000', name: 'REPS Ads (system user)' };
+  if (path === '/me/adaccounts') return { data: [
+    { account_id: '120000000000001', name: 'Dailey Demolition', currency: 'GBP', account_status: 1, business: { name: 'Kate Dailey Fitness' } },
+    { account_id: '120000000000002', name: 'Physique X Ads', currency: 'GBP', account_status: 1, business: { name: 'Physique X Ltd' } },
+    { account_id: '120000000000003', name: 'Lean Body Academy', currency: 'GBP', account_status: 2 },
+  ] };
+  const m = path.match(/^\/act_(\d+)\/(insights|campaigns)$/);
+  if (!m) throw new Error('Unknown path');
+  const names = ['Black Friday | Leads', 'Evergreen | App trial'];
+  if (m[2] === 'campaigns') return { data: names.map((n, i) => ({ id: `${m[1]}${i}`, name: n, effective_status: i ? 'PAUSED' : 'ACTIVE', daily_budget: i ? '1500' : '4000' })) };
+  const range = JSON.parse(u.searchParams.get('time_range') ?? '{}') as { since: string; until: string };
+  const data: Record<string, unknown>[] = [];
+  let seed = Number(m[1].slice(-3)) + 3;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let d = new Date(`${range.since}T12:00:00Z`); d.toISOString().slice(0, 10) <= range.until; d = new Date(d.getTime() + 864e5)) {
+    names.forEach((campaign, ci) => ['Reel', 'Carousel'].forEach((ad) => {
+      const spend = (ci ? 4 : 16) * (0.7 + rnd() * 0.6);
+      const impressions = Math.round(spend * 110), clicks = Math.round(impressions * 0.014), leads = Math.round(clicks * 0.18);
+      data.push({ date_start: d.toISOString().slice(0, 10), campaign_name: campaign, adset_name: 'Broad UK 25-50', ad_name: ad, spend: spend.toFixed(2), impressions: String(impressions), reach: String(Math.round(impressions * 0.82)), inline_link_clicks: String(clicks), actions: leads ? [{ action_type: 'lead', value: String(leads) }] : [] });
+    }));
+  }
+  return { data };
+}
+
 const services: Services = {
   newId: uid,
+  metaGet: fakeMetaGet,
   pause: (ms) => new Promise((r) => setTimeout(r, ms)),
   claude: false,
   writeSiteCopy: async (a) => ({ copy: fallbackCopy(a), by: 'template' }),

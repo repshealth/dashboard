@@ -17,6 +17,7 @@ import FunnelsView from '@/components/funnels/FunnelsView';
 import AdsView from '@/components/ads/AdsView';
 import LaunchSetupPage from '@/components/agency/LaunchSetupPage';
 import LoginsPage from '@/components/agency/LoginsPage';
+import MetaConnection from '@/components/agency/MetaConnection';
 import LoginPage from '@/app/login/page';
 import OnboardingScreen from '@/components/onboarding/OnboardingScreen';
 import { usePathname } from './shims/navigation';
@@ -32,6 +33,7 @@ function Screen() {
   if (path === '/agency/tasks') return <AgencyTasks />;
   if (path === '/agency/launch') return <LaunchSetupPage />;
   if (path === '/agency/logins') return <LoginsPage />;
+  if (path === '/agency/meta') return <MetaConnection />;
   if (path.startsWith('/tasks')) return <TasksView />;
   if (path.startsWith('/funnels')) return <FunnelsView />;
   if (path.startsWith('/ads')) return <AdsView />;

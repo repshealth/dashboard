@@ -16,6 +16,7 @@ export interface StarterClient {
 import type { EmailCampaign } from './emails/types';
 import { physiqueXCalculatorFlow } from './emails/flows/physique-x-calculator';
 import { leanBodyVslNoCallFlow } from './emails/flows/lean-body-vsl-no-call';
+import { leanBodyBlackFridayFlow } from './emails/flows/lean-body-black-friday';
 
 /** Follow-up email flows written for starting clients. Each is added once, as a draft for the REPS team. */
 /**
@@ -25,6 +26,7 @@ import { leanBodyVslNoCallFlow } from './emails/flows/lean-body-vsl-no-call';
 export const STARTER_FLOWS: { clientId: string; flowId: string; make: (clientId: string, versionId: string) => EmailCampaign; reopen?: string }[] = [
   { clientId: 'physique-x', flowId: 'calculator', make: physiqueXCalculatorFlow },
   { clientId: 'lean-body-academy', flowId: 'vsl-no-call', make: leanBodyVslNoCallFlow, reopen: '2026-10-30 open for Josh to comment again (asked by James)' },
+  { clientId: 'lean-body-academy', flowId: 'black-friday-shred-in-7', make: leanBodyBlackFridayFlow },
 ];
 
 export const STARTER_CLIENTS: StarterClient[] = [

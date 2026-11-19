@@ -159,7 +159,7 @@ function Connection({ r, admin, onSaved }: { r: AdsReport; admin: boolean; onSav
       <div className="ad-conn">
         <span className="ad-conn-dot on" aria-hidden="true" />
         <div className="ad-conn-t">
-          <b>Connected to Meta{a.accountName ? ` · ${a.accountName}` : ''}</b>
+          <b>Connected to Meta{a.links?.length ? ` · ${a.links.map((l) => l.accountName ?? l.accountId).join(', ')}` : ''}</b>
           <span>
             {a.lastSyncError ? `The last sync failed: ${a.lastSyncError}` : a.lastSyncAt ? `Results updated ${fmtWhen(a.lastSyncAt)}.` : 'Pulling in results…'}
             {' '}Pausing ads and changing budgets from here is coming next.
@@ -173,7 +173,7 @@ function Connection({ r, admin, onSaved }: { r: AdsReport; admin: boolean; onSav
             catch (e) { toast(e instanceof Error ? e.message : 'Could not reach Meta.'); onSaved(); }
             finally { setSyncing(false); }
           }}>{syncing ? 'Syncing…' : 'Sync now'}</button>
-          {admin && <Link className="ob-link" href="/agency/meta">Meta connection</Link>}
+          {admin && <Link className="ob-link" href="/agency/meta">Manage ad accounts</Link>}
         </span>
       </div>
     );

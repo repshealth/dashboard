@@ -177,15 +177,17 @@ export interface Backend {
   saveMetaAccount(clientId: string, x: { adAccountId?: string }): Promise<MetaAdsAccount>;
   saveAdCampaign(clientId: string, x: AdCampaignInput): Promise<AdCampaign>;
   removeAdCampaign(id: string): Promise<void>;
-  /** The agency's Meta connection (REPS only). The token is never sent back. */
+  /** The agency's Meta connections (REPS only). Tokens are never sent back. */
   getMetaConnection(): Promise<MetaConnectionPublic>;
-  connectMeta(token: string): Promise<MetaConnectionPublic>;
-  refreshMetaAccounts(): Promise<MetaConnectionPublic>;
-  disconnectMeta(): Promise<void>;
-  /** Link a Meta ad account to a client (or unlink it, with clientId ''). */
-  linkMetaAccount(accountId: string, clientId: string): Promise<MetaConnectionPublic>;
+  /** Add a connection, or with id replace its token or rename it. */
+  connectMeta(x: { token?: string; label?: string; id?: string }): Promise<MetaConnectionPublic>;
+  refreshMetaAccounts(connectionId?: string): Promise<MetaConnectionPublic>;
+  disconnectMeta(connectionId: string): Promise<void>;
+  /** Link an ad account to a client (a client can have several). filter keeps only campaigns whose name contains it. */
+  linkMetaAccount(clientId: string, x: { connectionId: string; accountId: string; filter?: string }): Promise<MetaConnectionPublic>;
+  unlinkMetaAccount(clientId: string, accountId: string): Promise<MetaConnectionPublic>;
   /** Pull a linked client's latest results from Meta. */
-  syncMetaAds(clientId: string): Promise<{ rows: number; from: string; to: string; skipped?: boolean }>;
+  syncMetaAds(clientId: string): Promise<{ rows: number; from: string; to: string; skipped?: boolean; failed?: number }>;
   listTasks(clientId?: string): Promise<Task[]>;
   /** clientId may be empty for a client not on the dashboard yet, with their name in t.clientName. */
   addTask(clientId: string, t: NewTask): Promise<Task>;

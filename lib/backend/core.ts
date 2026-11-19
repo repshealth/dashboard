@@ -20,11 +20,11 @@ import { funnelStats, signedUpAt } from '../funnels/stats';
 import type { Funnel, FunnelHit, FunnelInput, FunnelCheck } from '../funnels/types';
 import { adsReport } from '../ads/stats';
 import { shortHash } from '../ads/hash';
-import { AD_STATUS, type AdCampaign, type AdRow, type AdRowInput, type MetaAdsAccount, type MetaConnectionPublic } from '../ads/types';
+import { AD_STATUS, type AdCampaign, type AdRow, type AdRowInput, type MetaAdLink, type MetaAdsAccount, type MetaConnectionPublic } from '../ads/types';
 import { metaAdAccounts, metaCampaigns, metaInsights, metaWhoAmI, type MetaAdAccountInfo, type MetaGet } from '../meta/sync';
 
 /** Stored server side only: the token never goes to the browser. */
-interface MetaConnStored { token: string; name: string; userId: string; connectedAt: string; refreshedAt: string; accounts: MetaAdAccountInfo[]; error?: string }
+interface MetaConnStored { id: string; label: string; token: string; name: string; userId: string; connectedAt: string; refreshedAt: string; accounts: MetaAdAccountInfo[]; error?: string }
 import type { Assignee, FoundTask, Task } from '../tasks/types';
 import type { Backend, LoginInfo, Submission } from './types';
 import type { StripePublic, StripeSettings } from '../stripe/types';
@@ -702,7 +702,7 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
    * Saves ad results for a client. Rows already there for the same days are replaced: for a CSV
    * only the campaigns in the file, for a Meta sync every campaign (Meta sends the whole day).
    */
-  const putAdRows = async (clientId: string, list: AdRowInput[], scope: 'campaigns' | 'days', now: string) => {
+  const putAdRows = async (clientId: string, list: AdRowInput[], scope: 'campaigns' | 'days', now: string, account?: { id: string; legacy?: boolean }) => {
     const n = (v: unknown) => { const k = Number(v); return isFinite(k) && k >= 0 ? Math.round(k * 100) / 100 : 0; };
     const t = (v: unknown, max = 200) => String(v ?? '').trim().slice(0, max);
     const rows: AdRow[] = [];
@@ -711,7 +711,7 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       if (!date || !campaign) continue;
       const adset = t(r.adset), ad = t(r.ad);
       rows.push({
-        id: `${clientId}~${date}~${shortHash(`${campaign}|${adset}|${ad}`)}`, clientId, date,
+        id: `${clientId}~${date}~${shortHash(`${account ? `${account.id}|` : ''}${campaign}|${adset}|${ad}`)}`, clientId, date, ...(account ? { account: account.id } : {}),
         ...(cleanDay(r.endDate) && cleanDay(r.endDate) !== date ? { endDate: cleanDay(r.endDate) } : {}),
         campaign, adset, ad, spend: n(r.spend), impressions: n(r.impressions), reach: n(r.reach), clicks: n(r.clicks),
         results: n(r.results), resultType: t(r.resultType, 60) || undefined, metaLeads: n(r.metaLeads), purchases: n(r.purchases), value: n(r.value),
@@ -721,67 +721,109 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
     const dates = new Set(rows.map((r) => r.date)), names = new Set(rows.map((r) => r.campaign));
     const old = await store.list<AdRow>('adrow', { clientId });
     const keep = new Set(rows.map((r) => r.id));
-    const gone = old.filter((r) => dates.has(r.date) && (scope === 'days' || names.has(r.campaign)) && !keep.has(r.id));
+    // From Meta: the whole day for this ad account (plus rows from before accounts were recorded). From a CSV: the campaigns in the file.
+    const mine = (r: AdRow) => (account ? r.account === account.id || (Boolean(account.legacy) && !r.account) : true);
+    const gone = old.filter((r) => dates.has(r.date) && mine(r) && (scope === 'days' || names.has(r.campaign)) && !keep.has(r.id));
     for (let i = 0; i < gone.length; i += 50) await Promise.all(gone.slice(i, i + 50).map((r) => store.del('adrow', r.id)));
     for (let i = 0; i < rows.length; i += 50) await Promise.all(rows.slice(i, i + 50).map((r) => store.put('adrow', r.id, r, { clientId, sort: r.date })));
     const sorted = [...dates].sort();
     return { rows: rows.length, replaced: gone.length, campaigns: names.size, from: sorted[0], to: sorted[sorted.length - 1], names };
   };
 
-  /** The agency's Meta connection, with the token (server side only). */
-  const metaConn = () => store.get<MetaConnStored>('metaconn', 'agency');
+  /** The agency's Meta connections, with their tokens (server side only). The first one was saved under "agency". */
+  const metaConns = async () => (await store.list<MetaConnStored>('metaconn')).map((c) => ({ ...c, id: c.id ?? 'agency', label: c.label ?? 'REPS Business Manager' }));
   const metaGet = (): MetaGet => {
     if (!services.metaGet) throw new AccessError('Meta connects on the live dashboard, not in the preview.', 400);
     return services.metaGet;
   };
+  /** A client's links, reading the older single-account form too. */
+  const linksOf = (a?: MetaAdsAccount | null): MetaAdLink[] => {
+    if (!a) return [];
+    if (a.links) return a.links;
+    return a.adAccountId && a.connected ? [{ accountId: a.adAccountId, connectionId: 'agency', accountName: a.accountName, lastSyncAt: a.lastSyncAt, lastSyncError: a.lastSyncError }] : [];
+  };
+  const saveLinks = async (clientId: string, change: (links: MetaAdLink[], a: MetaAdsAccount) => void) => {
+    // mutate only changes a doc that exists, so create the client's Meta set-up first if needed.
+    if (!(await store.get('metaads', clientId))) await store.put('metaads', clientId, { clientId, currency: 'GBP', connected: false } satisfies MetaAdsAccount, { clientId });
+    return store.mutate<MetaAdsAccount>('metaads', clientId, (a) => {
+      const links = linksOf(a).map((l) => ({ ...l }));
+      change(links, a);
+      a.links = links; a.connected = links.length > 0;
+      delete a.adAccountId; delete a.accountName;
+      a.lastSyncAt = links.map((l) => l.lastSyncAt).filter(Boolean).sort().pop();
+      const errs = links.filter((l) => l.lastSyncError);
+      if (errs.length) a.lastSyncError = errs.map((l) => `${l.accountName ?? l.accountId}: ${l.lastSyncError}`).join(' ');
+      else delete a.lastSyncError;
+    }, () => ({ clientId }));
+  };
 
-  /** Pulls a linked client's results from Meta: 90 days the first time, then the last 7 (Meta keeps adjusting recent days). */
+  /**
+   * Pulls a client's results from each linked ad account: 90 days the first time, then the last 7
+   * (Meta keeps adjusting recent days). A filter keeps only that client's campaigns from a shared account.
+   */
   const syncClientAds = async (clientId: string) => {
-    const conn = await metaConn();
     const acct = await store.get<MetaAdsAccount>('metaads', clientId);
-    if (!conn?.token || !acct?.adAccountId || !acct.connected) throw new AccessError('This client isn’t linked to a Meta ad account yet.', 400);
+    const links = linksOf(acct);
+    if (!links.length) throw new AccessError('This client isn’t linked to a Meta ad account yet.', 400);
+    const conns = new Map((await metaConns()).map((c) => [c.id, c]));
     const get = metaGet();
     const now = new Date().toISOString();
     const until = now.slice(0, 10);
-    const since = new Date(Date.now() - (acct.lastSyncAt ? 6 : 89) * 864e5).toISOString().slice(0, 10);
-    try {
-      const [rows, camps] = await Promise.all([
-        metaInsights(get, conn.token, acct.adAccountId, since, until),
-        metaCampaigns(get, conn.token, acct.adAccountId).catch(() => [] as Awaited<ReturnType<typeof metaCampaigns>>),
-      ]);
-      const r = await putAdRows(clientId, rows, 'days', now);
-      // Keep each campaign's status and budget in step with Meta, without touching the team's own settings.
-      const mine = await store.list<AdCampaign>('adcampaign', { clientId });
-      for (const mc of camps) {
-        if (!r.names.has(mc.name) && mc.status !== 'active' && !mine.some((c) => c.metaId === mc.id)) continue;
-        const have = mine.find((c) => c.metaId === mc.id) ?? mine.find((c) => c.name.toLowerCase() === mc.name.toLowerCase());
-        if (have) await store.mutate<AdCampaign>('adcampaign', have.id, (c) => { c.name = mc.name; c.status = mc.status; c.metaId = mc.id; c.dailyBudget = mc.dailyBudget ?? c.dailyBudget; c.updatedAt = now; }, meta.adcampaign);
-        else if (r.names.has(mc.name) || mc.status === 'active') {
-          const c: AdCampaign = { id: services.newId(), clientId, name: mc.name, status: mc.status, metaId: mc.id, dailyBudget: mc.dailyBudget, createdAt: now, updatedAt: now };
-          await store.put('adcampaign', c.id, c, meta.adcampaign(c));
+    const legacy = Boolean(acct && !acct.links && !acct.lastImportAt);
+    let total = 0;
+    const results: { accountId: string; error?: string; since: string }[] = [];
+    const mine = await store.list<AdCampaign>('adcampaign', { clientId });
+    for (const link of links) {
+      const since = new Date(Date.now() - (link.lastSyncAt ? 6 : 89) * 864e5).toISOString().slice(0, 10);
+      const conn = conns.get(link.connectionId);
+      if (!conn?.token) { results.push({ accountId: link.accountId, error: 'Its Meta connection was removed. Link it again from another connection.', since }); continue; }
+      const f = link.filter?.trim().toLowerCase();
+      const keepName = (n: string) => !f || n.toLowerCase().includes(f);
+      try {
+        const [rows, camps] = await Promise.all([
+          metaInsights(get, conn.token, link.accountId, since, until),
+          metaCampaigns(get, conn.token, link.accountId).catch(() => [] as Awaited<ReturnType<typeof metaCampaigns>>),
+        ]);
+        const r = await putAdRows(clientId, rows.filter((x) => keepName(x.campaign)), 'days', now, { id: link.accountId, legacy });
+        total += r.rows;
+        // Keep campaign status and budget in step with Meta, without touching the team's own settings.
+        for (const mc of camps) {
+          if (!keepName(mc.name)) continue;
+          const have = mine.find((c) => c.metaId === mc.id) ?? mine.find((c) => c.name.toLowerCase() === mc.name.toLowerCase());
+          if (have) await store.mutate<AdCampaign>('adcampaign', have.id, (c) => { c.name = mc.name; c.status = mc.status; c.metaId = mc.id; c.dailyBudget = mc.dailyBudget ?? c.dailyBudget; c.updatedAt = now; }, meta.adcampaign);
+          else if (r.names.has(mc.name) || mc.status === 'active') {
+            const c: AdCampaign = { id: services.newId(), clientId, name: mc.name, status: mc.status, metaId: mc.id, dailyBudget: mc.dailyBudget, createdAt: now, updatedAt: now };
+            await store.put('adcampaign', c.id, c, meta.adcampaign(c));
+            mine.push(c);
+          }
         }
+        results.push({ accountId: link.accountId, since });
+      } catch (e) {
+        results.push({ accountId: link.accountId, error: (e instanceof Error ? e.message : String(e)).slice(0, 300), since });
       }
-      await store.mutate<MetaAdsAccount>('metaads', clientId, (a) => { a.lastSyncAt = now; delete a.lastSyncError; }, () => ({ clientId }));
-      return { rows: r.rows, from: since, to: until };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      await store.mutate<MetaAdsAccount>('metaads', clientId, (a) => { a.lastSyncError = msg.slice(0, 300); }, () => ({ clientId }));
-      throw new AccessError(`Meta didn’t send the results: ${msg}`, 502);
     }
+    await saveLinks(clientId, (ls) => {
+      for (const l of ls) {
+        const x = results.find((y) => y.accountId === l.accountId);
+        if (!x) continue;
+        if (x.error) l.lastSyncError = x.error; else { l.lastSyncAt = now; delete l.lastSyncError; }
+      }
+    });
+    const failed = results.filter((x) => x.error);
+    if (failed.length === results.length) throw new AccessError(`Meta didn’t send the results: ${failed[0].error}`, 502);
+    return { rows: total, from: results.map((x) => x.since).sort()[0], to: until, failed: failed.length };
   };
 
   const metaPublic = async (): Promise<MetaConnectionPublic> => {
-    const conn = await metaConn();
-    if (!conn?.token) return { connected: false, accounts: [] };
-    const [links, clients] = await Promise.all([store.list<MetaAdsAccount>('metaads'), store.list<ClientRec>('client')]);
-    const byAcct = new Map(links.filter((l) => l.adAccountId && l.connected).map((l) => [l.adAccountId!, l]));
-    const name = new Map(clients.map((c) => [c.id, c.name]));
+    const [conns, all, clients] = await Promise.all([metaConns(), store.list<MetaAdsAccount>('metaads'), store.list<ClientRec>('client')]);
+    const label = new Map(conns.map((c) => [c.id, c.label]));
+    const byClient = new Map(all.map((a) => [a.clientId, linksOf(a)]));
     return {
-      connected: true, name: conn.name, connectedAt: conn.connectedAt, refreshedAt: conn.refreshedAt, error: conn.error,
-      accounts: conn.accounts.map((a) => {
-        const l = byAcct.get(a.id);
-        return { ...a, clientId: l?.clientId, clientName: l ? name.get(l.clientId) : undefined, lastSyncAt: l?.lastSyncAt, lastSyncError: l?.lastSyncError };
-      }),
+      connections: conns.map((c) => ({ id: c.id, label: c.label, name: c.name, connectedAt: c.connectedAt, refreshedAt: c.refreshedAt, error: c.error, accounts: c.accounts })),
+      clients: clients.map((c) => ({
+        clientId: c.id, clientName: c.name,
+        links: (byClient.get(c.id) ?? []).map((l) => ({ ...l, connectionLabel: label.get(l.connectionId), missing: !label.has(l.connectionId) })),
+      })).sort((x, y) => x.clientName.localeCompare(y.clientName)),
     };
   };
 
@@ -1667,58 +1709,72 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       await admin();
       return wait(await metaPublic());
     },
-    async connectMeta(token) {
+    async connectMeta(x) {
       await admin();
-      const tk = String(token ?? '').trim();
+      const tk = String(x?.token ?? '').trim();
+      const conns = await metaConns();
+      const existing = x?.id ? conns.find((c) => c.id === x.id) : undefined;
+      if (x?.id && !existing) throw new AccessError('That connection was removed. Add it again.', 404);
+      const label = String(x?.label ?? '').trim().slice(0, 80) || existing?.label || (conns.length ? `Meta connection ${conns.length + 1}` : 'REPS Business Manager');
+      if (existing && !tk) {
+        // Only renaming.
+        await store.mutate<MetaConnStored>('metaconn', existing.id, (c) => { c.label = label; c.id = existing.id; }, () => ({}));
+        return wait(await metaPublic());
+      }
       if (!/^[A-Za-z0-9_-]{60,}$/.test(tk)) throw new AccessError('That doesn’t look like a Meta access token. Copy the whole token again (it’s a long string starting EAA).', 400);
       const get = metaGet();
       const me = await metaWhoAmI(get, tk).catch((e) => { throw new AccessError(`Meta didn’t accept that token: ${e instanceof Error ? e.message : e}`, 400); });
       const accounts = await metaAdAccounts(get, tk).catch((e) => { throw new AccessError(`Connected, but Meta wouldn’t list the ad accounts: ${e instanceof Error ? e.message : e}. Check the token has ads_read.`, 400); });
+      const dupe = conns.find((c) => c.userId === me.id && c.id !== existing?.id);
+      if (dupe) throw new AccessError(`That token is for ${me.name}, which is already connected as “${dupe.label}”. Use Replace token on it instead.`, 400);
       const now = new Date().toISOString();
-      const prev = await metaConn();
-      await store.put('metaconn', 'agency', { token: tk, name: me.name, userId: me.id, connectedAt: prev?.connectedAt ?? now, refreshedAt: now, accounts } satisfies MetaConnStored, {});
-      // Clients linked before a disconnect come back on.
-      for (const l of await store.list<MetaAdsAccount>('metaads')) {
-        if (l.adAccountId && !l.connected && accounts.some((a) => a.id === l.adAccountId) && l.lastSyncAt) await store.mutate<MetaAdsAccount>('metaads', l.clientId, (a) => { a.connected = true; }, () => ({ clientId: l.clientId }));
-      }
+      const id = existing?.id ?? services.newId();
+      await store.put('metaconn', id, { id, label, token: tk, name: me.name, userId: me.id, connectedAt: existing?.connectedAt ?? now, refreshedAt: now, accounts } satisfies MetaConnStored, {});
       return wait(await metaPublic());
     },
-    async refreshMetaAccounts() {
+    async refreshMetaAccounts(connectionId) {
       await admin();
-      const conn = await metaConn();
-      if (!conn?.token) throw new AccessError('Connect Meta first.', 400);
-      try {
-        const accounts = await metaAdAccounts(metaGet(), conn.token);
-        await store.mutate<MetaConnStored>('metaconn', 'agency', (c) => { c.accounts = accounts; c.refreshedAt = new Date().toISOString(); delete c.error; }, () => ({}));
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        await store.mutate<MetaConnStored>('metaconn', 'agency', (c) => { c.error = msg.slice(0, 300); }, () => ({}));
-        throw new AccessError(`Meta didn’t answer: ${msg}`, 502);
+      const conns = (await metaConns()).filter((c) => !connectionId || c.id === connectionId);
+      if (!conns.length) throw new AccessError('Connect Meta first.', 400);
+      const errors: string[] = [];
+      for (const conn of conns) {
+        try {
+          const accounts = await metaAdAccounts(metaGet(), conn.token);
+          await store.mutate<MetaConnStored>('metaconn', conn.id, (c) => { c.id = conn.id; c.accounts = accounts; c.refreshedAt = new Date().toISOString(); delete c.error; }, () => ({}));
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          errors.push(`${conn.label}: ${msg}`);
+          await store.mutate<MetaConnStored>('metaconn', conn.id, (c) => { c.id = conn.id; c.error = msg.slice(0, 300); }, () => ({}));
+        }
       }
+      if (errors.length === conns.length) throw new AccessError(`Meta didn’t answer. ${errors.join(' ')}`, 502);
       return wait(await metaPublic());
     },
-    async disconnectMeta() {
+    async disconnectMeta(connectionId) {
       await admin();
-      await store.del('metaconn', 'agency');
-      // Links are kept (switched off), so reconnecting puts every client back as it was. Imported results stay.
-      for (const l of await store.list<MetaAdsAccount>('metaads')) if (l.connected) await store.mutate<MetaAdsAccount>('metaads', l.clientId, (a) => { a.connected = false; }, () => ({ clientId: l.clientId }));
+      // Clients' links stay (and show as needing a connection), so results already pulled in are kept.
+      await store.del('metaconn', connectionId || 'agency');
     },
-    async linkMetaAccount(accountId, clientId) {
+    async linkMetaAccount(clientId, x) {
       await admin();
-      const conn = await metaConn();
-      const acct = conn?.accounts.find((a) => a.id === accountId);
-      if (!conn?.token || !acct) throw new AccessError('That ad account isn’t on the Meta connection. Refresh the list and try again.', 400);
-      // One ad account per client: unlink whoever had this account.
-      for (const l of await store.list<MetaAdsAccount>('metaads')) {
-        if (l.adAccountId === accountId && l.clientId !== clientId) await store.mutate<MetaAdsAccount>('metaads', l.clientId, (a) => { a.connected = false; delete a.adAccountId; delete a.accountName; delete a.lastSyncAt; }, () => ({ clientId: l.clientId }));
-      }
-      if (clientId) {
-        if (!(await store.get('client', clientId))) throw new AccessError('Client not found.', 404);
-        await store.mutate<MetaAdsAccount>('metaads', clientId, (a) => {
-          if (a.adAccountId !== accountId) delete a.lastSyncAt;
-          a.adAccountId = accountId; a.accountName = acct.name; a.currency = acct.currency; a.connected = true; delete a.lastSyncError;
-        }, () => ({ clientId }));
-      }
+      if (!(await store.get('client', clientId))) throw new AccessError('Client not found.', 404);
+      const conn = (await metaConns()).find((c) => c.id === x?.connectionId);
+      const acct = conn?.accounts.find((a) => a.id === x?.accountId);
+      if (!conn || !acct) throw new AccessError('That ad account isn’t on the Meta connection. Refresh the list and try again.', 400);
+      const filter = String(x.filter ?? '').trim().slice(0, 80) || undefined;
+      await saveLinks(clientId, (links, a) => {
+        const i = links.findIndex((l) => l.accountId === acct.id);
+        const prev = i >= 0 ? links[i] : undefined;
+        // A new or changed filter re-pulls 90 days so older days match it.
+        const next: MetaAdLink = { accountId: acct.id, connectionId: conn.id, accountName: acct.name, ...(filter ? { filter } : {}), ...(prev && prev.filter === filter && prev.connectionId === conn.id ? { lastSyncAt: prev.lastSyncAt } : {}) };
+        if (i >= 0) links[i] = next; else links.push(next);
+        if (!a.lastImportAt && links.length === 1) a.currency = acct.currency;
+      });
+      return wait(await metaPublic());
+    },
+    async unlinkMetaAccount(clientId, accountId) {
+      await admin();
+      await saveLinks(clientId, (links) => { const i = links.findIndex((l) => l.accountId === accountId); if (i >= 0) links.splice(i, 1); });
       return wait(await metaPublic());
     },
     async syncMetaAds(clientId) {

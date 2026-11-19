@@ -26,6 +26,8 @@ export interface AdRow {
   value: number; // purchase conversion value
   delivery?: string;
   importedAt: string;
+  /** The Meta ad account it came from, for rows synced from Meta. */
+  account?: string;
 }
 export type AdRowInput = Omit<AdRow, 'id' | 'clientId' | 'importedAt'>;
 
@@ -47,32 +49,40 @@ export interface AdCampaign {
 }
 export type AdCampaignInput = Pick<AdCampaign, 'name' | 'status' | 'funnelId' | 'utm' | 'dailyBudget' | 'notes'> & { id?: string };
 
-/** A client's Meta ad account. */
-export interface MetaAdsAccount {
-  clientId: string;
-  adAccountId?: string;
-  currency: string;
-  connected: boolean;
-  lastImportAt?: string;
-  lastImportName?: string;
-  lastImportRange?: [string, string];
-  /** The ad account's name in Meta, once linked. */
+/** One Meta ad account feeding a client, optionally only the campaigns whose name contains a filter. */
+export interface MetaAdLink {
+  accountId: string;
+  connectionId: string;
   accountName?: string;
+  /** Only campaigns whose name contains this (case doesn't matter). For an ad account shared by several clients. */
+  filter?: string;
   lastSyncAt?: string;
   lastSyncError?: string;
 }
 
-/** The agency's one Meta connection (a System User token) and the ad accounts it can see. */
-export interface MetaConnectionPublic {
+/** A client's Meta ads set-up: the ad accounts linked to them, and CSV import details. */
+export interface MetaAdsAccount {
+  clientId: string;
+  currency: string;
+  /** True when at least one ad account is linked. */
   connected: boolean;
-  name?: string;
-  connectedAt?: string;
-  refreshedAt?: string;
-  error?: string;
-  accounts: {
-    id: string; name: string; currency: string; status: string; business?: string;
-    clientId?: string; clientName?: string; lastSyncAt?: string; lastSyncError?: string;
-  }[];
+  links?: MetaAdLink[];
+  /** Older single link, read as links[0]. */
+  adAccountId?: string;
+  accountName?: string;
+  lastSyncAt?: string;
+  lastSyncError?: string;
+  lastImportAt?: string;
+  lastImportName?: string;
+  lastImportRange?: [string, string];
+}
+
+export interface MetaAdAccountPublic { id: string; name: string; currency: string; status: string; business?: string }
+
+/** The agency's Meta connections (System User tokens) and which client each ad account feeds. Tokens never leave the server. */
+export interface MetaConnectionPublic {
+  connections: { id: string; label: string; name: string; connectedAt: string; refreshedAt: string; error?: string; accounts: MetaAdAccountPublic[] }[];
+  clients: { clientId: string; clientName: string; links: (MetaAdLink & { connectionLabel?: string; missing?: boolean })[] }[];
 }
 
 export interface AdMetrics {

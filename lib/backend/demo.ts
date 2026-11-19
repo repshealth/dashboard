@@ -33,15 +33,18 @@ async function fakeMetaGet(token: string, pathOrUrl: string): Promise<Record<str
   if (!FAKE_TOKEN_OK(token)) throw new Error('Invalid OAuth access token (code 190)');
   const u = new URL(pathOrUrl.startsWith('http') ? pathOrUrl : `https://graph.facebook.com/v23.0${pathOrUrl}`);
   const path = u.pathname.replace(/^\/v[\d.]+/, '');
-  if (path === '/me') return { id: '1000', name: 'REPS Ads (system user)' };
+  const second = /two/i.test(token);
+  if (path === '/me') return second ? { id: '2000', name: 'Client BM (system user)' } : { id: '1000', name: 'REPS Ads (system user)' };
+  if (path === '/me/adaccounts' && second) return { data: [{ account_id: '220000000000009', name: 'Shape Up with Gabby', currency: 'GBP', account_status: 1, business: { name: 'Shape Up Ltd' } }] };
   if (path === '/me/adaccounts') return { data: [
+    { account_id: '120000000000004', name: 'REPS Shared Ads', currency: 'GBP', account_status: 1, business: { name: 'REPS Health' } },
     { account_id: '120000000000001', name: 'Dailey Demolition', currency: 'GBP', account_status: 1, business: { name: 'Kate Dailey Fitness' } },
     { account_id: '120000000000002', name: 'Physique X Ads', currency: 'GBP', account_status: 1, business: { name: 'Physique X Ltd' } },
     { account_id: '120000000000003', name: 'Lean Body Academy', currency: 'GBP', account_status: 2 },
   ] };
   const m = path.match(/^\/act_(\d+)\/(insights|campaigns)$/);
   if (!m) throw new Error('Unknown path');
-  const names = ['Black Friday | Leads', 'Evergreen | App trial'];
+  const names = m[1].endsWith('4') ? ['Dailey | Black Friday | Leads', 'Physique X | Calculator | Leads', 'Kim Weston | Challenge'] : ['Black Friday | Leads', 'Evergreen | App trial'];
   if (m[2] === 'campaigns') return { data: names.map((n, i) => ({ id: `${m[1]}${i}`, name: n, effective_status: i ? 'PAUSED' : 'ACTIVE', daily_budget: i ? '1500' : '4000' })) };
   const range = JSON.parse(u.searchParams.get('time_range') ?? '{}') as { since: string; until: string };
   const data: Record<string, unknown>[] = [];

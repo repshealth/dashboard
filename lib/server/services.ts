@@ -6,7 +6,7 @@ import { writeCopy } from './write-copy';
 import { writeLaunchEmails, writePreRegCopy } from './write-launch';
 import { amendWithClaude } from './amend';
 import { amendEmailsWithClaude } from './amend-emails';
-import { addSubscriber, scheduleLaunch } from './mailerlite';
+import { addSubscriber, saveEmailTemplate, scheduleLaunch } from './mailerlite';
 import { appUrl, linkEmail, sendEmail, signInLink } from './auth';
 import { cf, setting } from './env';
 import { META_GRAPH } from '../meta/sync';
@@ -97,6 +97,7 @@ export function liveServices(store: DocStore, origin: string): Services {
       return `/api/files/${key}`;
     },
     scheduleLaunch: async (c, emails) => scheduleLaunch(await ml(c.clientId), c, emails),
+    saveEmailTemplate: async (c, e, label) => saveEmailTemplate(await ml(c.clientId), c, e, label),
     addSubscriber: async (clientId, p) => addSubscriber(await ml(clientId), p),
     async sendInvite(u, clientName, what) {
       const link = await signInLink(store, origin, u.email, 7);

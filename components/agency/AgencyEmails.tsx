@@ -17,6 +17,7 @@ import {
 import type { Lead } from '@/lib/types';
 import type { Device } from '@/lib/types';
 import type { MailerLiteSettings } from '@/lib/emails/types';
+import { fmtWhen } from '@/lib/format';
 
 /** "Pre-reg list", "General list" or "Follow-up", from an email id like "prereg-3". */
 const listOf = (emailId: string) => (emailId.startsWith('prereg') ? 'Pre-reg list' : emailId.startsWith('public') ? 'General list' : 'Follow-up');
@@ -385,8 +386,66 @@ function CampaignDetail({ ckey, name, onBack }: { ckey: string; name: string; on
             <MailerLiteForm clientId={clientId} />
           </div>
           )}
+          <MlTemplates ckey={ckey} campaign={campaign} reload={reload} />
         </aside>
       </div>
+    </div>
+  );
+}
+
+/** Save the emails as templates in the client's MailerLite, one at a time with progress. */
+function MlTemplates({ ckey, campaign, reload }: { ckey: string; campaign: EmailCampaign; reload: () => Promise<unknown> }) {
+  const { toast } = useData();
+  const [doing, setDoing] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const ver = campaign.versions.find((v) => v.state === 'published') ?? campaign.versions[0];
+  if (!ver) return null;
+  const saved = new Map((campaign.mailerlite.templates ?? []).map((t) => [t.emailId, t]));
+  const go = async (only?: string) => {
+    const list = ver.emails.filter((e) => (only ? e.id === only : true));
+    const errs: Record<string, string> = { ...errors };
+    let ok = 0;
+    for (const e of list) {
+      setDoing(e.id);
+      try { await backend.saveEmailTemplate(ckey, e.id); ok++; delete errs[e.id]; }
+      catch (x) {
+        errs[e.id] = x instanceof Error ? x.message : 'Failed';
+        setErrors({ ...errs });
+        // The same problem (no key, sender not verified) would hit every email, so stop at the first.
+        if (!only) break;
+      }
+    }
+    setErrors(errs); setDoing(null);
+    await reload();
+    toast(Object.keys(errs).length ? `Saved ${ok}. One failed: ${Object.values(errs)[0]}` : `Saved ${ok} template${ok === 1 ? '' : 's'} in MailerLite.`);
+  };
+  const all = ver.emails.length;
+  const done = ver.emails.filter((e) => saved.get(e.id)?.version === ver.version).length;
+  return (
+    <div className="detail ae-card">
+      <div className="lbl" style={{ marginTop: 0 }}>MAILERLITE TEMPLATES</div>
+      <p className="ap-hint" style={{ marginTop: 0 }}>Saves each email ({ver.version}) as a template in the client&apos;s MailerLite, built in the drag and drop editor so it can be edited there. Works on any MailerLite plan.</p>
+      <ul className="ae-tpl">
+        {ver.emails.map((e) => {
+          const t = saved.get(e.id);
+          const err = errors[e.id];
+          return (
+            <li key={e.id}>
+              <span className="ae-tpl-n">{e.n}. {e.subject}</span>
+              {doing === e.id ? <span className="ae-tpl-s">Saving…</span>
+                : err ? <span className="ae-tpl-s mc-err" title={err}>Failed</span>
+                : t ? <span className={`ae-tpl-s ${t.version === ver.version ? 'ok' : ''}`} title={`${t.name} · ${fmtWhen(t.at)}`}>{t.version === ver.version ? 'Saved' : `Saved (${t.version})`}</span>
+                : <span className="ae-tpl-s">Not saved</span>}
+              {!doing && (err || t) && <button type="button" className="ob-link" onClick={() => go(e.id)}>{err ? 'Retry' : 'Save again'}</button>}
+            </li>
+          );
+        })}
+      </ul>
+      {Object.values(errors)[0] && <div className="form-msg err">{Object.values(errors)[0]}</div>}
+      <button type="button" className={`btn${done === all ? '' : ' gold'}`} disabled={doing !== null} onClick={() => go()}>
+        {doing ? `Saving ${ver.emails.findIndex((e) => e.id === doing) + 1} of ${all}…` : done ? `Save all ${all} again` : `Save ${all} as MailerLite templates`}
+      </button>
+      <p className="ap-hint">Saving again adds a new copy in MailerLite; delete old ones there if needed.</p>
     </div>
   );
 }

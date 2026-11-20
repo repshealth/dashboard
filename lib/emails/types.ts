@@ -87,7 +87,10 @@ export interface MailerLiteState {
   note: string;
   at?: string;
   campaignIds?: string[];
+  /** Emails saved as templates in the client's MailerLite (one per email, the latest save). */
+  templates?: MailerLiteTemplate[];
 }
+export interface MailerLiteTemplate { emailId: string; templateId: string; name: string; version: string; at: string }
 
 /** A client's MailerLite account details. Saved by REPS; the API key never goes back to the browser. */
 export interface MailerLiteSettings {

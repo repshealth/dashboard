@@ -11,7 +11,7 @@ const METHODS = new Set<keyof Backend>([
   'listAllLeads', 'listSites', 'requestChanges', 'approveVersion', 'rejectVersion', 'listSubmissions',
   'getEmails', 'listEmails', 'markFlowLive', 'listEmailCampaigns', 'addEmailComment', 'setEmailCommentResolved', 'sendEmailsToClient',
   'requestEmailChanges', 'approveEmails', 'scheduleEmails', 'approveEmailVersion', 'rejectEmailVersion',
-  'saveEmailEdits', 'saveEmailWording', 'saveLaunchSettings', 'getMailerLite', 'saveMailerLite', 'rewriteEmails',
+  'saveEmailEdits', 'saveEmailWording', 'saveEmailTemplate', 'saveLaunchSettings', 'getMailerLite', 'saveMailerLite', 'rewriteEmails',
   'listMeetings', 'addMeeting', 'updateMeeting', 'deleteMeeting', 'getVoice', 'refreshVoice', 'saveVoice',
   'listTasks', 'addTask', 'updateTask', 'findTasks', 'saveSiteSource', 'syncSite', 'closeComments', 'setSiteDesign', 'listLaunchSetups', 'getLaunchSetup', 'saveLaunchSetup',
 ]);

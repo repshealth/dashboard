@@ -10,7 +10,7 @@ import { makeAmendedVersion, type AmendFn } from '../site/make-amend';
 import { carryOpenComments, latestPublished } from '../site/versions';
 import { buildCampaign } from '../emails/copy';
 import { applyRepsEdits, cleanEditedWording, makeAmendedEmails, makeEditedEmails, type EmailAmendFn } from '../emails/amend';
-import { clientOfKey, isFlow, latestEmailVersion, pendingEmailVersion, type EmailCampaign, type EmailComment, type LaunchEmail, type MailerLiteSettings, type MailerLiteState } from '../emails/types';
+import { campaignTitle, clientOfKey, isFlow, latestEmailVersion, pendingEmailVersion, type EmailCampaign, type EmailComment, type LaunchEmail, type MailerLiteSettings, type MailerLiteState } from '../emails/types';
 import { meetingKey, parseMeetingText } from '../meetings/parse';
 import { matchClient } from '../meetings/match';
 import { voiceForPrompt, type Meeting, type VoiceProfile } from '../meetings/types';
@@ -92,6 +92,8 @@ export interface Services {
   /** A voice profile from a client's calls. Returns null when it can't do better than an existing one. */
   buildVoice(clientId: string, meetings: Meeting[], names: string[], coach: string, brand: string, existing: VoiceProfile | null): Promise<VoiceProfile | null>;
   scheduleLaunch(c: EmailCampaign, emails: LaunchEmail[]): Promise<MailerLiteState>;
+  /** Save one email as a template in the client's MailerLite. */
+  saveEmailTemplate?(c: EmailCampaign, e: LaunchEmail, label: string): Promise<{ templateId: string; name: string }>;
   /** Adds a pre-registered person to the client's pre-reg group in MailerLite. */
   addSubscriber(clientId: string, p: { email: string; name?: string; phone?: string }): Promise<boolean>;
   /** The actions agreed on a call, with who each looks like it's for. */
@@ -1370,6 +1372,22 @@ export function createBackend(store: DocStore, services: Services, who: () => Pr
       const ml = await services.scheduleLaunch(c, ver.emails);
       await campaign(key, (x) => { x.mailerlite = ml; });
       return wait(ml, 600);
+    },
+    async saveEmailTemplate(key, emailId) {
+      await admin();
+      const c = await store.get<EmailCampaign>('campaign', key);
+      if (!c) throw new AccessError('These emails were not found.', 404);
+      const ver = c.versions.find((x) => x.state === 'published') ?? c.versions[0];
+      const e = ver?.emails.find((x) => x.id === emailId);
+      if (!ver || !e) throw new AccessError('That email was not found.', 404);
+      if (!services.saveEmailTemplate) throw new AccessError('MailerLite templates are made on the live dashboard, not in the preview.', 400);
+      const label = `${c.brand.name} · ${campaignTitle(c)}`;
+      let made: { templateId: string; name: string };
+      try { made = await services.saveEmailTemplate(c, e, label); }
+      catch (x) { throw new AccessError(`MailerLite: ${x instanceof Error ? x.message : x}`, 502); }
+      const entry = { emailId: e.id, templateId: made.templateId, name: made.name, version: ver.version, at: new Date().toISOString() };
+      await campaign(key, (x) => { x.mailerlite = { ...x.mailerlite, templates: [...(x.mailerlite.templates ?? []).filter((t) => t.emailId !== e.id), entry] }; });
+      return entry;
     },
     async markFlowLive(key, live) {
       await admin();

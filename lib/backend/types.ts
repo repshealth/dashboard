@@ -3,7 +3,7 @@ import type { StripePublic } from '../stripe/types';
 import type { SiteDesign } from '../site/spec';
 import type { LaunchDoc, LaunchSetup, OnboardingAnswers } from '../site/onboarding';
 import type { Client, Lead, LeadEvent, Site, SiteComment, SiteSource, SiteVersion, StageId, Viewer } from '../types';
-import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState } from '../emails/types';
+import type { EmailCampaign, EmailComment, LaunchEmail, MailerLitePublic, MailerLiteSettings, MailerLiteState, MailerLiteTemplate } from '../emails/types';
 import type { Meeting, VoiceProfile } from '../meetings/types';
 import type { Assignee, NewTask, Task, TaskPatch } from '../tasks/types';
 import type { Funnel, FunnelInput, FunnelStats, FunnelCheck } from '../funnels/types';
@@ -138,6 +138,8 @@ export interface Backend {
   /** REPS edits the emails by hand. */
   saveEmailEdits(clientId: string, emails: LaunchEmail[]): Promise<void>;
   /** Reword the emails from the Emails screen. Saves a new version straight away. */
+  /** Save one email as a template in the client's MailerLite (REPS only). */
+  saveEmailTemplate(key: string, emailId: string): Promise<MailerLiteTemplate>;
   saveEmailWording(key: string, versionId: string, emails: LaunchEmail[]): Promise<{ changed: number; version: string; reopened?: boolean }>;
   /** REPS changes the launch date, website link or code. Send times move with the launch date. */
   saveLaunchSettings(clientId: string, s: LaunchSettings): Promise<void>;

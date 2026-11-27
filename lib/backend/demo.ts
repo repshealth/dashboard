@@ -112,10 +112,10 @@ async function seedExample() {
     await store.put('client', rec.id, rec, meta.client(rec));
     const site: Site = {
       clientId: c.id, status: 'review', statusNote: 'Latest version from GitHub', contact: c.contactName, domain: c.name, versions: [],
-      github: { repo: c.repo, branch: c.branch, autoPublish: false },
+      github: c.repo ? { repo: c.repo, branch: c.branch || 'main', autoPublish: false } : undefined,
     };
     await store.put('site', c.id, site, meta.site(site));
-    const snap = snapshots[c.repo];
+    const snap = c.repo ? snapshots[c.repo] : undefined;
     if (snap) await syncSiteFromGitHub(store, { ...services, fetchSite: snap }, c.id).catch(() => null);
     await starterNote(store, c.id);
   }

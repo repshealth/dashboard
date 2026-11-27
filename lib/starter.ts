@@ -8,9 +8,9 @@ export interface StarterClient {
   slug: string;
   name: string;
   contactName: string;
-  /** Where the site is saved from Claude. */
-  repo: string;
-  branch: string;
+  /** Where the site is saved from Claude. Leave out for an account that only collects leads. */
+  repo?: string;
+  branch?: string;
 }
 
 import type { EmailCampaign } from './emails/types';
@@ -40,6 +40,8 @@ export const STARTER_CLIENTS: StarterClient[] = [
   { id: 'apex', slug: 'apex', name: 'Apex', contactName: 'Rory', repo: 'repshealth/apex', branch: 'main' },
   // James's own private 1-1 consulting page. Its application form posts here as client "james".
   { id: 'james', slug: 'james', name: 'James', contactName: 'James', repo: 'repshealth/fitpreneurjames', branch: 'main' },
+  // The REPS Health website (repshealth.com, hosted on Firebase). Every form on it posts here as client "reps-website".
+  { id: 'reps-website', slug: 'reps-website', name: 'REPS Website', contactName: 'James' },
 ];
 
 /**

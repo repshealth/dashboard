@@ -420,12 +420,14 @@ export async function seedStarter(store: DocStore, services: Services) {
     };
     await store.put('client', client.id, client, meta.client(client));
     const site: Site = {
-      clientId: c.id, status: 'review', statusNote: 'Latest version from GitHub', contact: c.contactName, domain: c.name, versions: [],
-      github: { repo: c.repo, branch: c.branch, autoPublish: false },
+      clientId: c.id, status: 'review', statusNote: c.repo ? 'Latest version from GitHub' : 'Leads only. This site is hosted outside the dashboard.', contact: c.contactName, domain: c.name, versions: [],
+      github: c.repo ? { repo: c.repo, branch: c.branch || 'main', autoPublish: false } : undefined,
     };
     await store.put('site', c.id, site, meta.site(site));
-    await syncSiteFromGitHub(store, services, c.id).catch((e) => console.error('Starter sync failed', c.repo, e));
-    await starterNote(store, c.id);
+    if (c.repo) {
+      await syncSiteFromGitHub(store, services, c.id).catch((e) => console.error('Starter sync failed', c.repo, e));
+      await starterNote(store, c.id);
+    }
   }
   await seedFlows(store, services);
   await linkSiteRepos(store, services);

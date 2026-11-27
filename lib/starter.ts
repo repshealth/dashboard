@@ -38,6 +38,8 @@ export const STARTER_CLIENTS: StarterClient[] = [
   { id: 'rebuild', slug: 'rebuild', name: 'Rebuild', contactName: 'James Haskell', repo: 'repshealth/rebuild', branch: 'main' },
   { id: 'kim-weston', slug: 'kim-weston', name: 'Kim Weston', contactName: 'Kim Weston', repo: 'repshealth/kimwestoncalories', branch: 'main' },
   { id: 'apex', slug: 'apex', name: 'Apex', contactName: 'Rory', repo: 'repshealth/apex', branch: 'main' },
+  // James's own private 1-1 consulting page. Its application form posts here as client "james".
+  { id: 'james', slug: 'james', name: 'James', contactName: 'James', repo: 'repshealth/fitpreneurjames', branch: 'main' },
 ];
 
 /**
